@@ -9,12 +9,14 @@ class SentenceParserView extends StatefulWidget {
   final List<NlpToken> tokens;
   final bool showTashkeel;
   final String title;
+  final void Function(NlpToken token)? onEditToken;
 
   const SentenceParserView({
     super.key,
     required this.tokens,
     this.showTashkeel = true,
     this.title = 'المثال التفاعلي (انقر على الكلمة لمعرفة إعرابها):',
+    this.onEditToken,
   });
 
   @override
@@ -216,6 +218,25 @@ class _SentenceParserViewState extends State<SentenceParserView> {
                 fontSize: 13.5,
                 color: AppTheme.textMuted,
                 height: 1.5,
+              ),
+            ),
+          ],
+          if (widget.onEditToken != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () => widget.onEditToken!(token),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  side: BorderSide(color: color.withValues(alpha: 0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: Icon(Icons.edit_note_rounded, size: 18, color: color),
+                label: Text(
+                  'تصحيح إعراب الكلمة (حفظ للأبد)',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: color),
+                ),
               ),
             ),
           ],

@@ -1,6 +1,6 @@
 # Screens Directory (`lib/screens`)
 
-This directory houses the 9 core application screens and features specified in `tasks.md`:
+This directory houses the 9 core application screens specified in `tasks.md` plus the enhanced offline Computational Linguistics Lab:
 
 ## Files:
 - [home_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/home_screen.dart): **[01] الصفحة الرئيسية** - Welcome screen with book icon, child-friendly banner illustration, start button, and quick access to tools.
@@ -11,4 +11,4 @@ This directory houses the 9 core application screens and features specified in `
 - [quiz_evaluation_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/quiz_evaluation_screen.dart): **[07] التقويم** - Multi-question achievement quiz (`جلس التلميذ في الفصل -> اختر الفعل`) with dynamic score calculation.
 - [progress_results_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/progress_results_screen.dart): **[08] النتيجة والتقدم** - Performance reports, stars, badges, and cross-grade progress tracking.
 - [settings_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/settings_screen.dart): **[09] شاشة الإعدادات** - Sound settings, tashkeel preferences, progress reset, and computational linguistics documentation.
-- [nlp_lab_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/nlp_lab_screen.dart): **المختبر اللغوي الآلي (اللسانيات الحاسوبية)** - Automated morphological parser, grammar checker, and automatic diacritizer fulfilling core application vision.
+- [nlp_lab_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/nlp_lab_screen.dart): **المختبر اللغوي الآلي الهجين** - Interactive Computational Linguistics interface featuring sentence type classification, bigram context analysis, automated diacritization, and an on-screen dialog for user overrides and feedback loops.

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/nlp_database_service.dart';
 import 'services/progress_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize SQLite cache and user correction loop
+  await NlpDatabaseService.instance.init();
 
   final progressService = ProgressService();
   await progressService.init();

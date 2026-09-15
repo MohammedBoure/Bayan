@@ -1,10 +1,12 @@
 import '../models/nlp_token_model.dart';
+import '../services/nlp_database_service.dart';
+import 'arabic_clitic_stemmer.dart';
+import 'arabic_hybrid_parser.dart';
 
-/// Computational Linguistics Engine for Arabic Grammar in Primary Education.
-/// Implements morphological analysis, part-of-speech tagging, syntactic parsing,
-/// diacritics management, and grammatical error checking with intelligent feedback.
+/// المحرك الرئيسي للسانيات الحاسوبية العربية (Arabic Computational Linguistics Engine).
+/// يدمج بين المحلل الهجين (Rule Engine + Bigram Context)
+/// ونظام التخزين المؤقت وقاعدة بيانات التصحيحات التفاعلية (Feedback Loop).
 class ArabicLinguisticsEngine {
-  // Common Arabic diacritics Unicode codepoints
   static const String fatha = '\u064E';
   static const String damma = '\u064F';
   static const String kasra = '\u0650';
@@ -14,41 +16,13 @@ class ArabicLinguisticsEngine {
   static const String tanwinDamm = '\u064C';
   static const String tanwinKasr = '\u064D';
 
-  static final RegExp _diacriticsRegex = RegExp(
-    r'[\u064B-\u0652\u0670\u0640]',
-  );
+  /// إزالة التشكيل
+  static String stripDiacritics(String input) => ArabicCliticStemmer.stripDiacritics(input);
 
-  // Common prepositions (حروف الجر)
-  static const List<String> prepositions = [
-    'من', 'مِنْ', 'إلى', 'إِلَى', 'عن', 'عَنْ', 'على', 'عَلَى',
-    'في', 'فِي', 'رب', 'رُبَّ', 'الباء', 'اللام', 'الكاف',
-  ];
+  /// توحيد الحروف
+  static String normalize(String input) => ArabicCliticStemmer.normalize(input);
 
-  // Common particles of accusative (نواصب المضارع)
-  static const List<String> accusativeParticles = [
-    'أن', 'أَنْ', 'لن', 'لَنْ', 'كي', 'كَيْ', 'إذن', 'إِذَنْ', 'حتى', 'حَتَّى'
-  ];
-
-  // Common particles of jussive (جوازم المضارع)
-  static const List<String> jussiveParticles = [
-    'لم', 'لَمْ', 'لما', 'لَمَّا', 'لا الناهية', 'لام الأمر'
-  ];
-
-  /// Strips all tashkeel (diacritics) from an Arabic string.
-  static String stripDiacritics(String input) {
-    return input.replaceAll(_diacriticsRegex, '');
-  }
-
-  /// Normalizes Arabic characters (alifs, teh marbuta, etc.)
-  static String normalize(String input) {
-    var text = stripDiacritics(input);
-    text = text.replaceAll(RegExp(r'[إأآٱ]'), 'ا');
-    text = text.replaceAll('ى', 'ي');
-    text = text.replaceAll('ة', 'ه');
-    return text.trim();
-  }
-
-  /// Tokenizes a sentence into a list of words.
+  /// تقطيع النص إلى كلمات
   static List<String> tokenize(String sentence) {
     return sentence
         .trim()
@@ -57,242 +31,112 @@ class ArabicLinguisticsEngine {
         .toList();
   }
 
-  /// Evaluates whether a word is a particle (حرف).
-  static bool isParticle(String word) {
-    final clean = normalize(word);
-    const particles = [
-      'في', 'من', 'الي', 'علي', 'عن', 'ثم', 'او', 'بل', 'لكن',
-      'ان', 'لن', 'كي', 'لم', 'لما', 'قد', 'سوف', 'هل', 'ما', 'لا'
-    ];
-    return particles.contains(clean);
-  }
-
-  /// Evaluates whether a word has prominent noun markers (علامات الاسم).
-  static bool hasNounMarkers(String word) {
-    final raw = word.trim();
-    final clean = normalize(raw);
-
-    // Starts with definite article 'ال'
-    if (clean.startsWith('ال') && clean.length > 3) return true;
-
-    // Ends with teh marbuta 'ة'
-    if (raw.endsWith('ة') || raw.endsWith('َة') || raw.endsWith('ُة') || raw.endsWith('ِة')) return true;
-
-    // Has tanwin
-    if (raw.contains(tanwinFath) || raw.contains(tanwinDamm) || raw.contains(tanwinKasr)) return true;
-
-    return false;
-  }
-
-  /// Classifies the tense of an Arabic verb (ماضٍ، مضارع، أمر).
-  static String classifyVerbTense(String word) {
-    final clean = normalize(word);
-
-    // Imperative clues (often starts with ا followed by imperative patterns or direct request)
-    if (clean.startsWith('ا') && (clean.length == 4 || clean.length == 5)) {
-      if (clean.startsWith('اقر') || clean.startsWith('اكتب') || clean.startsWith('اجلس') ||
-          clean.startsWith('احفظ') || clean.startsWith('انتبه') || clean.startsWith('اسمع')) {
-        return 'أمر';
-      }
+  /// تحليل نحوي وصرفي ذكي غير متزامن يستشير قاعدة البيانات والكاش أولاً
+  static Future<ParseResult> parseSentenceAsync(String sentence) async {
+    final cachedTokens = await NlpDatabaseService.instance.lookupSentence(sentence);
+    if (cachedTokens != null && cachedTokens.isNotEmpty) {
+      return ParseResult(
+        tokens: cachedTokens,
+        type: SentenceType.nominal,
+        typeArabic: 'مُسْتَرْجَعٌ مِنْ قَاعِدَةِ البَيَانَاتِ النَّمُوذَجِيَّةِ',
+      );
     }
 
-    // Present tense clues (starts with حروف أنيت: أ، ن، ي، ت)
-    if (clean.startsWith('ي') || clean.startsWith('ت') || clean.startsWith('ن') || clean.startsWith('س')) {
-      if (clean.length >= 3) {
-        return 'مضارع';
-      }
-    }
+    final overrides = NlpDatabaseService.instance.currentOverrides;
+    final result = ArabicHybridParser.parse(sentence, userOverrides: overrides);
 
-    // Default for 3-letter or common past verbs
-    return 'ماضٍ';
+    // حفظ التحليل في الكاش المحلي للمرات القادمة
+    final diacritized = autoDiacritizeSentence(sentence);
+    await NlpDatabaseService.instance.saveParsedSentence(
+      sentence,
+      result.tokens,
+      result.typeArabic,
+      diacritized,
+    );
+
+    return result;
   }
 
-  /// Morpho-syntactically analyzes an educational verbal sentence (الجملة الفعلية).
-  /// Designed to empower elementary students with computational parsing.
+  /// تحليل نحوي متزامن بالاعتماد على المحلل الهجين والتصحيحات الفورية
   static List<NlpToken> parseVerbalSentence(String sentence) {
-    final tokens = tokenize(sentence);
-    final List<NlpToken> results = [];
-
-    for (int i = 0; i < tokens.length; i++) {
-      final current = tokens[i];
-      final clean = normalize(current);
-
-      if (isParticle(current)) {
-        results.add(NlpToken(
-          word: current,
-          plainWord: stripDiacritics(current),
-          pos: 'حرف',
-          subType: 'حرف جر أو عطف أو نفي',
-          caseMark: 'مبني لا محل له من الإعراب',
-          explanation: 'الحرف كلمة لا يظهر معناها كاملاً إلا مع غيرها في الجملة.',
-        ));
-        continue;
-      }
-
-      // In elementary verbal sentences, the first non-particle word is typically the Verb
-      if (i == 0 || (i == 1 && results.isNotEmpty && results.first.pos == 'حرف')) {
-        final tense = classifyVerbTense(current);
-        String caseInfo = 'مبني على الفتح';
-        String exp = 'الفعل الماضي يدل على عمل حدث وانتهى في الزمن الماضي.';
-
-        if (tense == 'مضارع') {
-          caseInfo = 'مرفوع وعلامة رفعه الضمة الظاهرة';
-          exp = 'الفعل المضارع يدل على حدث يقع الآن في الحاضر أو سيقع في المستقبل.';
-        } else if (tense == 'أمر') {
-          caseInfo = 'مبني على السكون';
-          exp = 'فعل الأمر يدل على طلب القيام بعمل في المستقبل.';
-        }
-
-        results.add(NlpToken(
-          word: current,
-          plainWord: stripDiacritics(current),
-          pos: 'فعل',
-          subType: 'فعل $tense',
-          caseMark: caseInfo,
-          explanation: exp,
-          isTarget: true,
-        ));
-        continue;
-      }
-
-      // Check if preceded by a preposition
-      final prev = i > 0 ? results[i - 1] : null;
-      if (prev != null && prev.pos == 'حرف' && (clean != 'لا' && clean != 'قد' && clean != 'سوف')) {
-        results.add(NlpToken(
-          word: current,
-          plainWord: stripDiacritics(current),
-          pos: 'اسم',
-          subType: 'اسم مجرور',
-          caseMark: 'مجرور وعلامة جره الكسرة الظاهرة',
-          explanation: 'الاسم الواقع بعد حرف الجر يسمى اسماً مجروراً وتكون علامة جره الكسرة.',
-        ));
-        continue;
-      }
-
-      // Detect Subject (الفاعل): typically follows verb
-      final hasVerbBefore = results.any((t) => t.pos == 'فعل');
-      final hasSubjectBefore = results.any((t) => t.subType == 'فاعل');
-
-      if (hasVerbBefore && !hasSubjectBefore) {
-        results.add(NlpToken(
-          word: current,
-          plainWord: stripDiacritics(current),
-          pos: 'اسم',
-          subType: 'فاعل',
-          caseMark: 'مرفوع وعلامة رفعه الضمة الظاهرة',
-          explanation: 'الفاعل هو الاسم المرفوع الذي يدل على من قام بالفعل أو اتصف به.',
-        ));
-        continue;
-      }
-
-      // Detect Object (المفعول به): typically follows subject
-      if (hasVerbBefore && hasSubjectBefore) {
-        results.add(NlpToken(
-          word: current,
-          plainWord: stripDiacritics(current),
-          pos: 'اسم',
-          subType: 'مفعول به',
-          caseMark: 'منصوب وعلامة نصبه الفتحة الظاهرة',
-          explanation: 'المفعول به هو الاسم المنصوب الذي وقع عليه فعل الفاعل.',
-        ));
-        continue;
-      }
-
-      // General fallback
-      results.add(NlpToken(
-        word: current,
-        plainWord: stripDiacritics(current),
-        pos: hasNounMarkers(current) ? 'اسم' : 'كلمة',
-        subType: 'ركن متمم للجملة',
-        caseMark: 'حسب موقعه في الجملة',
-        explanation: 'كلمة تكمل معنى الجملة وتوضح أركانها.',
-      ));
-    }
-
-    return results;
+    final overrides = NlpDatabaseService.instance.currentOverrides;
+    final result = ArabicHybridParser.parse(sentence, userOverrides: overrides);
+    return result.tokens;
   }
 
-  /// Automated Diacritization and Tashkeel recommender for elementary verbal sentences.
+  /// التشكيل وضبط الإعراب الآلي الذكي (المُشكّل الآلي)
   static String autoDiacritizeSentence(String sentence) {
-    final tokens = parseVerbalSentence(sentence);
+    final parseResult = ArabicHybridParser.parse(
+      sentence,
+      userOverrides: NlpDatabaseService.instance.currentOverrides,
+    );
     final diacritizedWords = <String>[];
 
-    for (final token in tokens) {
+    for (final token in parseResult.tokens) {
       var word = token.plainWord;
-      if (token.pos == 'فعل') {
+
+      // إذا كانت الكلمة مشكولة أصلاً بتنوين نحتفظ بتشكيلها
+      if (token.word.contains(tanwinFath) || token.word.contains(tanwinDamm) || token.word.contains(tanwinKasr)) {
+        diacritizedWords.add(token.word);
+        continue;
+      }
+
+      if (token.subType == 'مبتدأ' || token.subType?.contains('فاعل') == true) {
+        word = '$word$damma';
+      } else if (token.subType?.contains('خبر المبتدأ') == true) {
+        word = '$word$tanwinDamm';
+      } else if (token.subType?.contains('مفعول به') == true) {
+        word = '$word$fatha';
+      } else if (token.subType?.contains('مفعول مطلق') == true) {
+        word = '$word$tanwinFath';
+      } else if (token.subType?.contains('اسم مجرور') == true) {
+        word = '$word$kasra';
+      } else if (token.pos == 'فعل') {
         if (token.subType?.contains('ماض') == true) {
-          // Add fatha on end
           word = '$word$fatha';
         } else if (token.subType?.contains('مضارع') == true) {
-          // Add damma on end
           word = '$word$damma';
         } else if (token.subType?.contains('أمر') == true) {
-          // Add sukun on end
           word = '$word$sukun';
         }
-      } else if (token.subType == 'فاعل') {
-        // Subject has damma
-        word = '$word$damma';
-      } else if (token.subType == 'مفعول به') {
-        // Object has fatha
-        word = '$word$fatha';
-      } else if (token.subType == 'اسم مجرور') {
-        // Genitive has kasra
-        word = '$word$kasra';
       }
+
       diacritizedWords.add(word);
     }
 
     return diacritizedWords.join(' ');
   }
 
-  /// Automated Grammatical & Morphological Checker (المدقق النحوي والصرفي الآلي).
-  /// Checks whether a sentence complies with primary school grammar rules.
+  /// المدقق النحوي والصرفي الآلي
   static List<GrammarIssue> checkGrammar(String sentence) {
     final issues = <GrammarIssue>[];
-    final words = tokenize(sentence);
+    final parsed = ArabicHybridParser.parse(sentence).tokens;
 
-    for (int i = 0; i < words.length; i++) {
-      final word = words[i];
-      final clean = normalize(word);
+    for (int i = 0; i < parsed.length; i++) {
+      final token = parsed[i];
+      final word = token.word;
 
-      // Check 1: Verb directly after preposition
-      if (i > 0) {
-        final prev = normalize(words[i - 1]);
-        if (prepositions.map(normalize).contains(prev)) {
-          final isCleanVerb = !hasNounMarkers(word) && (clean.startsWith('ي') || clean.startsWith('ت'));
-          if (isCleanVerb && !word.startsWith('ال')) {
-            issues.add(GrammarIssue(
-              word: word,
-              rule: 'حروف الجر تدخل على الأسماء فقط',
-              suggestion: 'تأكد من أن الكلمة بعد "$prev" هي اسم مجرور، وليس فعلاً.',
-              type: GrammarIssueType.prepositionWithVerb,
-            ));
-          }
-        }
-      }
-
-      // Check 2: Haraka on Subject (الفاعل) if user explicitly included fatha/kasra on what should be subject
-      if (i == 1 && words.length >= 2) {
+      // 1. فحص حركة الفاعل إن كُتب خطأً بالفتح أو الكسر
+      if (token.subType == 'فاعل' || token.subType == 'مبتدأ') {
         if (word.endsWith(fatha) || word.endsWith(tanwinFath)) {
           issues.add(GrammarIssue(
             word: word,
-            rule: 'الفاعل مرفوع دائماً وعلامته الضمة',
-            suggestion: 'كلمة "$word" وقعت فاعلاً، لذا يجب أن تنتهي بالضمة وليس الفتحة.',
+            rule: '${token.subType} مرفوع دائماً وعلامته الضمة',
+            suggestion: 'كلمة "$word" جاءت ${token.subType}، لذا يجب أن تُضبط بالضمة وليس الفتحة.',
             type: GrammarIssueType.subjectCaseError,
           ));
         } else if (word.endsWith(kasra) || word.endsWith(tanwinKasr)) {
           issues.add(GrammarIssue(
             word: word,
-            rule: 'الفاعل مرفوع وعلامته الضمة',
-            suggestion: 'الفاعل لا يكون مجروراً بالكسرة هنا؛ بل مرفوع بالضمة.',
+            rule: '${token.subType} مرفوع وعلامته الضمة',
+            suggestion: '${token.subType} لا يكون مجروراً بالكسرة؛ بل مرفوعاً بالضمة.',
             type: GrammarIssueType.subjectCaseError,
           ));
         }
       }
 
-      // Check 3: Haraka on Object (المفعول به) if user explicitly included damma on object
-      if (i == 2 && words.length >= 3) {
+      // 2. فحص حركة المفعول به إن كُتب خطأً بالضم
+      if (token.subType == 'مفعول به') {
         if (word.endsWith(damma) || word.endsWith(tanwinDamm)) {
           issues.add(GrammarIssue(
             word: word,
@@ -302,23 +146,19 @@ class ArabicLinguisticsEngine {
           ));
         }
       }
+
+      // 3. فحص حرف الجر مع الفعل
+      if (i > 0 && parsed[i - 1].subType == 'حرف جر' && token.pos == 'فعل') {
+        issues.add(GrammarIssue(
+          word: word,
+          rule: 'حروف الجر تختص بالدخول على الأسماء فقط',
+          suggestion: 'لا يجوز دخول حرف الجر على الفعل، فالجر من علامات الأسماء.',
+          type: GrammarIssueType.prepositionWithVerb,
+        ));
+      }
     }
 
     return issues;
-  }
-
-  /// Generates intelligent pedagogical feedback for student answers.
-  static String generateFeedback({
-    required bool isCorrect,
-    required String targetWord,
-    required String expectedRole,
-    required String contextSentence,
-  }) {
-    if (isCorrect) {
-      return 'أحسنت يا بطل! إجابة صحيحة وممتازة. كلمة "$targetWord" هي بالفعل $expectedRole في جملة "$contextSentence".';
-    } else {
-      return 'إجابة تحتاج إلى مراجعة. لاحظ جيداً: كلمة "$targetWord" ليست $expectedRole. تذكر أن الفعل يدل على عمل وزمن، والفاعل هو من قام بالعمل، والمفعول به هو من وقع عليه الفعل.';
-    }
   }
 }
 
@@ -329,7 +169,6 @@ enum GrammarIssueType {
   spellingError,
 }
 
-/// Represents an identified grammar or morphology violation.
 class GrammarIssue {
   final String word;
   final String rule;
