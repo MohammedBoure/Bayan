@@ -6,11 +6,7 @@ import '../widgets/app_scaffold.dart';
 import 'progress_results_screen.dart';
 
 /// [07] التقويم (Evaluation Quiz Screen)
-/// Matching tasks.md:
-/// - مثال على التقويم:
-/// - اختر الفعل من الجملة التالية: "جلس التلميذ في الفصل" -> ( ) جلس  ( ) التلميذ
-/// - [ زر: إرسال ]
-/// Transitions to [08] النتيجة والتقدم
+/// Scaled for lecture display on a Data Show projector.
 class QuizEvaluationScreen extends StatefulWidget {
   final QuizModel quiz;
   final ProgressService progressService;
@@ -40,7 +36,7 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
   void _goToNextOrSubmit() {
     if (!_selectedAnswers.containsKey(_currentQuestionIndex)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار إجابة للسؤال الحالي.')),
+        const SnackBar(content: Text('يرجى اختيار إجابة للسؤال الحالي المعروض.')),
       );
       return;
     }
@@ -83,10 +79,10 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
     final selectedOption = _selectedAnswers[_currentQuestionIndex];
 
     return AppScaffold(
-      title: 'التَّقْوِيمُ التَّحْصِيلِيُّ',
+      title: 'التَّقْوِيمُ التَّحْصِيلِيُّ الشَّامِلُ',
       progressService: widget.progressService,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -97,53 +93,54 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
                 Text(
                   'السُّؤَالُ ${_currentQuestionIndex + 1} مِنْ ${widget.quiz.questions.length}',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryTeal,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.accentPurple,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentPurple.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppTheme.accentPurple.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.accentPurple),
                   ),
                   child: const Text(
-                    'تقويم مرحلي',
+                    'تقويم مرحلي على السبورة',
                     style: TextStyle(
                       color: AppTheme.accentPurple,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 16,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
                 value: (_currentQuestionIndex + 1) / widget.quiz.questions.length,
-                minHeight: 8,
-                backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                minHeight: 12,
+                backgroundColor: const Color(0xFFE2E8F0),
                 valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentPurple),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // Question Card
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppTheme.accentPurple.withValues(alpha: 0.25), width: 1.5),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: AppTheme.accentPurple, width: 2.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -153,26 +150,26 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
                   Text(
                     _currentQuestion.questionText,
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
                       color: AppTheme.textDark,
                     ),
                   ),
                   if (_currentQuestion.contextSentence != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 18),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryLight,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.25)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.primaryTeal, width: 2),
                       ),
                       child: Text(
                         '"${_currentQuestion.contextSentence!}"',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 36, // Highly visible context sentence
+                          fontWeight: FontWeight.w900,
                           color: AppTheme.primaryDark,
                         ),
                       ),
@@ -181,7 +178,7 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // Options List
             ...List.generate(_currentQuestion.options.length, (index) {
@@ -189,46 +186,46 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
               final isSelected = selectedOption == index;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: InkWell(
                   onTap: () => _onOptionSelected(index),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.accentPurple.withValues(alpha: 0.08) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      color: isSelected ? AppTheme.accentPurple.withValues(alpha: 0.1) : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppTheme.accentPurple : Colors.grey.withValues(alpha: 0.3),
-                        width: isSelected ? 2.2 : 1.2,
+                        color: isSelected ? AppTheme.accentPurple : const Color(0xFFCBD5E1),
+                        width: isSelected ? 3.0 : 1.8,
                       ),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isSelected ? AppTheme.accentPurple : Colors.grey,
-                              width: 2,
+                              width: 2.5,
                             ),
                             color: isSelected ? AppTheme.accentPurple : Colors.transparent,
                           ),
                           child: isSelected
                               ? const Center(
-                                  child: Icon(Icons.check, size: 15, color: Colors.white),
+                                  child: Icon(Icons.check, size: 22, color: Colors.white),
                                 )
                               : null,
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 18),
                         Expanded(
                           child: Text(
                             option,
                             style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 24,
+                              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
                               color: isSelected ? AppTheme.accentPurple : AppTheme.textDark,
                             ),
                           ),
@@ -240,31 +237,33 @@ class _QuizEvaluationScreenState extends State<QuizEvaluationScreen> {
               );
             }),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
-            // Submit / Next Question Button [ زر: إرسال ]
+            // Submit / Next Question Button
             SizedBox(
-              height: 54,
+              height: 68,
               child: ElevatedButton.icon(
                 onPressed: _goToNextOrSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentPurple,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 icon: Icon(
                   _currentQuestionIndex == widget.quiz.questions.length - 1
                       ? Icons.check_circle_rounded
                       : Icons.arrow_forward_rounded,
                   color: Colors.white,
+                  size: 28,
                 ),
                 label: Text(
                   _currentQuestionIndex == widget.quiz.questions.length - 1
-                      ? 'إِرْسَالُ الإِجَابَاتِ وَعَرْضُ النَّتِيجَةِ'
+                      ? 'إِرْسَالُ الإِجَابَاتِ وَعَرْضُ النَّتِيجَةِ الشَّامِلَةِ'
                       : 'السُّؤَالُ التَّالِي',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

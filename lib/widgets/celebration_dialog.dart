@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Modal dialog providing intelligent feedback for activities as specified in tasks.md [06].
+/// Scaled for Data Show presentation in classroom lectures.
 class FeedbackDialog extends StatelessWidget {
   final bool isCorrect;
   final String title;
@@ -49,101 +50,108 @@ class FeedbackDialog extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon Header
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: themeColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 750),
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon Header
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isCorrect ? Icons.emoji_events_rounded : Icons.lightbulb_rounded,
+                    color: themeColor,
+                    size: 54,
+                  ),
                 ),
-                child: Icon(
-                  isCorrect ? Icons.emoji_events_rounded : Icons.lightbulb_rounded,
-                  color: themeColor,
-                  size: 42,
-                ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-              // Title (e.g. أحسنت! إجابة صحيحة)
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: themeColor,
+                // Title (أحسنت! إجابة صحيحة)
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28, // High visibility
+                    fontWeight: FontWeight.w900,
+                    color: themeColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-              // Detailed pedagogical feedback
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textDark,
-                  height: 1.6,
+                // Detailed pedagogical feedback
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                    height: 1.6,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 22),
 
-              // Rule box
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.bookmark_rounded, color: AppTheme.primaryTeal, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        ruleSummary,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryDark,
+                // Rule box
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.4), width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bookmark_rounded, color: AppTheme.primaryTeal, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          ruleSummary,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryDark,
+                            height: 1.5,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 28),
 
-              // Button: متابعة
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                  label: const Text(
-                    'مُتَابَعَة',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                // Button: متابعة
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton.icon(
+                    onPressed: onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: themeColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    ),
+                    icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 28),
+                    label: const Text(
+                      'مُتَابَعَةُ التَّعَلُّمِ',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

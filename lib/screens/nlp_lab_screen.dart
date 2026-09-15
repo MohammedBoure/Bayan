@@ -6,8 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/sentence_parser_view.dart';
 
 /// المختبر اللغوي الآلي الذكي (Computational Linguistics Lab Screen)
-/// يدعم المحلل النحوي والصرفي الهجين (Hybrid Rule Engine + Bigram Context)
-/// ونظام التخزين المؤقت (SQLite Cache) وحلقة التغذية الراجعة والتصحيح التفاعلي (Feedback Loop).
+/// Scaled for lecture display on Data Show projectors and interactive whiteboards.
 class NlpLabScreen extends StatefulWidget {
   const NlpLabScreen({super.key});
 
@@ -21,7 +20,7 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
   );
 
   List<NlpToken> _parsedTokens = [];
-  String _sentenceTypeName = 'جُمْلَةٌ اسْمِيَّةٌ';
+  String _sentenceTypeName = 'جُمْلَةٌ اسْمِيَّةٌ (مُبْتَدَأٌ وَخَبَرٌ)';
   String _autoDiacritized = '';
   List<GrammarIssue> _grammarIssues = [];
   bool _hasAnalyzed = false;
@@ -34,7 +33,7 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
     'اِحْفَظْ دَرْسَكَ يَا عَلِيُّ',
     'العِلْمُ نُورٌ وَالجَهْلُ ظَلامٌ',
     'بَحْرٌ وَاسِعٌ وَجَمِيلٌ',
-    'كَتَبَ التِّلْمِيذَ الدَّرْسُ', // مثال خطأ مقصود لاختبار المدقق
+    'كَتَبَ التِّلْمِيذَ الدَّرْسُ', // خطأ مقصود في الفاعل لاختبار المدقق
   ];
 
   @override
@@ -65,7 +64,6 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
     });
   }
 
-  /// نافذة تعديل وتصحيح إعراب أي كلمة (User Correction & Feedback Loop)
   void _openCorrectionDialog(NlpToken token) {
     String selectedPos = token.pos;
     final subTypeController = TextEditingController(text: token.subType ?? '');
@@ -97,103 +95,105 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
               title: Row(
                 children: [
-                  const Icon(Icons.edit_note_rounded, color: AppTheme.verbColor, size: 28),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.edit_note_rounded, color: AppTheme.verbColor, size: 36),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'تصحيح إعراب: "${token.word}"',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      'تصحيح إعراب كلمة: "${token.word}"',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
               content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('نوع الكلمة (قسم الكلام):', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      children: posOptions.map((pos) {
-                        final isSelected = selectedPos == pos;
-                        return ChoiceChip(
-                          label: Text(pos),
-                          selected: isSelected,
-                          onSelected: (val) {
-                            setDialogState(() => selectedPos = pos);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 14),
-
-                    const Text('الموقع الإعرابي (الدور النحوي):', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: subTypeController,
-                      decoration: InputDecoration(
-                        hintText: 'مثال: مبتدأ، فاعل، مفعول به...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // اختصارات سريعة
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: quickRoles.map((role) {
-                          return Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: ActionChip(
-                              label: Text(role, style: const TextStyle(fontSize: 11.5)),
-                              onPressed: () {
-                                setDialogState(() {
-                                  subTypeController.text = role;
-                                });
-                              },
-                            ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('قسم الكلام (النوع الأساسي):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 10,
+                        children: posOptions.map((pos) {
+                          final isSelected = selectedPos == pos;
+                          return ChoiceChip(
+                            label: Text(pos, style: const TextStyle(fontSize: 16)),
+                            selected: isSelected,
+                            onSelected: (val) {
+                              setDialogState(() => selectedPos = pos);
+                            },
                           );
                         }).toList(),
                       ),
-                    ),
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 18),
 
-                    const Text('الحالة وعلامة الإعراب:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: caseMarkController,
-                      decoration: InputDecoration(
-                        hintText: 'مثال: مرفوع وعلامة رفعه الضمة الظاهرة',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      const Text('الموقع الإعرابي:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: subTypeController,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: InputDecoration(
+                          hintText: 'مثال: مبتدأ، فاعل، مفعول به...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 10),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: quickRoles.map((role) {
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: ActionChip(
+                                label: Text(role, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    subTypeController.text = role;
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
 
-                    const Text('التوضيح التربوي:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: explanationController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'شرح بسيط يوضح سبب هذا الإعراب...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      const Text('الحالة وعلامة الإعراب:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: caseMarkController,
+                        style: const TextStyle(fontSize: 18),
+                        decoration: InputDecoration(
+                          hintText: 'مثال: مرفوع وعلامة رفعه الضمة الظاهرة',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 18),
+
+                      const Text('التوضيح التربوي:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: explanationController,
+                        maxLines: 2,
+                        style: const TextStyle(fontSize: 16),
+                        decoration: InputDecoration(
+                          hintText: 'شرح مبسط يوضح سبب هذا الإعراب لتلاميذ الصف...',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('إلغاء'),
+                  child: const Text('إلغاء', style: TextStyle(fontSize: 18)),
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
@@ -215,9 +215,9 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.verbColor),
-                  icon: const Icon(Icons.save_rounded, color: Colors.white, size: 18),
-                  label: const Text('حفظ التصحيح للأبد', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.verbColor, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
+                  icon: const Icon(Icons.save_rounded, color: Colors.white, size: 22),
+                  label: const Text('حفظ التصحيح للأبد', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -239,146 +239,57 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('المُخْتَبَرُ اللُّغَوِيُّ الآلِيُّ الهَجِينُ (اللسانيات الحاسوبية)'),
+          toolbarHeight: 68,
+          title: const Text('المُخْتَبَرُ اللُّغَوِيُّ الآلِيُّ الهَجِينُ (اللسانيات الحاسوبية)', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           backgroundColor: AppTheme.verbColor,
         ),
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 850),
+              constraints: const BoxConstraints(maxWidth: 1450), // Widescreen for Data Show
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Header Banner
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                       child: Stack(
                         children: [
                           Image.asset(
                             'assets/images/linguistics_lab.jpg',
-                            height: 125,
+                            height: 140,
                             width: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => Container(
-                              height: 125,
+                              height: 140,
                               color: AppTheme.verbColor.withValues(alpha: 0.15),
-                              child: const Icon(Icons.psychology_rounded, size: 50, color: AppTheme.verbColor),
+                              child: const Icon(Icons.psychology_rounded, size: 60, color: AppTheme.verbColor),
                             ),
                           ),
                           Container(
-                            height: 125,
+                            height: 140,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
+                                colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
                               ),
                             ),
                           ),
                           Positioned(
-                            bottom: 12,
-                            right: 16,
+                            bottom: 16,
+                            right: 20,
                             child: Row(
                               children: const [
-                                Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
-                                SizedBox(width: 8),
+                                Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 26),
+                                SizedBox(width: 10),
                                 Text(
-                                  'المحلل الهجين: شجرة قرار + سياق ثنائي + قاعدة أمثلة',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  'المحلل الهجين: شجرة قرار نحوية + سياق ثنائي + قاعدة أمثلة معربة',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20),
                                 ),
                               ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Input Section
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.verbColor.withValues(alpha: 0.3)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'أَدْخِلْ أَوْ اخْتَرْ جُمْلَةً لِتَحْلِيلِهَا آلِيّاً (اسمية، فعلية، ناسخة):',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _sentenceController,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            decoration: InputDecoration(
-                              hintText: 'اكتب الجملة هنا (مثال: المنزل كبير جدا أليس كذلك)...',
-                              filled: true,
-                              fillColor: AppTheme.backgroundLight,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.clear_rounded),
-                                onPressed: () => _sentenceController.clear(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Quick Sample Chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: _sampleSentences.map((sample) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: ActionChip(
-                                    label: Text(sample),
-                                    onPressed: () {
-                                      _sentenceController.text = sample;
-                                      _analyzeSentence();
-                                    },
-                                    backgroundColor: sample.contains('المنزل')
-                                        ? AppTheme.verbColor.withValues(alpha: 0.15)
-                                        : AppTheme.primaryLight,
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Run Analysis Button
-                          ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _analyzeSentence,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.verbColor,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            icon: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.analytics_rounded, color: Colors.white),
-                            label: const Text(
-                              'تَحْلِيلُ الجُمْلَةِ وَتَدْقِيقُهَا لُغَوِيّاً',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
                         ],
@@ -386,31 +297,125 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Input Section
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.verbColor, width: 2.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'أَدْخِلْ أَوْ اخْتَرْ جُمْلَةً لِتَحْلِيلِهَا آلِيّاً عَلَى السَّبُّورَةِ (اسمية، فعلية، ناسخة):',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textDark),
+                          ),
+                          const SizedBox(height: 14),
+                          TextField(
+                            controller: _sentenceController,
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              hintText: 'اكتب الجملة هنا (مثال: المنزل كبير جدا أليس كذلك)...',
+                              filled: true,
+                              fillColor: AppTheme.backgroundLight,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 28),
+                                onPressed: () => _sentenceController.clear(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Quick Sample Chips with Large Readability
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _sampleSentences.map((sample) {
+                                final isSelectedSample = _sentenceController.text.trim() == sample;
+                                return Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: ActionChip(
+                                    label: Text(sample, style: TextStyle(fontSize: 16, fontWeight: isSelectedSample ? FontWeight.bold : FontWeight.w600)),
+                                    onPressed: () {
+                                      _sentenceController.text = sample;
+                                      _analyzeSentence();
+                                    },
+                                    backgroundColor: isSelectedSample
+                                        ? AppTheme.verbColor.withValues(alpha: 0.2)
+                                        : AppTheme.primaryLight,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Run Analysis Button
+                          SizedBox(
+                            height: 64,
+                            child: ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _analyzeSentence,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.verbColor,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              ),
+                              icon: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                    )
+                                  : const Icon(Icons.analytics_rounded, color: Colors.white, size: 28),
+                              label: const Text(
+                                'تَحْلِيلُ الجُمْلَةِ وَتَدْقِيقُهَا لُغَوِيّاً',
+                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
                     // Analysis Results
                     if (_hasAnalyzed) ...[
                       // Sentence Type Banner
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         decoration: BoxDecoration(
-                          color: AppTheme.verbColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.verbColor.withValues(alpha: 0.3)),
+                          color: AppTheme.verbColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.verbColor, width: 2),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.category_rounded, color: AppTheme.verbColor, size: 22),
-                            const SizedBox(width: 10),
+                            const Icon(Icons.category_rounded, color: AppTheme.verbColor, size: 30),
+                            const SizedBox(width: 14),
                             const Text(
-                              'نَوْعُ التَّرْكِيبِ:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                              'نَوْعُ التَّرْكِيبِ النَّحْوِيِّ:',
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: AppTheme.textDark),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 _sentenceTypeName,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 22,
                                   color: AppTheme.verbColor,
                                 ),
                               ),
@@ -418,71 +423,73 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // 1. Syntactic & Morphological Parser Output with Edit Capability
                       SentenceParserView(
                         tokens: _parsedTokens,
                         showTashkeel: true,
-                        title: 'نَتَائِجُ التَّحْلِيلِ النَّحْوِيِّ وَالصَّرْفِيِّ الآلِيِّ (انقر لتعديل أي كلمة):',
+                        title: 'نَتَائِجُ التَّحْلِيلِ النَّحْوِيِّ وَالصَّرْفِيِّ الآلِيِّ عَلَى شَاشَةِ العَرْضِ:',
                         onEditToken: _openCorrectionDialog,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // 2. Automated Diacritization Result
                       Container(
-                        padding: const EdgeInsets.all(18),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppTheme.primaryTeal, width: 2),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: const [
-                                Icon(Icons.format_color_text_rounded, color: AppTheme.primaryTeal, size: 24),
-                                SizedBox(width: 8),
+                                Icon(Icons.format_color_text_rounded, color: AppTheme.primaryTeal, size: 30),
+                                SizedBox(width: 10),
                                 Text(
-                                  'المُشَكِّلُ الآلِيُّ (اقْتِرَاحُ الضَّبْطِ الإِعْرَابِيِّ):',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                                  'المُشَكِّلُ الآلِيُّ (اقْتِرَاحُ الضَّبْطِ الإِعْرَابِيِّ لِلصَّفِّ):',
+                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textDark),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 14),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
                                 _autoDiacritized,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 34, // Prominent voweling for projector
+                                  fontWeight: FontWeight.w900,
                                   color: AppTheme.primaryDark,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // 3. Automated Grammar Checker
                       Container(
-                        padding: const EdgeInsets.all(18),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: _grammarIssues.isEmpty
-                                ? AppTheme.successGreen.withValues(alpha: 0.4)
-                                : AppTheme.errorRed.withValues(alpha: 0.4),
+                                ? AppTheme.successGreen
+                                : AppTheme.errorRed,
+                            width: 2,
                           ),
                         ),
                         child: Column(
@@ -493,29 +500,29 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
                                 Icon(
                                   _grammarIssues.isEmpty ? Icons.verified_rounded : Icons.warning_amber_rounded,
                                   color: _grammarIssues.isEmpty ? AppTheme.successGreen : AppTheme.errorRed,
-                                  size: 24,
+                                  size: 32,
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 10),
                                 Text(
                                   'المُدَقِّقُ النَّحْوِيُّ وَالصَّرْفِيُّ الآلِيُّ:',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
                                     color: _grammarIssues.isEmpty ? AppTheme.successGreen : AppTheme.errorRed,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             if (_grammarIssues.isEmpty) ...[
                               const Row(
                                 children: [
-                                  Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 20),
-                                  SizedBox(width: 8),
+                                  Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 26),
+                                  SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'الجملة سليمة نحوياً ومطابقة للقواعد الإعرابية.',
-                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.successGreen),
+                                      'الجملة سليمة نحوياً ومطابقة للقواعد الإعرابية المقررة.',
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.successGreen),
                                     ),
                                   ),
                                 ],
@@ -523,28 +530,28 @@ class _NlpLabScreenState extends State<NlpLabScreen> {
                             ] else ...[
                               ..._grammarIssues.map((issue) {
                                 return Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: AppTheme.errorRed.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppTheme.errorRed.withValues(alpha: 0.3)),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppTheme.errorRed, width: 1.5),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'تنبيه على كلمة "${issue.word}": ${issue.rule}',
+                                        'تنبيه إعرابي على كلمة "${issue.word}": ${issue.rule}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 14,
+                                          fontSize: 18,
                                           color: AppTheme.errorRed,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
                                       Text(
                                         issue.suggestion,
-                                        style: const TextStyle(fontSize: 13, color: AppTheme.textDark),
+                                        style: const TextStyle(fontSize: 16, color: AppTheme.textDark, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),

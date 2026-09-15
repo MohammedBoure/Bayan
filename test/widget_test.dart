@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nahw_app/data/curriculum_repository.dart';
 import 'package:nahw_app/main.dart';
+import 'package:nahw_app/models/lesson_model.dart';
 import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
@@ -50,15 +53,41 @@ void main() {
     const sentence = 'بحر واسع';
     final result = ArabicHybridParser.parse(sentence);
 
-    // "بحر" is identified as a noun and mubtada due to the following adjective "واسع" and inherent noun lexicon
     expect(result.type, equals(SentenceType.nominal));
     expect(result.tokens[0].pos, equals('اسم'));
     expect(result.tokens[0].subType, equals('مبتدأ'));
     expect(result.tokens[1].subType, equals('خبر المبتدأ'));
   });
 
+  test('CurriculumRepository is extensible and supports dynamic lessons & units', () {
+    final repo = CurriculumRepository.instance;
+    final grades = repo.getAllGrades();
+    expect(grades.length, equals(3));
+
+    // Check units in Grade 3
+    final grade3 = repo.getGradeById('grade3')!;
+    expect(grade3.units.isNotEmpty, isTrue);
+    final initialCount = grade3.lessons.length;
+
+    // Dynamically register a new lesson
+    const newLesson = LessonModel(
+      id: 'g3_custom_lesson',
+      gradeId: 'grade3',
+      title: 'درس إضافي تجريبي',
+      subtitle: 'اختبار قابلية التوسع',
+      ruleSummary: 'قاعدة تجريبية',
+      detailedExplanation: 'شرح موسع',
+      examples: [],
+      keyTakeaways: [],
+      activities: [],
+    );
+
+    repo.addLessonToGrade('grade3', newLesson);
+    final updatedGrade3 = repo.getGradeById('grade3')!;
+    expect(updatedGrade3.lessons.length, equals(initialCount + 1));
+  });
+
   test('User Corrections & Overrides apply with top priority (Feedback Loop)', () async {
-    // Override word "سيارة"
     await NlpDatabaseService.instance.saveUserCorrection(
       word: 'سيارة',
       pos: 'اسم',
@@ -82,12 +111,17 @@ void main() {
     expect(cached[0].subType, equals('مبتدأ'));
   });
 
-  testWidgets('App launches and renders Home Screen', (WidgetTester tester) async {
+  testWidgets('App launches and renders Home Screen for Data Show display', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
     final progressService = ProgressService();
     await tester.pumpWidget(NahwApp(progressService: progressService));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('بُسْتَانُ النَّحْوِ'), findsWidgets);
-    expect(find.textContaining('اِبْـدَأِ التَّعَلُّـمَ'), findsOneWidget);
+    expect(find.textContaining('Data Show'), findsOneWidget);
+    expect(find.textContaining('دَرْسَ اليَوْمِ'), findsOneWidget);
   });
 }

@@ -7,12 +7,8 @@ import 'progress_results_screen.dart';
 import 'settings_screen.dart';
 
 /// [01] الشاشة الرئيسية (Home Screen)
-/// Matching tasks.md specification:
-/// - اسم التطبيق (App Name)
-/// - رسم يناسب الأطفال (Child-friendly illustration)
-/// - زر: ابدأ (Start Button)
-/// - أيقونة كتاب (Book Icon)
-/// - روابط سريعة للمختبر اللغوي الحاسوبي والإعدادات
+/// Scaled and optimized for Classroom Data Show projectors and lecture halls.
+/// Displays prominent Arabic typography, high contrast, and responsive widescreen space utilization.
 class HomeScreen extends StatelessWidget {
   final ProgressService progressService;
 
@@ -29,39 +25,41 @@ class HomeScreen extends StatelessWidget {
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 750),
+                constraints: const BoxConstraints(maxWidth: 1400),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top App Bar with Quick Badges
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Top App Bar with Data Show Badge & Star Tracker
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 16,
+                      runSpacing: 12,
                       children: [
                         // Star count badge
                         ListenableBuilder(
                           listenable: progressService,
                           builder: (context, _) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                               decoration: BoxDecoration(
-                                color: AppTheme.accentAmber.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppTheme.accentAmber.withValues(alpha: 0.4)),
+                                color: AppTheme.accentAmber.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: AppTheme.accentAmber, width: 2),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 24),
-                                  const SizedBox(width: 6),
+                                  const Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 30),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    '${progressService.progress.totalStars} نجمة',
+                                    '${progressService.progress.totalStars} نجمة تميز',
                                     style: const TextStyle(
                                       color: AppTheme.textDark,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                      fontSize: 18,
                                     ),
                                   ),
                                 ],
@@ -69,9 +67,33 @@ class HomeScreen extends StatelessWidget {
                             );
                           },
                         ),
-                        // Quick Settings Button
+                        // Data Show Projection Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryTeal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.cast_for_education_rounded, color: AppTheme.primaryTeal, size: 24),
+                              SizedBox(width: 8),
+                              Text(
+                                'مُهيأ للعرض الصفي (Data Show)',
+                                style: TextStyle(
+                                  color: AppTheme.primaryTeal,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Settings Shortcut Button
                         IconButton(
-                          icon: const Icon(Icons.settings_rounded, color: AppTheme.primaryTeal, size: 28),
+                          icon: const Icon(Icons.settings_rounded, color: AppTheme.primaryTeal, size: 34),
                           tooltip: 'الإعدادات',
                           onPressed: () {
                             Navigator.of(context).push(
@@ -83,83 +105,43 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // App Title & Tagline
-                    const Center(
-                      child: Text(
-                        'بُسْتَانُ النَّحْوِ العَرَبِيِّ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Center(
-                      child: Text(
-                        'تَعَلَّمِ الجُمْلَةَ الفِعْلِيَّةَ وَالأَفْعَالَ بِأَدَوَاتِ اللِّسَانِيَّاتِ الحَاسُوبِيَّةِ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryTeal,
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 24),
 
-                    // Child-friendly Hero Illustration (Downloaded from Internet)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          Image.asset(
-                            'assets/images/hero_reading.jpg',
-                            height: 230,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 200,
-                              color: AppTheme.primaryLight,
-                              child: const Center(
-                                child: Icon(Icons.menu_book_rounded, size: 80, color: AppTheme.primaryTeal),
-                              ),
+                    // App Title Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3), width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: const [
+                          Text(
+                            'بُسْتَانُ النَّحْوِ العَرَبِيِّ التَّفَاعُلِيُّ',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 42, // Large font for classroom projector
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryDark,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          Container(
-                            height: 90,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.75),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(14.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.menu_book_rounded, color: Colors.white, size: 22),
-                                SizedBox(width: 8),
-                                Text(
-                                  'المرحلة الابتدائية: السنوات 3 . 4 . 5',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          SizedBox(height: 8),
+                          Text(
+                            'مَنْظُومَةٌ تَعْلِيمِيَّةٌ لِتَعْلِيمِ الجُمْلَةِ الفِعْلِيَّةِ وَالأَفْعَالِ بِاللِّسَانِيَّاتِ الحَاسُوبِيَّةِ (لِلتَّلامِيذِ 7 - 11 سَنَة)',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryTeal,
                             ),
                           ),
                         ],
@@ -167,144 +149,243 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
 
-                    // Primary Action: [ زر: ابدأ ]
-                    SizedBox(
-                      height: 58,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => GradeSelectionScreen(progressService: progressService),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryTeal,
-                          foregroundColor: Colors.white,
-                          elevation: 4,
-                          shadowColor: AppTheme.primaryTeal.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        icon: const Icon(Icons.play_circle_filled_rounded, size: 30, color: Colors.white),
-                        label: const Text(
-                          'اِبْـدَأِ التَّعَلُّـمَ',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                    // Responsive 2-Column Presentation Layout for Wide Projector Screens
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 850;
 
-                    // Computational Linguistics Lab Button (اللسانيات الحاسوبية)
-                    SizedBox(
-                      height: 52,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const NlpLabScreen(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppTheme.verbColor, width: 2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        icon: const Icon(Icons.smart_toy_rounded, size: 26, color: AppTheme.verbColor),
-                        label: const Text(
-                          'المُخْتَبَرُ اللُّغَوِيُّ الذَّكِيُّ (المُحَلِّلُ الآلِيُّ)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.verbColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Progress and Settings Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ProgressResultsScreen(progressService: progressService),
+                        final heroIllustration = ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              Image.asset(
+                                'assets/images/hero_reading.jpg',
+                                height: isWide ? 360 : 240,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  height: 240,
+                                  color: AppTheme.primaryLight,
+                                  child: const Center(
+                                    child: Icon(Icons.menu_book_rounded, size: 90, color: AppTheme.primaryTeal),
+                                  ),
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accentAmber.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.accentAmber.withValues(alpha: 0.3)),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.emoji_events_rounded, color: AppTheme.accentAmber, size: 22),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'سِجِلُّ التَّقَدُّمِ',
+                              Container(
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.8),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.school_rounded, color: Colors.white, size: 28),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'المرحلة الابتدائية: السنوات 3 . 4 . 5',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        final actionControls = Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Primary Classroom Start Action
+                            SizedBox(
+                              height: 76, // Extra tall for classroom visibility
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => GradeSelectionScreen(progressService: progressService),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryTeal,
+                                  foregroundColor: Colors.white,
+                                  elevation: 5,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.play_circle_filled_rounded, size: 40, color: Colors.white),
+                                label: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'اِبْـدَأْ دَرْسَ اليَوْمِ فِي الصَّفِّ',
                                     style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textDark,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => SettingsScreen(progressService: progressService),
+                            const SizedBox(height: 18),
+
+                            // Computational Linguistics Lab Button
+                            SizedBox(
+                              height: 66,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const NlpLabScreen(),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: AppTheme.verbColor, width: 3),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(22),
+                                  ),
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.tune_rounded, color: AppTheme.primaryTeal, size: 22),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'الإِعْدَادَاتُ',
+                                icon: const Icon(Icons.smart_toy_rounded, size: 32, color: AppTheme.verbColor),
+                                label: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'المُخْتَبَرُ اللُّغَوِيُّ الذَّكِيُّ (المُحَلِّلُ الآلِيُّ)',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryDark,
+                                      color: AppTheme.verbColor,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ],
+                            const SizedBox(height: 18),
+
+                            // Sub-actions Row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ProgressResultsScreen(progressService: progressService),
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentAmber.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: AppTheme.accentAmber, width: 2),
+                                      ),
+                                      child: const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.emoji_events_rounded, color: AppTheme.accentAmber, size: 28),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'سِجِلُّ الإِنْجَازِ',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.textDark,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => SettingsScreen(progressService: progressService),
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryLight,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: AppTheme.primaryTeal, width: 2),
+                                      ),
+                                      child: const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.tune_rounded, color: AppTheme.primaryTeal, size: 28),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'الإِعْدَادَاتُ',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+
+                        if (isWide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(flex: 5, child: heroIllustration),
+                              const SizedBox(width: 32),
+                              Expanded(flex: 6, child: actionControls),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              heroIllustration,
+                              const SizedBox(height: 24),
+                              actionControls,
+                            ],
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),

@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 
-/// Reusable responsive scaffold with custom educational navigation header,
-/// star counters, sound toggle, and RTL alignment.
+/// Reusable responsive scaffold optimized for Data Show projectors and lecture halls.
+/// Uses expansive widescreen horizontal space, high-contrast badges, and large touch targets.
 class AppScaffold extends StatelessWidget {
   final String title;
   final Widget body;
   final Widget? floatingActionButton;
   final List<Widget>? actions;
   final bool showHomeButton;
+  final double maxWidth;
   final ProgressService? progressService;
 
   const AppScaffold({
@@ -19,6 +20,7 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.actions,
     this.showHomeButton = true,
+    this.maxWidth = 1450, // Expansive widescreen width for Data Show displays
     this.progressService,
   });
 
@@ -28,29 +30,60 @@ class AppScaffold extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title),
+          toolbarHeight: 68,
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
           actions: [
+            // Data Show / Classroom Mode Indicator Badge
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.tv_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 6),
+                    Text(
+                      'شَاشَةُ العَرْضِ (Data Show)',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             if (progressService != null) ...[
               // Star display badge
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppTheme.accentAmber.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 20),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.star_rounded, color: Colors.white, size: 22),
+                      const SizedBox(width: 6),
                       Text(
                         '${progressService!.progress.totalStars}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 16,
                         ),
                       ),
                     ],
@@ -64,7 +97,7 @@ class AppScaffold extends StatelessWidget {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
+              constraints: BoxConstraints(maxWidth: maxWidth),
               child: body,
             ),
           ),
