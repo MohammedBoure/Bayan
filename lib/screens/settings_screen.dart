@@ -24,7 +24,7 @@ class SettingsScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text('إِعَادَةُ ضَبْطِ سِجِلِّ الفَصْلِ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           content: const Text(
-            'هل أنت متأكد من رغبتك في مسح كل الدروس المنجزة والنجوم المحرزة والبدء من جديد مع فوج آخر؟',
+            'هل أنت متأكد من رغبتك في مسح تقدم الدروس المنجزة والبدء من جديد مع فوج آخر؟',
             style: TextStyle(fontSize: 18),
           ),
           actions: [
@@ -424,7 +424,7 @@ class SettingsScreen extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.errorRed, fontSize: 20),
                   ),
                   subtitle: const Text(
-                    'تصفير النجوم والدروس المكتملة لبدء درس جديد مع فوج أو فصل آخر',
+                    'إعادة تعيين الدروس المكتملة لبدء عرض جديد مع فوج أو فصل آخر',
                     style: TextStyle(fontSize: 16),
                   ),
                   onTap: () => _confirmReset(context),

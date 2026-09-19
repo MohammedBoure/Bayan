@@ -38,26 +38,27 @@ class HomeScreen extends StatelessWidget {
                       spacing: 16,
                       runSpacing: 12,
                       children: [
-                        // Star count badge
+                        // Completed lessons badge
                         ListenableBuilder(
                           listenable: progressService,
                           builder: (context, _) {
+                            final completedCount = progressService.progress.completedLessons.length;
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                               decoration: BoxDecoration(
-                                color: AppTheme.accentAmber.withValues(alpha: 0.18),
+                                color: AppTheme.primaryTeal.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: AppTheme.accentAmber, width: 2),
+                                border: Border.all(color: AppTheme.primaryTeal, width: 2),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 30),
+                                  const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 28),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '${progressService.progress.totalStars} نجمة تميز',
+                                    '$completedCount دُرُوسٌ مُنْجَزَةٌ',
                                     style: const TextStyle(
-                                      color: AppTheme.textDark,
+                                      color: AppTheme.primaryDark,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
                                     ),

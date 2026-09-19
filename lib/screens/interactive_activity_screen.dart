@@ -131,7 +131,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
           title: Row(
             children: const [
-              Icon(Icons.stars_rounded, color: AppTheme.accentAmber, size: 40),
+              Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 40),
               SizedBox(width: 12),
               Text('تَمَّ إِنْجَازُ الأَنْشِطَةِ بِنَجَاحٍ!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             ],

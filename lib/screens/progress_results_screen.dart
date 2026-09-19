@@ -143,25 +143,24 @@ class ProgressResultsScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           if (correctAnswers != null && totalQuestions != null) ...[
-            Text(
-              'تمت الإجابة بشكل صحيح عن $correctAnswers من أصل $totalQuestions أسئلة.',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: isHighPass
+                    ? AppTheme.successGreen.withValues(alpha: 0.12)
+                    : (isPass ? AppTheme.accentOrange.withValues(alpha: 0.12) : AppTheme.errorRed.withValues(alpha: 0.1)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'تمت الإجابة بشكل صحيح عن $correctAnswers من أصل $totalQuestions أسئلة.',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isHighPass ? AppTheme.successGreen : (isPass ? AppTheme.accentOrange : AppTheme.errorRed),
+                ),
+              ),
             ),
           ],
-          const SizedBox(height: 18),
-
-          // Giant Stars Display
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (index) {
-              final starEarned = isHighPass ? true : (isPass ? index < 2 : index < 1);
-              return Icon(
-                Icons.star_rounded,
-                size: 56, // Big celebratory stars
-                color: starEarned ? AppTheme.accentAmber : Colors.grey.withValues(alpha: 0.3),
-              );
-            }),
-          ),
         ],
       ),
     );
@@ -190,7 +189,7 @@ class ProgressResultsScreen extends StatelessWidget {
               Icon(Icons.insights_rounded, color: AppTheme.primaryTeal, size: 32),
               SizedBox(width: 12),
               Text(
-                'إِجْمَالِيُّ الإِنْجَازَاتِ وَالنُّجُومِ لِلصَّفِّ:',
+                'إِجْمَالِيُّ تَقَدُّمِ الصَّفِّ فِي المِنْهَاجِ:',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textDark),
               ),
             ],
@@ -198,15 +197,6 @@ class ProgressResultsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(
-                child: _buildMetricTile(
-                  icon: Icons.star_rounded,
-                  label: 'مجموع النجوم',
-                  value: '${progressService.progress.totalStars}',
-                  color: AppTheme.accentAmber,
-                ),
-              ),
-              const SizedBox(width: 16),
               Expanded(
                 child: _buildMetricTile(
                   icon: Icons.menu_book_rounded,
@@ -219,9 +209,18 @@ class ProgressResultsScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricTile(
                   icon: Icons.task_alt_rounded,
-                  label: 'التمارين المكتملة',
+                  label: 'الأنشطة المكتملة',
                   value: '${progressService.progress.totalExercisesCompleted}',
                   color: AppTheme.verbColor,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildMetricTile(
+                  icon: Icons.school_rounded,
+                  label: 'المراحل المفتوحة',
+                  value: '3',
+                  color: AppTheme.accentAmber,
                 ),
               ),
             ],
