@@ -10,6 +10,11 @@ class ProgressService extends ChangeNotifier {
   static const String _keySoundEnabled = 'sound_enabled';
   static const String _keyShowTashkeel = 'show_tashkeel';
   static const String _keyFontSizeScale = 'font_size_scale';
+  static const String _keyTeacherModeEnabled = 'teacher_mode_enabled';
+  static const String _keyRevealAnswersDirectly = 'reveal_answers_directly';
+  static const String _keyTimerDuration = 'timer_duration';
+  static const String _keySpotlightReading = 'spotlight_reading';
+  static const String _keyNlpAutoAnalysis = 'nlp_auto_analysis';
 
   SharedPreferences? _prefs;
   UserProgress _progress = UserProgress();
@@ -17,11 +22,21 @@ class ProgressService extends ChangeNotifier {
   bool _soundEnabled = true;
   bool _showTashkeel = true;
   double _fontSizeScale = 1.0;
+  bool _teacherModeEnabled = true;
+  bool _revealAnswersDirectly = false;
+  int _timerDuration = 45; // 0 = no timer, 30, 45, 60, 90 seconds
+  bool _spotlightReading = true;
+  bool _nlpAutoAnalysis = true;
 
   UserProgress get progress => _progress;
   bool get soundEnabled => _soundEnabled;
   bool get showTashkeel => _showTashkeel;
   double get fontSizeScale => _fontSizeScale;
+  bool get teacherModeEnabled => _teacherModeEnabled;
+  bool get revealAnswersDirectly => _revealAnswersDirectly;
+  int get timerDuration => _timerDuration;
+  bool get spotlightReading => _spotlightReading;
+  bool get nlpAutoAnalysis => _nlpAutoAnalysis;
 
   /// Initializes SharedPreferences and loads saved student progress.
   Future<void> init() async {
@@ -45,6 +60,11 @@ class ProgressService extends ChangeNotifier {
     _soundEnabled = _prefs!.getBool(_keySoundEnabled) ?? true;
     _showTashkeel = _prefs!.getBool(_keyShowTashkeel) ?? true;
     _fontSizeScale = _prefs!.getDouble(_keyFontSizeScale) ?? 1.0;
+    _teacherModeEnabled = _prefs!.getBool(_keyTeacherModeEnabled) ?? true;
+    _revealAnswersDirectly = _prefs!.getBool(_keyRevealAnswersDirectly) ?? false;
+    _timerDuration = _prefs!.getInt(_keyTimerDuration) ?? 45;
+    _spotlightReading = _prefs!.getBool(_keySpotlightReading) ?? true;
+    _nlpAutoAnalysis = _prefs!.getBool(_keyNlpAutoAnalysis) ?? true;
 
     // Load lesson scores
     final Map<String, int> lessonScores = {};
@@ -144,6 +164,51 @@ class ProgressService extends ChangeNotifier {
     _fontSizeScale = scale;
     if (_prefs != null) {
       await _prefs!.setDouble(_keyFontSizeScale, scale);
+    }
+    notifyListeners();
+  }
+
+  /// Updates teacher presentation mode toggle.
+  Future<void> setTeacherModeEnabled(bool value) async {
+    _teacherModeEnabled = value;
+    if (_prefs != null) {
+      await _prefs!.setBool(_keyTeacherModeEnabled, value);
+    }
+    notifyListeners();
+  }
+
+  /// Updates whether model answers are revealed directly to teacher.
+  Future<void> setRevealAnswersDirectly(bool value) async {
+    _revealAnswersDirectly = value;
+    if (_prefs != null) {
+      await _prefs!.setBool(_keyRevealAnswersDirectly, value);
+    }
+    notifyListeners();
+  }
+
+  /// Updates classroom activity challenge timer duration (in seconds, 0 = disabled).
+  Future<void> setTimerDuration(int seconds) async {
+    _timerDuration = seconds;
+    if (_prefs != null) {
+      await _prefs!.setInt(_keyTimerDuration, seconds);
+    }
+    notifyListeners();
+  }
+
+  /// Updates spotlight reading focus toggle.
+  Future<void> setSpotlightReading(bool value) async {
+    _spotlightReading = value;
+    if (_prefs != null) {
+      await _prefs!.setBool(_keySpotlightReading, value);
+    }
+    notifyListeners();
+  }
+
+  /// Updates live NLP linguistic analysis toggle.
+  Future<void> setNlpAutoAnalysis(bool value) async {
+    _nlpAutoAnalysis = value;
+    if (_prefs != null) {
+      await _prefs!.setBool(_keyNlpAutoAnalysis, value);
     }
     notifyListeners();
   }

@@ -3,11 +3,21 @@ import '../models/activity_model.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/categorization_board_widget.dart';
 import '../widgets/celebration_dialog.dart';
+import '../widgets/classroom_timer_widget.dart';
+import '../widgets/image_matching_widget.dart';
+import '../widgets/sentence_ordering_widget.dart';
+import '../widgets/teacher_toolbar_widget.dart';
 
-/// [05] النشاط التفاعلي (Interactive Activity Screen)
-/// Classroom billboard presentation format for Data Show devices.
-/// Features a massive sentence display (44px), prominent option tiles (A, B, C), and large submit buttons.
+/// [05] النشاط التفاعلي الشامل (Comprehensive Interactive Activity Screen)
+/// Supports 6 activity engines:
+/// 1. Multiple Choice with large whiteboard letters (أ، ب، ج)
+/// 2. Drag & Drop fill in the blanks
+/// 3. Categorization Boards (2-column & 3-column)
+/// 4. Sentence Word Ordering
+/// 5. Image & Verb Matching
+/// Includes Classroom Challenge Timer and Teacher Mode quick-controls.
 class InteractiveActivityScreen extends StatefulWidget {
   final List<ActivityModel> activities;
   final String lessonTitle;
@@ -30,25 +40,58 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   int _currentIndex = 0;
   int? _selectedOptionIndex;
   bool _submitted = false;
+  bool _areAnswersRevealed = false;
+
+  // State flags for rich interaction engines
+  bool _categorizationValid = false;
+  bool _sentenceOrderValid = false;
+  bool _imageMatchValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
+  @override
+  void initState() {
+    super.initState();
+    _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
+  }
+
   void _submitAnswer() {
-    if (_selectedOptionIndex == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('الرجاء اختيار إجابة من اللوحة أولاً!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
+    bool isCorrect = false;
+
+    switch (_currentActivity.type) {
+      case ActivityType.categorizationTwoCols:
+      case ActivityType.categorizationThreeCols:
+        isCorrect = _categorizationValid;
+        break;
+      case ActivityType.sentenceOrdering:
+        isCorrect = _sentenceOrderValid;
+        break;
+      case ActivityType.imageMatching:
+        isCorrect = _imageMatchValid;
+        break;
+      case ActivityType.multipleChoice:
+      case ActivityType.dragDropFillBlank:
+      case ActivityType.selectVerb:
+      case ActivityType.selectSubject:
+      case ActivityType.selectObject:
+      case ActivityType.classifyVerbTense:
+      default:
+        if (_selectedOptionIndex == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('الرجاء اختيار إجابة من اللوحة أولاً!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        isCorrect = _selectedOptionIndex == _currentActivity.correctIndex;
+        break;
     }
 
     setState(() {
       _submitted = true;
     });
-
-    final isCorrect = _selectedOptionIndex == _currentActivity.correctIndex;
 
     // Show [06] التغذية الراجعة (FeedbackDialog)
     FeedbackDialog.show(
@@ -63,6 +106,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
             _currentIndex++;
             _selectedOptionIndex = null;
             _submitted = false;
+            _categorizationValid = false;
+            _sentenceOrderValid = false;
+            _imageMatchValid = false;
           });
         } else {
           // Completed all activities for this set
@@ -98,11 +144,11 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                 height: 140,
                 errorBuilder: (context, error, stackTrace) => const Icon(Icons.emoji_events_rounded, size: 90, color: AppTheme.accentAmber),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               const Text(
-                'مبارك لجميع التلاميذ! لقد أتممتم الأنشطة التفاعلية بنجاح على شاشة العرض.',
+                'مبارك لك ولتلاميذك! لقد تم حل جميع الأنشطة بنجاح وإتقان.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, height: 1.6),
               ),
             ],
           ),
@@ -114,10 +160,11 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryTeal,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               ),
-              child: const Text('عَوْدَةٌ إِلَى قَائِمَةِ الدُّرُوسِ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              child: const Text('العَوْدَةُ لِقَائِمَةِ الدُّرُوسِ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -127,229 +174,315 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scale = widget.progressService.fontSizeScale;
+    final total = widget.activities.length;
+    final progressVal = (_currentIndex + 1) / total;
+
     return AppScaffold(
-      title: 'النَّشَاطُ التَّفَاعُلِيُّ - ${widget.lessonTitle}',
+      title: 'الأَنْشِطَةُ التَّفَاعُلِيَّةُ: ${widget.lessonTitle}',
       progressService: widget.progressService,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Progress Bar Across Classroom Screen
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: LinearProgressIndicator(
-                      value: (_currentIndex + 1) / widget.activities.length,
-                      minHeight: 14,
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryTeal),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.primaryTeal),
-                  ),
-                  child: Text(
-                    'تمرين ${_currentIndex + 1} مِنْ ${widget.activities.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppTheme.primaryDark),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-
-            // Giant Target Sentence Billboard (as in tasks.md: [ يقرأ التلميذ الكتاب ])
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppTheme.verbColor, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.verbColor.withValues(alpha: 0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'الجُمْلَةُ المَعْرُوضَةُ عَلَى السَّبُّورَةِ:',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    _currentActivity.sentence,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 44, // Huge billboard typography
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.textDark,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Question Prompt (حَدِّدِ الفِعْلَ مِنَ الجُمْلَة:)
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-              ),
-              child: Text(
-                _currentActivity.prompt,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.textDark,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Option Cards Layout - Widescreen Grid on Data Show
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 800;
-
-                final optionWidgets = List.generate(_currentActivity.options.length, (index) {
-                  final option = _currentActivity.options[index];
-                  final isSelected = _selectedOptionIndex == index;
-                  final optionLetters = ['أ', 'ب', 'ج', 'د', 'هـ'];
-                  final letter = index < optionLetters.length ? optionLetters[index] : '${index + 1}';
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: InkWell(
-                      onTap: _submitted
-                          ? null
-                          : () {
-                              setState(() {
-                                _selectedOptionIndex = index;
-                              });
-                            },
-                      borderRadius: BorderRadius.circular(22),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primaryLight : Colors.white,
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
-                            width: isSelected ? 3.5 : 2.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isSelected ? AppTheme.primaryTeal.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            // Big Letter Badge
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primaryTeal : const Color(0xFFF1F5F9),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? AppTheme.primaryTeal : const Color(0xFF94A3B8),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  letter,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : AppTheme.textDark,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: Text(
-                                option,
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                                  color: isSelected ? AppTheme.primaryDark : AppTheme.textDark,
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 32),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
+            // Teacher Toolbar
+            TeacherToolbarWidget(
+              progressService: widget.progressService,
+              areAnswersRevealed: _areAnswersRevealed,
+              onToggleAnswers: () {
+                setState(() {
+                  _areAnswersRevealed = !_areAnswersRevealed;
+                  if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
+                    _selectedOptionIndex = _currentActivity.correctIndex;
+                  }
                 });
-
-                if (isWide && _currentActivity.options.length <= 4) {
-                  return Column(
-                    children: optionWidgets,
-                  );
-                } else {
-                  return Column(children: optionWidgets);
-                }
               },
             ),
 
-            const SizedBox(height: 28),
+            // Activity Progress & Classroom Timer Header
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'النَّشَاطُ ${_currentIndex + 1} مِنْ $total',
+                            style: TextStyle(
+                              fontSize: 20 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryTeal,
+                            ),
+                          ),
+                          Text(
+                            _currentActivity.title,
+                            style: TextStyle(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: progressVal,
+                          minHeight: 12,
+                          backgroundColor: const Color(0xFFCBD5E1),
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryTeal),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.progressService.timerDuration > 0) ...[
+                  const SizedBox(width: 20),
+                  ClassroomTimerWidget(
+                    key: ValueKey(_currentIndex),
+                    initialSeconds: widget.progressService.timerDuration,
+                    onTimerFinished: () {
+                      if (!_submitted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('انتهى وقت التحدي الصفي!')),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
 
-            // Submit Button: [ زر: إرسال الإجابة ]
+            const SizedBox(height: 24),
+
+            // Prompt Card
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentOrange.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.help_outline_rounded, color: AppTheme.accentOrange, size: 30),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          _currentActivity.prompt,
+                          style: TextStyle(
+                            fontSize: 22 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_currentActivity.sentence.isNotEmpty &&
+                      _currentActivity.type != ActivityType.categorizationTwoCols &&
+                      _currentActivity.type != ActivityType.categorizationThreeCols) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.primaryTeal, width: 2),
+                      ),
+                      child: Text(
+                        _currentActivity.sentence,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 26 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryDark,
+                          height: 1.7,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Interactive Interaction Engine
+            _buildInteractionEngine(scale),
+
+            const SizedBox(height: 32),
+
+            // Submit Button
             SizedBox(
-              height: 68,
+              height: 72,
               child: ElevatedButton.icon(
                 onPressed: _submitAnswer,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryTeal,
                   foregroundColor: Colors.white,
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 30),
-                label: const Text(
-                  'إِرْسَالُ الإِجَابَةِ لِلتَّحَقُّقِ',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
+                icon: const Icon(Icons.check_circle_rounded, size: 36),
+                label: Text(
+                  'تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ',
+                  style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInteractionEngine(double scale) {
+    switch (_currentActivity.type) {
+      case ActivityType.categorizationTwoCols:
+      case ActivityType.categorizationThreeCols:
+        return CategorizationBoardWidget(
+          key: ValueKey(_currentIndex),
+          categories: _currentActivity.categories ?? ['الفئة الأولى', 'الفئة الثانية'],
+          correctMapping: _currentActivity.categorizedItems ?? {},
+          availableWords: _currentActivity.availableWords ?? _currentActivity.options,
+          onValidationChanged: (isValid) {
+            _categorizationValid = isValid;
+          },
+        );
+
+      case ActivityType.sentenceOrdering:
+        return SentenceOrderingWidget(
+          key: ValueKey(_currentIndex),
+          initialWords: _currentActivity.availableWords ?? _currentActivity.options,
+          targetSequence: _currentActivity.orderedWords ?? _currentActivity.options,
+          onValidationChanged: (isValid) {
+            _sentenceOrderValid = isValid;
+          },
+        );
+
+      case ActivityType.imageMatching:
+        return ImageMatchingWidget(
+          key: ValueKey(_currentIndex),
+          pairs: _currentActivity.imagePairs ?? {},
+          onValidationChanged: (isValid) {
+            _imageMatchValid = isValid;
+          },
+        );
+
+      case ActivityType.multipleChoice:
+      case ActivityType.dragDropFillBlank:
+      case ActivityType.selectVerb:
+      case ActivityType.selectSubject:
+      case ActivityType.selectObject:
+      case ActivityType.classifyVerbTense:
+      default:
+        return _buildStandardOptionTiles(scale);
+    }
+  }
+
+  Widget _buildStandardOptionTiles(double scale) {
+    final letters = ['أ', 'ب', 'ج', 'د', 'هـ'];
+
+    return Column(
+      children: _currentActivity.options.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final optionText = entry.value;
+        final isSelected = _selectedOptionIndex == idx;
+        final isAnswerRevealed = _areAnswersRevealed && idx == _currentActivity.correctIndex;
+        final letter = idx < letters.length ? letters[idx] : '${idx + 1}';
+
+        Color tileBg = Colors.white;
+        Color tileBorder = const Color(0xFFCBD5E1);
+        Color textColor = AppTheme.textDark;
+
+        if (isSelected) {
+          tileBg = AppTheme.primaryLight;
+          tileBorder = AppTheme.primaryTeal;
+          textColor = AppTheme.primaryDark;
+        } else if (isAnswerRevealed) {
+          tileBg = AppTheme.accentAmber.withValues(alpha: 0.15);
+          tileBorder = AppTheme.accentAmber;
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _selectedOptionIndex = idx;
+              });
+            },
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              decoration: BoxDecoration(
+                color: tileBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: tileBorder,
+                  width: isSelected || isAnswerRevealed ? 3 : 1.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryTeal
+                        : (isAnswerRevealed ? AppTheme.accentAmber : const Color(0xFFF1F5F9)),
+                    child: Text(
+                      letter,
+                      style: TextStyle(
+                        fontSize: 20 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: isSelected || isAnswerRevealed ? Colors.white : AppTheme.textDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Text(
+                      optionText,
+                      style: TextStyle(
+                        fontSize: 24 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 32)
+                  else if (isAnswerRevealed)
+                    const Icon(Icons.lightbulb_rounded, color: AppTheme.accentAmber, size: 30),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

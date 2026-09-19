@@ -1,6 +1,7 @@
 import 'activity_model.dart';
 import 'nlp_token_model.dart';
 import 'quiz_model.dart';
+import 'reading_passage_model.dart';
 
 /// Represents an interactive example sentence broken down morphologically and syntactically.
 class LessonExample {
@@ -28,6 +29,8 @@ class LessonModel {
   final List<ActivityModel> activities;
   final QuizModel? evaluationQuiz;
   final String iconName;
+  final ReadingPassageModel? readingPassage;
+  final GrammarDiscoveryModel? discovery;
 
   const LessonModel({
     required this.id,
@@ -41,5 +44,7 @@ class LessonModel {
     required this.activities,
     this.evaluationQuiz,
     this.iconName = 'book',
+    this.readingPassage,
+    this.discovery,
   });
 }

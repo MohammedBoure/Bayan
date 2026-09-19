@@ -247,6 +247,18 @@ class NlpDatabaseService {
 
   Map<String, NlpToken> get currentOverrides => _memoryOverrides;
 
+  /// مسح كافة تصحيحات وقواعد الأستاذ واستعادة الوضع الافتراضي
+  Future<void> clearAllUserCorrections() async {
+    _memoryOverrides.clear();
+    if (_db != null) {
+      try {
+        await _db!.delete('user_corrections');
+      } catch (e) {
+        debugPrint('Error clearing user corrections: $e');
+      }
+    }
+  }
+
   /// بيانات تأسيسية مسبقة تشمل الجملة المذكورة في طلب المستخدم
   List<_PreSeededItem> _getPreSeededExamples() {
     return [

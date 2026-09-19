@@ -9,4 +9,6 @@ This directory defines all structured data models used throughout the applicatio
 - [lesson_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/lesson_model.dart): Data model for grammar lessons, containing instructional text, interactive examples, rules, and linked activities.
 - [curriculum_unit_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/curriculum_unit_model.dart): Data model for organizing lessons hierarchically into educational units (*الوحدات التعليمية*).
 - [grade_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/grade_model.dart): Data model for the three primary school grades (Years 3, 4, and 5) with curriculum units and metadata.
+- [reading_passage_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/reading_passage_model.dart): Data models for reading stories (`ReadingPassageModel`), vocabulary glossary items (`VocabularyItem`), oral comprehension questions (`ComprehensionQuestion`), and inductive grammar discovery (`GrammarDiscoveryModel`).
 - [progress_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/progress_model.dart): Data model for tracking student completion state, scores, stars, and achievements.
+

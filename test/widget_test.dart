@@ -7,11 +7,13 @@ import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
     await NlpDatabaseService.instance.init();
   });
 
@@ -123,5 +125,83 @@ void main() {
     expect(find.textContaining('بُسْتَانُ النَّحْوِ'), findsWidgets);
     expect(find.textContaining('Data Show'), findsOneWidget);
     expect(find.textContaining('دَرْسَ اليَوْمِ'), findsOneWidget);
+  });
+
+  test('Grade 3 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+
+    // Verify all 4 lessons exist
+    expect(grade3.lessons.length, greaterThanOrEqualTo(4));
+
+    // Check Lesson 1: الفعل الماضي - خدمة الأرض
+    final lesson1 = grade3.lessons.firstWhere((l) => l.id == 'g3_l1');
+    expect(lesson1.readingPassage, isNotNull);
+    expect(lesson1.readingPassage!.title, equals('خِدْمَةُ الْأَرْضِ'));
+    expect(lesson1.readingPassage!.paragraphs.length, equals(5));
+    expect(lesson1.readingPassage!.vocabulary.length, equals(8));
+    expect(lesson1.readingPassage!.comprehensionQuestions.length, equals(6));
+    expect(lesson1.discovery, isNotNull);
+    expect(lesson1.discovery!.triggerSentences.isNotEmpty, isTrue);
+    expect(lesson1.activities.length, equals(5));
+
+    // Check Lesson 2: الفعل المضارع - عمر ياسف
+    final lesson2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
+    expect(lesson2.readingPassage!.title, equals('عُمَرُ يَاسَفُ'));
+    expect(lesson2.activities.isNotEmpty, isTrue);
+
+    // Check Lesson 3: فعل الأمر - من أجلك يا جزائر
+    final lesson3 = grade3.lessons.firstWhere((l) => l.id == 'g3_l3');
+    expect(lesson3.readingPassage!.title, equals('مِنْ أَجْلِكِ يَا جَزَائِرُ'));
+    expect(lesson3.activities.isNotEmpty, isTrue);
+
+    // Check Lesson 4: الجملة الفعلية
+    final lesson4 = grade3.lessons.firstWhere((l) => l.id == 'g3_l4');
+    expect(lesson4.readingPassage!.title, equals('يَوْمٌ فِي الحَقْلِ'));
+    expect(lesson4.activities.isNotEmpty, isTrue);
+
+    // Check total activities across Grade 3 equals at least 16 (currently 17 applied activities)
+    final totalActivities = grade3.lessons.fold<int>(0, (sum, l) => sum + l.activities.length);
+    expect(totalActivities, greaterThanOrEqualTo(16));
+  });
+
+  test('ProgressService supports full teacher presentation configuration and persistence', () async {
+    final ps = ProgressService();
+    await ps.init();
+
+    // Verify default teacher settings
+    expect(ps.teacherModeEnabled, isTrue);
+    expect(ps.revealAnswersDirectly, isFalse);
+    expect(ps.timerDuration, equals(45));
+    expect(ps.spotlightReading, isTrue);
+    expect(ps.fontSizeScale, equals(1.0));
+    expect(ps.showTashkeel, isTrue);
+
+    // Toggle teacher settings
+    await ps.setTeacherModeEnabled(false);
+    expect(ps.teacherModeEnabled, isFalse);
+
+    await ps.setRevealAnswersDirectly(true);
+    expect(ps.revealAnswersDirectly, isTrue);
+
+    await ps.setTimerDuration(60);
+    expect(ps.timerDuration, equals(60));
+
+    await ps.setSpotlightReading(false);
+    expect(ps.spotlightReading, isFalse);
+
+    await ps.setFontSizeScale(1.35);
+    expect(ps.fontSizeScale, equals(1.35));
+
+    await ps.setShowTashkeel(false);
+    expect(ps.showTashkeel, isFalse);
+
+    // Reset back
+    await ps.setTeacherModeEnabled(true);
+    await ps.setRevealAnswersDirectly(false);
+    await ps.setTimerDuration(45);
+    await ps.setSpotlightReading(true);
+    await ps.setFontSizeScale(1.2);
+    await ps.setShowTashkeel(true);
   });
 }
