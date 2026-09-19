@@ -180,44 +180,50 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Lesson Header
+            // Streamlined Compact Lesson Header
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               decoration: BoxDecoration(
                 color: AppTheme.primaryLight,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.primaryTeal, width: 2),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(10),
                     decoration: const BoxDecoration(
                       color: AppTheme.primaryTeal,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 36),
+                    child: const Icon(Icons.school_rounded, color: Colors.white, size: 24),
                   ),
-                  const SizedBox(width: 18),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          widget.lesson.title,
-                          style: TextStyle(
-                            fontSize: 28 * scale,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryDark,
+                        Flexible(
+                          child: Text(
+                            widget.lesson.title,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 22 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryDark,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.lesson.subtitle,
-                          style: TextStyle(
-                            fontSize: 18 * scale,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryTeal,
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            widget.lesson.subtitle,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryTeal,
+                            ),
                           ),
                         ),
                       ],
@@ -227,7 +233,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Stage Navigation Tabs
             if (stageTitles.length > 1)
@@ -341,11 +347,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   // 1. النص القرائي
   Widget _buildStageReading(double scale, ReadingPassageModel passage) {
     return Container(
-      padding: const EdgeInsets.all(26),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -362,87 +368,177 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryTeal, size: 32),
-                  const SizedBox(width: 10),
+                  const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryTeal, size: 28),
+                  const SizedBox(width: 8),
                   Text(
                     'نَصُّ الاِنْطِلاقِ: "${passage.title}"',
-                    style: TextStyle(fontSize: 24 * scale, fontWeight: FontWeight.w900, color: AppTheme.textDark),
+                    style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900, color: AppTheme.textDark),
                   ),
                 ],
               ),
-              if (passage.author.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(14),
+              Row(
+                children: [
+                  if (passage.author.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        passage.author,
+                        style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.touch_app_rounded, size: 16, color: AppTheme.primaryTeal),
+                        SizedBox(width: 4),
+                        Text(
+                          'انقر على أي فقرة لتكبيرها',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Text(
-                    passage.author,
-                    style: TextStyle(fontSize: 15 * scale, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
-          const Divider(height: 28, thickness: 1.5),
+          const Divider(height: 18, thickness: 1.2),
 
           // Paragraphs
           ...passage.paragraphs.asMap().entries.map((entry) {
             final idx = entry.key;
             final text = entry.value;
-            final isSpotlighted = _isSpotlightActive && _spotlightedParagraphIndex == idx;
+            final hasSpotlight = _spotlightedParagraphIndex != null;
+            final isSpotlighted = _spotlightedParagraphIndex == idx;
+            final isDimmed = hasSpotlight && !isSpotlighted;
 
             return InkWell(
               onTap: () {
-                if (_isSpotlightActive) {
-                  setState(() {
-                    _spotlightedParagraphIndex = (_spotlightedParagraphIndex == idx) ? null : idx;
-                  });
-                }
+                setState(() {
+                  _spotlightedParagraphIndex = (_spotlightedParagraphIndex == idx) ? null : idx;
+                });
               },
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(14),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isSpotlighted ? AppTheme.primaryLight : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isSpotlighted ? AppTheme.primaryTeal : Colors.transparent,
-                    width: 2,
-                  ),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                margin: EdgeInsets.only(
+                  bottom: isSpotlighted ? 12 : 6,
+                  top: isSpotlighted ? 6 : 0,
                 ),
-                child: SelectableText(
-                  text,
-                  style: TextStyle(
-                    fontSize: (isSpotlighted ? 26 : 22) * scale,
-                    height: 2.0,
-                    fontWeight: isSpotlighted ? FontWeight.bold : FontWeight.w600,
-                    color: AppTheme.textDark,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSpotlighted ? 18 : 10,
+                  vertical: isSpotlighted ? 14 : 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isSpotlighted
+                      ? AppTheme.primaryLight
+                      : (isDimmed ? Colors.transparent : const Color(0xFFFAFAFA)),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSpotlighted
+                        ? AppTheme.primaryTeal
+                        : (isDimmed ? Colors.transparent : const Color(0xFFF1F5F9)),
+                    width: isSpotlighted ? 2.5 : 1,
+                  ),
+                  boxShadow: isSpotlighted
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.primaryTeal.withValues(alpha: 0.18),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Opacity(
+                  opacity: isDimmed ? 0.45 : 1.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isSpotlighted) ...[
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryTeal,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.zoom_in_rounded, color: Colors.white, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'فَقْرَةٌ مُكَبَّرَةٌ لِلصَّفِّ (${idx + 1})',
+                                    style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _spotlightedParagraphIndex = null;
+                                });
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(Icons.close_rounded, size: 16, color: Colors.red),
+                              label: const Text(
+                                'إلغاء التكبير',
+                                style: TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text(
+                        text,
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(
+                          fontSize: (isSpotlighted ? 28 : 21) * scale,
+                          height: isSpotlighted ? 2.0 : 1.75,
+                          fontWeight: isSpotlighted ? FontWeight.bold : FontWeight.w600,
+                          color: isSpotlighted ? AppTheme.primaryDark : AppTheme.textDark,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             );
           }),
 
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: const [
-                Icon(Icons.info_outline_rounded, color: AppTheme.primaryTeal, size: 22),
-                SizedBox(width: 8),
-                Text(
-                  'إرشاد للأستاذ: انقر على أي فقرة لتسليط الضوء عليها وتكبيرها لتلاميذ المقاعد الخلفية.',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.info_outline_rounded, color: AppTheme.primaryTeal, size: 18),
+              SizedBox(width: 6),
+              Text(
+                'انقر مباشرة على نص أي فقرة لتكبيرها فوريًا لتلاميذ المقاعد الخلفية.',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
+              ),
+            ],
           ),
         ],
       ),
