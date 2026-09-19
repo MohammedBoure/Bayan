@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.nahw.app" "\0"
-            VALUE "FileDescription", "nahw_app" "\0"
+            VALUE "CompanyName", "Bustan Al-Nahw Educational" "\0"
+            VALUE "FileDescription", "Bustan Al-Nahw Arabic Grammar Desktop Platform" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "nahw_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.nahw.app. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Bustan Al-Nahw. All rights reserved." "\0"
             VALUE "OriginalFilename", "nahw_app.exe" "\0"
-            VALUE "ProductName", "nahw_app" "\0"
+            VALUE "ProductName", "Bustan Al-Nahw" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
