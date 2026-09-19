@@ -37,6 +37,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   int _activeStageIndex = 0;
   int? _spotlightedParagraphIndex;
   int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها
+  final Set<int> _revealedQuestionIndices = <int>{};
 
   @override
   void initState() {
@@ -44,6 +45,38 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     _showTashkeel = widget.progressService.showTashkeel;
     _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
     _isSpotlightActive = widget.progressService.spotlightReading;
+    if (_areAnswersRevealed && widget.lesson.readingPassage != null) {
+      for (int i = 0; i < widget.lesson.readingPassage!.comprehensionQuestions.length; i++) {
+        _revealedQuestionIndices.add(i);
+      }
+    }
+  }
+
+  void _toggleAllComprehensionAnswers(int totalQuestions) {
+    setState(() {
+      if (_revealedQuestionIndices.length == totalQuestions) {
+        _revealedQuestionIndices.clear();
+        _areAnswersRevealed = false;
+      } else {
+        _revealedQuestionIndices.clear();
+        for (int i = 0; i < totalQuestions; i++) {
+          _revealedQuestionIndices.add(i);
+        }
+        _areAnswersRevealed = true;
+      }
+    });
+  }
+
+  void _toggleSingleQuestionAnswer(int index) {
+    setState(() {
+      if (_revealedQuestionIndices.contains(index)) {
+        _revealedQuestionIndices.remove(index);
+      } else {
+        _revealedQuestionIndices.add(index);
+      }
+      final total = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
+      _areAnswersRevealed = total > 0 && _revealedQuestionIndices.length == total;
+    });
   }
 
   void _inspectWord(String word) {
@@ -158,9 +191,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           progressService: widget.progressService,
           areAnswersRevealed: _areAnswersRevealed,
           onToggleAnswers: () {
-            setState(() {
-              _areAnswersRevealed = !_areAnswersRevealed;
-            });
+            final total = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
+            _toggleAllComprehensionAnswers(total);
           },
           isSpotlightActive: _isSpotlightActive,
           onToggleSpotlight: () {
@@ -962,34 +994,134 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // 3. أقرأ وأفهم
+  // 3. أقرأ وأفهم (دعم كامل للعرض والإخفاء الجزئي والكلي للإجابات النموذجية)
   Widget _buildStageComprehension(double scale, ReadingPassageModel passage) {
+    final totalQuestions = passage.comprehensionQuestions.length;
+    final allRevealed = _revealedQuestionIndices.length == totalQuestions;
+    final anyRevealed = _revealedQuestionIndices.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // شريط العنوان مع أزرار التحكم الكلي (إظهار الكل / إخفاء الكل)
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
-            color: AppTheme.verbColor.withValues(alpha: 0.12),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.verbColor, width: 2),
+            border: Border.all(color: AppTheme.verbColor.withValues(alpha: 0.3), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          child: Row(
-            children: const [
-              Icon(Icons.question_answer_rounded, color: AppTheme.verbColor, size: 30),
-              SizedBox(width: 10),
-              Text(
-                'أَقْرَأُ وَأَفْهَمُ (أَسْئِلَةُ الحِوَارِ وَالاسْتِيعَابِ الصَّفِّيِّ):',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textDark),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.verbColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.question_answer_rounded, color: AppTheme.verbColor, size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'أَقْرَأُ وَأَفْهَمُ (أَسْئِلَةُ الحِوَارِ وَالاسْتِيعَابِ الصَّفِّيِّ)',
+                        style: TextStyle(
+                          fontSize: 20 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      Text(
+                        'يُمْكِنُ عَرْضُ أَوْ إِخْفَاءُ الإِجَابَاتِ نَمُوذَجِيّاً لِكُلِّ سُؤَالٍ عَلَى حِدَةٍ أَوْ لِلْجَمِيعِ',
+                        style: TextStyle(
+                          fontSize: 13 * scale,
+                          color: AppTheme.textMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // أزرار التحكم الكلي في الإجابات
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // شارة عدد الإجابات المعروضة
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: anyRevealed
+                          ? AppTheme.primaryTeal.withValues(alpha: 0.12)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: anyRevealed ? AppTheme.primaryTeal.withValues(alpha: 0.3) : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      'المَعْرُوضُ: ${_revealedQuestionIndices.length} مِنْ $totalQuestions',
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: anyRevealed ? AppTheme.primaryDark : AppTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // زر التبديل الكلي (إظهار الكل / إخفاء الكل)
+                  ElevatedButton.icon(
+                    onPressed: () => _toggleAllComprehensionAnswers(totalQuestions),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: allRevealed ? AppTheme.accentOrange : AppTheme.primaryTeal,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: Icon(
+                      allRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      size: 18,
+                    ),
+                    label: Text(
+                      allRevealed ? 'إِخْفَاءُ جَمِيعِ الإِجَابَاتِ' : 'إِظْهَارُ جَمِيعِ الإِجَابَاتِ',
+                      style: TextStyle(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
         const SizedBox(height: 18),
 
+        // قائمة الأسئلة مع بطاقات التحكم الجزئي الفردي
         ...passage.comprehensionQuestions.asMap().entries.map((entry) {
           final idx = entry.key;
           final q = entry.value;
+          final isRevealed = _revealedQuestionIndices.contains(idx);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -997,7 +1129,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.8),
+              border: Border.all(
+                color: isRevealed
+                    ? AppTheme.primaryTeal.withValues(alpha: 0.6)
+                    : const Color(0xFFCBD5E1),
+                width: isRevealed ? 2 : 1.8,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isRevealed
+                      ? AppTheme.primaryTeal.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1007,8 +1153,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: AppTheme.verbColor,
-                      child: Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      backgroundColor: isRevealed ? AppTheme.primaryTeal : AppTheme.verbColor,
+                      child: Text(
+                        '${idx + 1}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1021,39 +1170,83 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+
+                    // زر التبديل الجزئي لهذا السؤال بالذات (عرض / إخفاء فردي)
+                    InkWell(
+                      onTap: () => _toggleSingleQuestionAnswer(idx),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isRevealed
+                              ? AppTheme.accentOrange.withValues(alpha: 0.12)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isRevealed
+                                ? AppTheme.accentOrange
+                                : const Color(0xFFCBD5E1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                              size: 17,
+                              color: isRevealed ? AppTheme.accentOrange : AppTheme.textMuted,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isRevealed ? 'إِخْفَاءُ الإِجَابَةِ' : 'عَرْضُ الإِجَابَةِ',
+                              style: TextStyle(
+                                fontSize: 13 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: isRevealed ? AppTheme.accentOrange : AppTheme.textDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
 
-                // Model Answer
+                // منطقة الإجابة النموذجية (ظهور متحرك فردي)
                 AnimatedCrossFade(
                   duration: const Duration(milliseconds: 200),
-                  crossFadeState: _areAnswersRevealed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                  crossFadeState: isRevealed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
                   firstChild: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _areAnswersRevealed = true;
-                      });
-                    },
+                    onTap: () => _toggleSingleQuestionAnswer(idx),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.visibility_rounded, size: 20, color: AppTheme.textMuted),
-                          SizedBox(width: 8),
-                          Text('انْقُرْ هُنَا لِعَرْضِ الإِجَابَةِ النَّمُوذَجِيَّةِ', style: TextStyle(fontWeight: FontWeight.bold)),
+                        children: [
+                          const Icon(Icons.help_outline_rounded, size: 20, color: AppTheme.textMuted),
+                          const SizedBox(width: 10),
+                          Text(
+                            'انْقُرْ هُنَا أَوْ عَلَى الزِّرِّ أَعْلَاهُ لِإِظْهَارِ الإِجَابَةِ النَّمُوذَجِيَّةِ لِهَذَا السُّؤَالِ',
+                            style: TextStyle(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                   secondChild: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryLight,
@@ -1061,13 +1254,36 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 24),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 24),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            q.modelAnswer,
-                            style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'الإِجَابَةُ النَّمُوذَجِيَّةُ:',
+                                style: TextStyle(
+                                  fontSize: 13 * scale,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.primaryDark.withValues(alpha: 0.7),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                q.modelAnswer,
+                                style: TextStyle(
+                                  fontSize: 20 * scale,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryDark,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
