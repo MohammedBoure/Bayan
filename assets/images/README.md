@@ -10,3 +10,7 @@ This directory contains high-quality, child-friendly educational imagery tailore
 - [grade_five.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/grade_five.jpg): Cover illustration for Grade 5 (السنة الخامسة ابتدائي) - Advanced syntax, verb inflection, and accusatives.
 - [trophy_success.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/trophy_success.jpg): Achievement star and trophy for quiz completion, feedback, and student progress celebration.
 - [linguistics_lab.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/linguistics_lab.jpg): Modern visual for the Computational Linguistics Lab (المختبر اللغوي الآلي).
+- [action_eat.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/action_eat.jpg): Educational visual for past verb action «أَكَلَ» (طفل يتناول طعامه الشهي).
+- [action_drink.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/action_drink.jpg): Educational visual for past verb action «شَرِبَ» (طفل يشرب كوب الماء النقي).
+- [action_sleep.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/action_sleep.jpg): Educational visual for past verb action «نَامَ» (طفل نائم في سريره الهادئ).
+- [action_run.jpg](file:///C:/Users/moham/Desktop/aze2/assets/images/action_run.jpg): Educational visual for past verb action «رَكَضَ» (طفل يركض في الملعب بنشاط وحيوية).
