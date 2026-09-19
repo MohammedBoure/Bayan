@@ -153,14 +153,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       title: widget.lesson.title,
       progressService: widget.progressService,
       actions: [
-        IconButton(
-          icon: Icon(
-            _showTashkeel ? Icons.format_color_text_rounded : Icons.text_fields_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
-          tooltip: _showTashkeel ? 'إخفاء التشكيل' : 'إظهار التشكيل',
-          onPressed: () {
+        TeacherHeaderActions(
+          progressService: widget.progressService,
+          areAnswersRevealed: _areAnswersRevealed,
+          onToggleAnswers: () {
+            setState(() {
+              _areAnswersRevealed = !_areAnswersRevealed;
+            });
+          },
+          isSpotlightActive: _isSpotlightActive,
+          onToggleSpotlight: () {
+            setState(() {
+              _isSpotlightActive = !_isSpotlightActive;
+            });
+          },
+          showTashkeel: _showTashkeel,
+          onToggleTashkeel: () {
             setState(() {
               _showTashkeel = !_showTashkeel;
             });
@@ -172,23 +180,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Teacher Presentation Toolbar
-            TeacherToolbarWidget(
-              progressService: widget.progressService,
-              areAnswersRevealed: _areAnswersRevealed,
-              onToggleAnswers: () {
-                setState(() {
-                  _areAnswersRevealed = !_areAnswersRevealed;
-                });
-              },
-              isSpotlightActive: _isSpotlightActive,
-              onToggleSpotlight: () {
-                setState(() {
-                  _isSpotlightActive = !_isSpotlightActive;
-                });
-              },
-            ),
-
             // Lesson Header
             Container(
               padding: const EdgeInsets.all(22),

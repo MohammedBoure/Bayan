@@ -33,7 +33,8 @@ class AppScaffold extends StatelessWidget {
           toolbarHeight: 68,
           title: Text(
             title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           actions: [
             // Data Show / Classroom Mode Indicator Badge

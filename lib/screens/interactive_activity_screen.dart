@@ -181,25 +181,25 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
     return AppScaffold(
       title: 'الأَنْشِطَةُ التَّفَاعُلِيَّةُ: ${widget.lessonTitle}',
       progressService: widget.progressService,
+      actions: [
+        TeacherHeaderActions(
+          progressService: widget.progressService,
+          areAnswersRevealed: _areAnswersRevealed,
+          onToggleAnswers: () {
+            setState(() {
+              _areAnswersRevealed = !_areAnswersRevealed;
+              if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
+                _selectedOptionIndex = _currentActivity.correctIndex;
+              }
+            });
+          },
+        ),
+      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Teacher Toolbar
-            TeacherToolbarWidget(
-              progressService: widget.progressService,
-              areAnswersRevealed: _areAnswersRevealed,
-              onToggleAnswers: () {
-                setState(() {
-                  _areAnswersRevealed = !_areAnswersRevealed;
-                  if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
-                    _selectedOptionIndex = _currentActivity.correctIndex;
-                  }
-                });
-              },
-            ),
-
             // Activity Progress & Classroom Timer Header
             Row(
               children: [

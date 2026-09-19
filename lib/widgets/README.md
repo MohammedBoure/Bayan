@@ -11,5 +11,5 @@ This directory houses modular, reusable UI components tailored for Arabic gramma
 - [categorization_board_widget.dart](file:///C:/Users/moham/Desktop/aze2/lib/widgets/categorization_board_widget.dart): Multi-column classification board supporting 2-column and 3-column drag-and-drop or tap-to-place word sorting.
 - [sentence_ordering_widget.dart](file:///C:/Users/moham/Desktop/aze2/lib/widgets/sentence_ordering_widget.dart): Reorderable chips board for assembling verbal sentences in correct syntactic order.
 - [image_matching_widget.dart](file:///C:/Users/moham/Desktop/aze2/lib/widgets/image_matching_widget.dart): Interactive visual verb and action matching board for young learners.
-- [teacher_toolbar_widget.dart](file:///C:/Users/moham/Desktop/aze2/lib/widgets/teacher_toolbar_widget.dart): Unobtrusive presentation toolbar providing the teacher with immediate controls to reveal/hide model answers, toggle paragraph spotlights, and launch the NLP lab.
+- [teacher_toolbar_widget.dart](file:///C:/Users/moham/Desktop/aze2/lib/widgets/teacher_toolbar_widget.dart): Contains `TeacherHeaderActions` embedding classroom teacher controls (model answers reveal toggle, spotlight focus, tashkeel toggle) directly within the lesson title bar (AppBar actions) on the side to maximize vertical viewing space for classroom projectors.
 

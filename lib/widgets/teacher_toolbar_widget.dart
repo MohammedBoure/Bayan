@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
-import '../screens/nlp_lab_screen.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 
-/// Teacher Presentation Control Bar (شريط أدوات الأستاذ الصفي)
-/// Sits at the top or bottom of the lesson screen for instantaneous classroom controls.
-class TeacherToolbarWidget extends StatelessWidget {
+/// Teacher Presentation Header Actions (عناصر لوحة تحكم الأستاذ في شريط عنوان الدرس)
+/// Positioned directly on the side of the AppBar to save vertical screen space for projector display.
+class TeacherHeaderActions extends StatelessWidget {
   final ProgressService progressService;
   final VoidCallback? onToggleAnswers;
   final bool areAnswersRevealed;
   final VoidCallback? onToggleSpotlight;
   final bool isSpotlightActive;
+  final VoidCallback? onToggleTashkeel;
+  final bool? showTashkeel;
 
-  const TeacherToolbarWidget({
+  const TeacherHeaderActions({
     super.key,
     required this.progressService,
     this.onToggleAnswers,
     this.areAnswersRevealed = false,
     this.onToggleSpotlight,
     this.isSpotlightActive = false,
+    this.onToggleTashkeel,
+    this.showTashkeel,
   });
 
   @override
@@ -27,95 +30,68 @@ class TeacherToolbarWidget extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B), // Dark slate for clear distinction as teacher controls
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 12,
-        runSpacing: 8,
-        children: [
-          // Teacher Mode Badge
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.school_rounded, color: AppTheme.accentAmber, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'لَوْحَةُ تَحَكُّمِ الأُسْتَاذِ',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Reveal / Hide Answers button
+        if (onToggleAnswers != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextButton.icon(
+              onPressed: onToggleAnswers,
+              style: TextButton.styleFrom(
+                backgroundColor: areAnswersRevealed
+                    ? AppTheme.accentOrange
+                    : Colors.black.withValues(alpha: 0.25),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: areAnswersRevealed ? AppTheme.accentAmber : Colors.white24,
+                    width: 1.2,
+                  ),
+                ),
               ),
-            ],
-          ),
-
-          // Action Buttons
-          Wrap(
-            spacing: 8,
-            children: [
-              // Reveal/Hide Answers
-              if (onToggleAnswers != null)
-                ElevatedButton.icon(
-                  onPressed: onToggleAnswers,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: areAnswersRevealed ? AppTheme.accentOrange : const Color(0xFF334155),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  icon: Icon(
-                    areAnswersRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    size: 20,
-                  ),
-                  label: Text(
-                    areAnswersRevealed ? 'إِخْفَاءُ الحُلُولِ' : 'إِظْهَارُ الحُلُولِ',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                ),
-
-              // Spotlight Focus
-              if (onToggleSpotlight != null)
-                IconButton(
-                  tooltip: isSpotlightActive ? 'إلغاء تسليط الضوء' : 'تسليط الضوء على الفقرات',
-                  icon: Icon(
-                    Icons.highlight_rounded,
-                    color: isSpotlightActive ? AppTheme.accentAmber : Colors.white70,
-                    size: 24,
-                  ),
-                  onPressed: onToggleSpotlight,
-                ),
-
-              // Quick NLP Lab Launcher
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const NlpLabScreen()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: AppTheme.verbColor, width: 1.8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                icon: const Icon(Icons.smart_toy_rounded, color: AppTheme.verbColor, size: 20),
-                label: const Text('المُحَلِّلُ الآلِيُّ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              icon: Icon(
+                areAnswersRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                size: 19,
+                color: Colors.white,
               ),
-            ],
+              label: Text(
+                areAnswersRevealed ? 'إِخْفَاءُ الحُلُولِ' : 'إِظْهَارُ الحُلُولِ',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
-        ],
-      ),
+
+        // Spotlight Focus Button
+        if (onToggleSpotlight != null)
+          IconButton(
+            tooltip: isSpotlightActive ? 'إلغاء تسليط الضوء على الفقرات' : 'تسليط الضوء على الفقرات',
+            icon: Icon(
+              Icons.highlight_rounded,
+              color: isSpotlightActive ? AppTheme.accentAmber : Colors.white,
+              size: 25,
+            ),
+            onPressed: onToggleSpotlight,
+          ),
+
+        // Tashkeel Toggle Button
+        if (onToggleTashkeel != null && showTashkeel != null)
+          IconButton(
+            tooltip: showTashkeel! ? 'إخفاء التشكيل' : 'إظهار التشكيل',
+            icon: Icon(
+              showTashkeel! ? Icons.format_color_text_rounded : Icons.text_fields_rounded,
+              color: Colors.white,
+              size: 25,
+            ),
+            onPressed: onToggleTashkeel,
+          ),
+      ],
     );
   }
 }
+
+/// Backward compatibility alias pointing to TeacherHeaderActions
+typedef TeacherToolbarWidget = TeacherHeaderActions;
