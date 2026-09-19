@@ -254,15 +254,23 @@ void main() {
     expect(continued, isTrue);
   });
 
-  test('AudioPlayerService accurately reads WAV track duration beyond 30 seconds', () async {
-    const track = ReadingAudioTrack(
-      title: 'النَّصُّ الكَامِلُ',
-      assetPath: 'assets/sounds/3_1.wav',
-      paragraphIndices: [0, 1, 2, 3, 4],
+  test('AudioPlayerService accurately reads WAV track duration for segmented audio', () async {
+    const track1 = ReadingAudioTrack(
+      title: 'المَقْطَعُ 2',
+      assetPath: 'assets/sounds/3_1/2.wav',
+      paragraphIndices: [2, 3, 4],
     );
-    final durationMs = await AudioPlayerService.instance.getTrackDuration(track);
-    // 3_1.wav is 51.48 seconds = 51480 ms
-    expect(durationMs, greaterThan(50000));
-    expect(durationMs, lessThan(55000));
+    final duration1 = await AudioPlayerService.instance.getTrackDuration(track1);
+    expect(duration1, greaterThan(45000));
+    expect(duration1, lessThan(50000));
+
+    const track2 = ReadingAudioTrack(
+      title: 'المَقْطَعُ 3',
+      assetPath: 'assets/sounds/3_2/3.wav',
+      paragraphIndices: [3, 4],
+    );
+    final duration2 = await AudioPlayerService.instance.getTrackDuration(track2);
+    expect(duration2, greaterThan(53000));
+    expect(duration2, lessThan(58000));
   });
 }

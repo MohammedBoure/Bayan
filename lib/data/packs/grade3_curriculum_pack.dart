@@ -109,9 +109,14 @@ class Grade3CurriculumPack {
         ],
         audioTracks: [
           ReadingAudioTrack(
-            title: 'النَّصُّ الكَامِلُ (خِدْمَةُ الأَرْضِ)',
-            assetPath: 'assets/sounds/3_1.wav',
-            paragraphIndices: [0, 1, 2, 3, 4],
+            title: 'المَقْطَعُ 1 (الفقرات 1 - 2)',
+            assetPath: 'assets/sounds/3_1/1.wav',
+            paragraphIndices: [0, 1],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 2 (الفقرات 3 - 5)',
+            assetPath: 'assets/sounds/3_1/2.wav',
+            paragraphIndices: [2, 3, 4],
           ),
         ],
       ),
@@ -277,9 +282,19 @@ class Grade3CurriculumPack {
         ],
         audioTracks: [
           ReadingAudioTrack(
-            title: 'النَّصُّ الكَامِلُ (عُمَرُ يَاسَفُ)',
-            assetPath: 'assets/sounds/3_2.wav',
-            paragraphIndices: [0, 1, 2, 3, 4],
+            title: 'المَقْطَعُ 1 (الفقرات 1 - 2)',
+            assetPath: 'assets/sounds/3_2/1.wav',
+            paragraphIndices: [0, 1],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 2 (الفقرة 3)',
+            assetPath: 'assets/sounds/3_2/2.wav',
+            paragraphIndices: [2],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 3 (الفقرات 4 - 5)',
+            assetPath: 'assets/sounds/3_2/3.wav',
+            paragraphIndices: [3, 4],
           ),
         ],
       ),

@@ -68,6 +68,8 @@ flutter:
     - assets/images/
     - assets/fonts/
     - assets/sounds/
+    - assets/sounds/3_1/
+    - assets/sounds/3_2/
     - assets/sounds/3_3/
 
   fonts:
