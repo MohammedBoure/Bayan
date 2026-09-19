@@ -36,6 +36,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   late bool _isSpotlightActive;
   int _activeStageIndex = 0;
   int? _spotlightedParagraphIndex;
+  int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها
 
   @override
   void initState() {
@@ -545,112 +546,419 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // 2. كلماتي الجديدة
+  // 2. كلماتي الجديدة (منظمة ومفروزة بدقة بين شرح المعاني والكلمة وضدها)
   Widget _buildStageVocabulary(double scale, ReadingPassageModel passage) {
+    final meanings = passage.vocabulary.where((v) => !v.isAntonym).toList();
+    final antonyms = passage.vocabulary.where((v) => v.isAntonym).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // شريط العنوان والمحدد الفئوي (Filter Bar) لراحة الأستاذ على شاشة العرض
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
-            color: AppTheme.accentOrange.withValues(alpha: 0.12),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.accentOrange, width: 2),
+            border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          child: Row(
-            children: const [
-              Icon(Icons.menu_book_rounded, color: AppTheme.accentOrange, size: 30),
-              SizedBox(width: 10),
-              Text(
-                'كَلِمَاتِي الجَدِيدَةُ وَإِثْرَاءُ الرَّصِيدِ اللُّغَوِيِّ (مَعَانٍ وَأَضْدَاد):',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textDark),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentOrange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.menu_book_rounded, color: AppTheme.accentOrange, size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'كَلِمَاتِي الجَدِيدَةُ وَإِثْرَاءُ الرَّصِيدِ اللُّغَوِيِّ',
+                        style: TextStyle(
+                          fontSize: 20 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      Text(
+                        'مُفْرَدَاتُ النَّصِّ مُصَنَّفَةٌ بَيْنَ شَرْحِ المَعَانِي وَالأَضْدَادِ',
+                        style: TextStyle(
+                          fontSize: 13 * scale,
+                          color: AppTheme.textMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // أزرار الفلترة السريعة للأستاذ
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildVocabFilterChip(
+                    label: 'الكُلُّ (${passage.vocabulary.length})',
+                    icon: Icons.grid_view_rounded,
+                    index: 0,
+                    scale: scale,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildVocabFilterChip(
+                    label: 'شَرْحُ المَعَانِي (${meanings.length})',
+                    icon: Icons.lightbulb_outline_rounded,
+                    index: 1,
+                    scale: scale,
+                    activeColor: AppTheme.primaryTeal,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildVocabFilterChip(
+                    label: 'الْكَلِمَةُ وَضِدُّهَا (${antonyms.length})',
+                    icon: Icons.compare_arrows_rounded,
+                    index: 2,
+                    scale: scale,
+                    activeColor: AppTheme.accentCoral,
+                  ),
+                ],
               ),
             ],
           ),
         ),
         const SizedBox(height: 18),
 
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: passage.vocabulary.map((vocab) {
-            return Container(
-              width: 380,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: vocab.isAntonym ? AppTheme.accentCoral : AppTheme.primaryTeal,
-                  width: 2,
+        // القسم الأول: شرح المفردات والمعاني
+        if ((_vocabFilter == 0 || _vocabFilter == 1) && meanings.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryTeal.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.25), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.bookmark_added_rounded, color: AppTheme.primaryTeal, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  '📖 شَرْحُ الْمُفْرَدَاتِ وَمَعَانِي الْكَلِمَاتِ (${meanings.length})',
+                  style: TextStyle(
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primaryTeal,
+                  ),
                 ),
-                boxShadow: [
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: meanings.map((vocab) => _buildMeaningCard(vocab, scale)).toList(),
+          ),
+          const SizedBox(height: 22),
+        ],
+
+        // القسم الثاني: الكلمة وضدها
+        if ((_vocabFilter == 0 || _vocabFilter == 2) && antonyms.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.accentCoral.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.3), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.swap_horiz_rounded, color: AppTheme.accentCoral, size: 26),
+                const SizedBox(width: 10),
+                Text(
+                  '⚖️ الْكَلِمَةُ وَضِدُّهَا فِي النَّصِّ (${antonyms.length})',
+                  style: TextStyle(
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.accentCoral,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: antonyms.map((vocab) => _buildAntonymCard(vocab, scale)).toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildVocabFilterChip({
+    required String label,
+    required IconData icon,
+    required int index,
+    required double scale,
+    Color activeColor = AppTheme.primaryTeal,
+  }) {
+    final isSelected = _vocabFilter == index;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        setState(() {
+          _vocabFilter = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? activeColor : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: activeColor.withValues(alpha: 0.25),
                     blurRadius: 6,
-                    offset: const Offset(0, 3),
+                    offset: const Offset(0, 2),
                   ),
-                ],
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: isSelected ? Colors.white : AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14 * scale,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+                color: isSelected ? Colors.white : AppTheme.textDark,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // بطاقة شرح المعنى (تصميم زمردي مريح للعين مع تحليل صرفي اختياري)
+  Widget _buildMeaningCard(VocabularyItem vocab, double scale) {
+    return Container(
+      width: 380,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.35), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                vocab.word,
+                style: TextStyle(
+                  fontSize: 26 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryTeal,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        vocab.word,
-                        style: TextStyle(
-                          fontSize: 26 * scale,
-                          fontWeight: FontWeight.w900,
-                          color: vocab.isAntonym ? AppTheme.accentCoral : AppTheme.primaryTeal,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.psychology_alt_rounded, color: AppTheme.primaryTeal, size: 24),
-                            tooltip: 'تَحْلِيلٌ صَرْفِيٌّ لِسَانِيٌّ',
-                            onPressed: () => _inspectWord(vocab.word),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: vocab.isAntonym
-                                  ? AppTheme.accentCoral.withValues(alpha: 0.15)
-                                  : AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              vocab.isAntonym ? 'ضِدٌّ' : 'مَعْنًى',
-                              style: TextStyle(
-                                fontSize: 14 * scale,
-                                fontWeight: FontWeight.bold,
-                                color: vocab.isAntonym ? AppTheme.accentCoral : AppTheme.primaryDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.psychology_alt_rounded, color: AppTheme.primaryTeal, size: 24),
+                    tooltip: 'تَحْلِيلٌ صَرْفِيٌّ لِسَانِيٌّ',
+                    onPressed: () => _inspectWord(vocab.word),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    vocab.explanation,
-                    style: TextStyle(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w600,
-                      height: 1.6,
-                      color: AppTheme.textDark,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      'مَعْنًى',
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryDark,
+                      ),
                     ),
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryTeal.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              vocab.explanation,
+              style: TextStyle(
+                fontSize: 18 * scale,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+                color: AppTheme.textDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // بطاقة الكلمة وضدها (تصميم مرجاني مميز مع إبراز التقابل اللغوي «الكلمة» ⟷ ≠ ⟷ «الضد»)
+  Widget _buildAntonymCard(VocabularyItem vocab, double scale) {
+    // تنظيف صيغة الضد إذا كانت مكتوبة كـ "ضدها: ..."
+    String cleanExplanation = vocab.explanation;
+    final regex = RegExp(r'ضِدُّهَا(?:\s+فِي\s+(?:النَّصِّ|المَعْنَى))?\s*:\s*', unicode: true);
+    final match = regex.firstMatch(cleanExplanation);
+    String oppositeWord = cleanExplanation;
+    if (match != null) {
+      oppositeWord = cleanExplanation.substring(match.end).replaceAll('.', '').trim();
+    }
+
+    return Container(
+      width: 380,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.4), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentCoral.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  'الكَلِمَةُ وَضِدُّهَا',
+                  style: TextStyle(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.accentCoral,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.psychology_alt_rounded, color: AppTheme.accentCoral, size: 24),
+                tooltip: 'تَحْلِيلٌ صَرْفِيٌّ لِسَانِيٌّ',
+                onPressed: () => _inspectWord(vocab.word),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // بطاقة المقابلة البصرية بين الكلمة وضدها
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.accentCoral.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: Text(
+                    vocab.word,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentCoral,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '≠ ضِدُّ',
+                    style: TextStyle(
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    oppositeWord,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.accentCoral,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

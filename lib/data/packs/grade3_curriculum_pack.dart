@@ -254,9 +254,12 @@ class Grade3CurriculumPack {
           VocabularyItem(word: 'مُسَخَّرٌ', explanation: 'فِي خِدْمَةِ بِلادِهِ وَشَعْبِهِ.'),
           VocabularyItem(word: 'قَدَرُهُ', explanation: 'مَا كَتَبَهُ اللَّهُ لَهُ مِنَ البُطُولَةِ.'),
           VocabularyItem(word: 'أُسْنِدَتْ', explanation: 'كُلِّفَ بِهَا مِنْ مُهِمَّاتٍ جَسِيمَةٍ.'),
-          VocabularyItem(word: 'يَتَحَلَّى', explanation: 'مُرَادِفُهَا فِي المَعْنَى: العَزِيمَةُ وَالإِرَادَةُ.'),
-          VocabularyItem(word: 'تَلْمَحُهُ', explanation: 'مُرَادِفُهَا فِي المَعْنَى: تَرَاهُ أُمُّهُ.'),
-          VocabularyItem(word: 'يَتَنَازَلُ', explanation: 'مُرَادِفُهَا فِي المَعْنَى: يَتَخَلَّى عَنِ المَدْرَسَةِ لِيَخْدِمَ الثَّوْرَةَ.'),
+          VocabularyItem(word: 'يَتَحَلَّى', explanation: 'يَتَّصِفُ بِالعَزِيمَةِ وَالشَّجَاعَةِ.'),
+          VocabularyItem(word: 'تَلْمَحُهُ', explanation: 'تَرَاهُ أُمُّهُ وَتَنْظُرُ إِلَيْهِ.'),
+          VocabularyItem(word: 'قَرِيبٌ', explanation: 'ضِدُّهَا فِي النَّصِّ: بَعِيدٌ.', isAntonym: true),
+          VocabularyItem(word: 'سَهْلَةً', explanation: 'ضِدُّهَا فِي النَّصِّ: صَعْبَةً / شَاقَّةً.', isAntonym: true),
+          VocabularyItem(word: 'الذَّهَابُ', explanation: 'ضِدُّهَا فِي النَّصِّ: الإِيَابُ / العَوْدَةُ.', isAntonym: true),
+          VocabularyItem(word: 'الحُرِّيَّةُ', explanation: 'ضِدُّهَا فِي المَعْنَى: الاسْتِعْمَارُ / القَيْدُ.', isAntonym: true),
         ],
         comprehensionQuestions: [
           ComprehensionQuestion(question: 'مَنْ هِيَ الشَّخْصِيَّةُ الرَّئِيسِيَّةُ فِي هَذَا النَّصِّ؟', modelAnswer: 'عُمَرُ يَاسَفُ، أَصْغَرُ فِدَائِيٍّ فِي ثَوْرَةِ التَّحْرِيرِ الوَطَنِيِّ.'),
@@ -568,6 +571,8 @@ class Grade3CurriculumPack {
         vocabulary: [
           VocabularyItem(word: 'يَحْرُثُ', explanation: 'يَقْلِبُ التُّرْبَةَ لِيُهَيِّئَهَا لِلزِّرَاعَةِ.'),
           VocabularyItem(word: 'المَحْصُولُ', explanation: 'مَا تُنْتِجُهُ الأَرْضُ مِنَ الثِّمَارِ وَالغِلالِ.'),
+          VocabularyItem(word: 'نَشَاطٌ', explanation: 'ضِدُّهَا فِي المَعْنَى: كَسَلٌ وَخُمُولٌ.', isAntonym: true),
+          VocabularyItem(word: 'يَفْرَحُ', explanation: 'ضِدُّهَا فِي النَّصِّ: يَحْزَنُ.', isAntonym: true),
         ],
         comprehensionQuestions: [
           ComprehensionQuestion(question: 'بِمَاذَا تَبْدَأُ جَمِيعُ جُمَلِ هَذَا النَّصِّ؟', modelAnswer: 'تَبْدَأُ بِأَفْعَالٍ (يَحْرُثُ، يَزْرَعُ، يَسْقِي، يَفْرَحُ)؛ لِذَلِكَ تُسَمَّى جُمَلاً فِعْلِيَّةً.'),
