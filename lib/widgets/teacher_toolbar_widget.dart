@@ -12,6 +12,10 @@ class TeacherHeaderActions extends StatelessWidget {
   final bool isSpotlightActive;
   final VoidCallback? onToggleTashkeel;
   final bool? showTashkeel;
+  final VoidCallback? onToggleAudio;
+  final bool isAudioActive;
+  final bool hasAudio;
+  final bool isAudioPlaying;
 
   const TeacherHeaderActions({
     super.key,
@@ -22,6 +26,10 @@ class TeacherHeaderActions extends StatelessWidget {
     this.isSpotlightActive = false,
     this.onToggleTashkeel,
     this.showTashkeel,
+    this.onToggleAudio,
+    this.isAudioActive = false,
+    this.hasAudio = false,
+    this.isAudioPlaying = false,
   });
 
   @override
@@ -33,6 +41,42 @@ class TeacherHeaderActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Audio Toggle button (شريط المقطع الصوتي)
+        if (hasAudio && onToggleAudio != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: TextButton.icon(
+              onPressed: onToggleAudio,
+              style: TextButton.styleFrom(
+                backgroundColor: isAudioActive
+                    ? AppTheme.successGreen
+                    : Colors.black.withValues(alpha: 0.25),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: isAudioActive ? Colors.white : Colors.white24,
+                    width: 1.2,
+                  ),
+                ),
+              ),
+              icon: Icon(
+                isAudioPlaying
+                    ? Icons.volume_up_rounded
+                    : (isAudioActive ? Icons.headphones_rounded : Icons.headset_mic_rounded),
+                size: 19,
+                color: isAudioActive
+                    ? Colors.white
+                    : (isAudioPlaying ? AppTheme.accentAmber : Colors.white),
+              ),
+              label: Text(
+                isAudioActive ? 'إِخْفَاءُ الصَّوْتِ' : 'المَقْطَعُ الصَّوْتِيُّ',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+
         // Reveal / Hide Answers button
         if (onToggleAnswers != null)
           Padding(

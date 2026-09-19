@@ -40,11 +40,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها
   final Set<int> _revealedQuestionIndices = <int>{};
   List<int> _audioHighlightedParagraphs = const [];
+  bool _showAudioPlayer = false;
 
   @override
   void dispose() {
+    AudioPlayerService.instance.removeListener(_onAudioPlayerStateChange);
     AudioPlayerService.instance.stop();
     super.dispose();
+  }
+
+  void _onAudioPlayerStateChange() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -53,6 +61,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     _showTashkeel = widget.progressService.showTashkeel;
     _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
     _isSpotlightActive = widget.progressService.spotlightReading;
+    AudioPlayerService.instance.addListener(_onAudioPlayerStateChange);
     if (_areAnswersRevealed && widget.lesson.readingPassage != null) {
       for (int i = 0; i < widget.lesson.readingPassage!.comprehensionQuestions.length; i++) {
         _revealedQuestionIndices.add(i);
@@ -112,6 +121,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       actions: [
         TeacherHeaderActions(
           progressService: widget.progressService,
+          hasAudio: passage?.hasAudio == true,
+          isAudioActive: _showAudioPlayer,
+          isAudioPlaying: AudioPlayerService.instance.isPlaying,
+          onToggleAudio: () {
+            setState(() {
+              _showAudioPlayer = !_showAudioPlayer;
+              if (_showAudioPlayer && passage != null) {
+                _activeStageIndex = 0; // jump directly to reading text
+              }
+            });
+          },
           areAnswersRevealed: _areAnswersRevealed,
           onToggleAnswers: () {
             final total = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
@@ -375,10 +395,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ),
           const Divider(height: 18, thickness: 1.2),
 
-          // Audio Narration Player
-          if (passage.hasAudio)
+          // Audio Narration Player (only displayed when requested by teacher from the top bar)
+          if (passage.hasAudio && _showAudioPlayer)
             AudioPlayerWidget(
               tracks: passage.audioTracks,
+              onClose: () {
+                setState(() {
+                  _showAudioPlayer = false;
+                });
+              },
               onTrackChanged: (indices) {
                 setState(() {
                   _audioHighlightedParagraphs = indices;

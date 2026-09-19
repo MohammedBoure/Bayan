@@ -8,11 +8,13 @@ import '../theme/app_theme.dart';
 class AudioPlayerWidget extends StatefulWidget {
   final List<ReadingAudioTrack> tracks;
   final ValueChanged<List<int>>? onTrackChanged;
+  final VoidCallback? onClose;
 
   const AudioPlayerWidget({
     super.key,
     required this.tracks,
     this.onTrackChanged,
+    this.onClose,
   });
 
   @override
@@ -22,12 +24,25 @@ class AudioPlayerWidget extends StatefulWidget {
 class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   final AudioPlayerService _player = AudioPlayerService.instance;
   late int _selectedTrackIndex;
+  int _knownDurationMs = 0;
 
   @override
   void initState() {
     super.initState();
     _selectedTrackIndex = 0;
     _player.addListener(_onPlayerStateChanged);
+    _loadDuration();
+  }
+
+  Future<void> _loadDuration() async {
+    if (widget.tracks.isNotEmpty && mounted) {
+      final d = await _player.getTrackDuration(widget.tracks[_selectedTrackIndex]);
+      if (mounted) {
+        setState(() {
+          _knownDurationMs = d;
+        });
+      }
+    }
   }
 
   @override
@@ -54,6 +69,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     setState(() {
       _selectedTrackIndex = index;
     });
+    _loadDuration();
     final track = widget.tracks[index];
     widget.onTrackChanged?.call(track.paragraphIndices);
   }
@@ -79,43 +95,45 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     final isThisTrackPaused = _player.isPaused && _player.currentTrack?.assetPath == currentTrack.assetPath;
     final isCurrentActive = isThisTrackPlaying || isThisTrackPaused;
 
-    final duration = isCurrentActive && _player.durationMs > 0 ? _player.durationMs : 1;
+    final duration = (isCurrentActive && _player.durationMs > 0)
+        ? _player.durationMs
+        : (_knownDurationMs > 0 ? _knownDurationMs : 1);
     final position = isCurrentActive ? _player.positionMs.clamp(0, duration) : 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF0FDF4), // soft green tint
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.successGreen.withValues(alpha: 0.4), width: 1.8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.successGreen.withValues(alpha: 0.45), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: AppTheme.successGreen.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header: Icon + Title + Track Selector
+          // Header: Icon + Title + Track Selector + Close Button
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: AppTheme.successGreen.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.record_voice_over_rounded, color: AppTheme.successGreen, size: 26),
+                child: const Icon(Icons.record_voice_over_rounded, color: AppTheme.successGreen, size: 24),
               ),
               const SizedBox(width: 10),
               const Text(
                 'الاستماع الصوتي للنص (قراءة نموذجية معبرة):',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.textDark,
                 ),
@@ -124,7 +142,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               // Track tabs if multiple
               if (widget.tracks.length > 1)
                 Wrap(
-                  spacing: 8,
+                  spacing: 6,
                   children: List.generate(widget.tracks.length, (i) {
                     final isSelected = _selectedTrackIndex == i;
                     return ChoiceChip(
@@ -132,7 +150,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       label: Text(
                         widget.tracks[i].title,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                           color: isSelected ? Colors.white : AppTheme.primaryDark,
                         ),
@@ -143,9 +161,22 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     );
                   }),
                 ),
+              if (widget.onClose != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: widget.onClose,
+                  tooltip: 'إخفاء شريط الصوت',
+                  icon: const Icon(Icons.close_rounded, size: 22, color: AppTheme.textMuted),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(6),
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Player bar: Play/Pause, Stop, Progress bar, Timestamps
           Row(

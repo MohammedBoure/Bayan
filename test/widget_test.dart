@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nahw_app/data/curriculum_repository.dart';
 import 'package:nahw_app/main.dart';
 import 'package:nahw_app/models/lesson_model.dart';
+import 'package:nahw_app/models/reading_passage_model.dart';
 import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
+import 'package:nahw_app/services/audio_player_service.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
 import 'package:nahw_app/theme/app_theme.dart';
@@ -250,5 +252,17 @@ void main() {
 
     await tester.tap(find.text('الإِكْمَالُ وَالمُتَابَعَةُ'));
     expect(continued, isTrue);
+  });
+
+  test('AudioPlayerService accurately reads WAV track duration beyond 30 seconds', () async {
+    const track = ReadingAudioTrack(
+      title: 'النَّصُّ الكَامِلُ',
+      assetPath: 'assets/sounds/3_1.wav',
+      paragraphIndices: [0, 1, 2, 3, 4],
+    );
+    final durationMs = await AudioPlayerService.instance.getTrackDuration(track);
+    // 3_1.wav is 51.48 seconds = 51480 ms
+    expect(durationMs, greaterThan(50000));
+    expect(durationMs, lessThan(55000));
   });
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/progress_service.dart';
-import '../theme/app_theme.dart';
 
 /// Reusable responsive scaffold optimized for Data Show projectors and lecture halls.
 /// Uses expansive widescreen horizontal space, high-contrast badges, and large touch targets.
@@ -64,34 +63,6 @@ class AppScaffold extends StatelessWidget {
                 ),
               ),
             ),
-            if (progressService != null) ...[
-              // Star display badge
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentAmber.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star_rounded, color: Colors.white, size: 22),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${progressService!.progress.totalStars}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
             ...?actions,
           ],
         ),

@@ -94,6 +94,67 @@ class AudioPlayerService extends ChangeNotifier {
     }
   }
 
+  /// Automatically inspects and rectifies PCM WAV byteRate if corrupted in header
+  void _ensureValidWavHeader(String filePath) {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) return;
+      final readRaf = file.openSync(mode: FileMode.read);
+      final header = readRaf.readSync(44);
+      readRaf.closeSync();
+
+      if (header.length >= 36) {
+        final format = header[20] | (header[21] << 8);
+        final channels = header[22] | (header[23] << 8);
+        final sampleRate = header[24] | (header[25] << 8) | (header[26] << 16) | (header[27] << 24);
+        final byteRate = header[28] | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
+        final bits = header[34] | (header[35] << 8);
+
+        if (format == 1 && channels > 0 && sampleRate > 0 && bits > 0) {
+          final expectedByteRate = sampleRate * channels * (bits ~/ 8);
+          if (byteRate != expectedByteRate) {
+            final writeRaf = file.openSync(mode: FileMode.writeOnlyAppend);
+            writeRaf.setPositionSync(28);
+            final brBytes = Uint8List(4)
+              ..buffer.asByteData().setInt32(0, expectedByteRate, Endian.little);
+            writeRaf.writeFromSync(brBytes);
+            writeRaf.closeSync();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('AudioPlayerService: Error verifying WAV header: $e');
+    }
+  }
+
+  /// Returns the duration of an audio track in milliseconds
+  Future<int> getTrackDuration(ReadingAudioTrack track) async {
+    if (_currentTrack?.assetPath == track.assetPath && _durationMs > 0) {
+      return _durationMs;
+    }
+    final resolvedPath = await _resolveAssetPath(track.assetPath);
+    if (resolvedPath != null) {
+      try {
+        final file = File(resolvedPath);
+        if (await file.exists()) {
+          final bytes = await file.openRead(0, 44).expand((chunk) => chunk).toList();
+          if (bytes.length >= 36) {
+            final channels = bytes[22] | (bytes[23] << 8);
+            final sampleRate = bytes[24] | (bytes[25] << 8) | (bytes[26] << 16) | (bytes[27] << 24);
+            final bits = bytes[34] | (bytes[35] << 8);
+            final byteRate = sampleRate * channels * (bits ~/ 8);
+            final fileSize = await file.length();
+            final dataLength = fileSize - 44;
+            if (byteRate > 0) {
+              return ((dataLength / byteRate) * 1000).round();
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    return 60000;
+  }
+
   /// Play a specific reading audio track
   Future<void> playTrack(ReadingAudioTrack track) async {
     if (_currentTrack?.assetPath == track.assetPath && _state == AudioPlaybackState.paused) {
@@ -109,11 +170,13 @@ class AudioPlayerService extends ChangeNotifier {
     if (resolvedPath == null || !Platform.isWindows) {
       // Non-windows or failed to resolve: simulate state for mock/tests
       _state = AudioPlaybackState.playing;
-      _durationMs = 30000;
+      _durationMs = await getTrackDuration(track);
       _startTicker();
       notifyListeners();
       return;
     }
+
+    _ensureValidWavHeader(resolvedPath);
 
     _mci('close $_alias');
     final openResult = _mci('open "$resolvedPath" type waveaudio alias $_alias');
@@ -126,8 +189,11 @@ class AudioPlayerService extends ChangeNotifier {
 
     final buffer = calloc<Uint16>(256).cast<Utf16>();
     _mci('status $_alias length', buffer, 256);
-    _durationMs = int.tryParse(buffer.toDartString()) ?? 0;
+    final mciLen = int.tryParse(buffer.toDartString()) ?? 0;
     calloc.free(buffer);
+
+    final calculatedDuration = await getTrackDuration(track);
+    _durationMs = (mciLen > 0) ? mciLen : calculatedDuration;
 
     _mci('play $_alias from 0');
     _state = AudioPlaybackState.playing;
