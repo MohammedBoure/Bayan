@@ -56,11 +56,15 @@ class ProgressService extends ChangeNotifier {
   void _loadState() {
     if (_prefs == null) return;
 
-    final completedList = _prefs!.getStringList(_keyCompletedLessons) ?? [];
-    final Map<String, bool> completed = {for (var id in completedList) id: true};
-
-    final totalStars = _prefs!.getInt(_keyTotalStars) ?? 0;
-    final totalExercises = _prefs!.getInt(_keyTotalExercises) ?? 0;
+    // Purge any previously saved progress/completion/stars to ensure a completely clean start every session
+    _prefs!.remove(_keyCompletedLessons);
+    _prefs!.remove(_keyTotalStars);
+    _prefs!.remove(_keyTotalExercises);
+    for (var key in _prefs!.getKeys().toList()) {
+      if (key.startsWith('score_')) {
+        _prefs!.remove(key);
+      }
+    }
 
     _soundEnabled = _prefs!.getBool(_keySoundEnabled) ?? true;
     _showTashkeel = _prefs!.getBool(_keyShowTashkeel) ?? true;
@@ -72,55 +76,16 @@ class ProgressService extends ChangeNotifier {
     _spotlightReading = _prefs!.getBool(_keySpotlightReading) ?? true;
     _nlpAutoAnalysis = _prefs!.getBool(_keyNlpAutoAnalysis) ?? true;
 
-    // Load lesson scores
-    final Map<String, int> lessonScores = {};
-    for (var key in _prefs!.getKeys()) {
-      if (key.startsWith('score_lesson_')) {
-        final lessonId = key.replaceFirst('score_lesson_', '');
-        lessonScores[lessonId] = _prefs!.getInt(key) ?? 0;
-      }
-    }
-
-    // Load grade scores
-    final Map<String, int> gradeScores = {};
-    for (var key in _prefs!.getKeys()) {
-      if (key.startsWith('score_grade_')) {
-        final gradeId = key.replaceFirst('score_grade_', '');
-        gradeScores[gradeId] = _prefs!.getInt(key) ?? 0;
-      }
-    }
-
-    _progress = UserProgress(
-      completedLessons: completed,
-      lessonScores: lessonScores,
-      gradeScores: gradeScores,
-      totalStars: totalStars,
-      totalExercisesCompleted: totalExercises,
-    );
+    _progress = UserProgress();
 
     notifyListeners();
   }
 
-  /// Marks a lesson as successfully completed and adds stars.
-  Future<void> markLessonCompleted(String lessonId, {int starsEarned = 3}) async {
+  /// In-memory notification only without persistent saving, ensuring every app launch starts identically
+  Future<void> markLessonCompleted(String lessonId, {int starsEarned = 0}) async {
     final completed = Map<String, bool>.from(_progress.completedLessons);
     completed[lessonId] = true;
-
-    final newStars = _progress.totalStars + starsEarned;
-    final newExercises = _progress.totalExercisesCompleted + 1;
-
-    _progress = _progress.copyWith(
-      completedLessons: completed,
-      totalStars: newStars,
-      totalExercisesCompleted: newExercises,
-    );
-
-    if (_prefs != null) {
-      await _prefs!.setStringList(_keyCompletedLessons, completed.keys.toList());
-      await _prefs!.setInt(_keyTotalStars, newStars);
-      await _prefs!.setInt(_keyTotalExercises, newExercises);
-    }
-
+    _progress = _progress.copyWith(completedLessons: completed);
     notifyListeners();
   }
 
@@ -228,10 +193,29 @@ class ProgressService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Resets all student progress and statistics.
-  Future<void> resetProgress() async {
+  /// Resets display and classroom presentation settings to defaults.
+  Future<void> resetSettingsToDefault() async {
+    _soundEnabled = true;
+    _showTashkeel = true;
+    _fontSizeScale = 1.0;
+    _selectedFontFamily = 'Amiri';
+    _teacherModeEnabled = true;
+    _revealAnswersDirectly = false;
+    _timerDuration = 60;
+    _spotlightReading = false;
+    _nlpAutoAnalysis = false;
     _progress = UserProgress();
+
     if (_prefs != null) {
+      await _prefs!.remove(_keySoundEnabled);
+      await _prefs!.remove(_keyShowTashkeel);
+      await _prefs!.remove(_keyFontSizeScale);
+      await _prefs!.remove(_keySelectedFontFamily);
+      await _prefs!.remove(_keyTeacherModeEnabled);
+      await _prefs!.remove(_keyRevealAnswersDirectly);
+      await _prefs!.remove(_keyTimerDuration);
+      await _prefs!.remove(_keySpotlightReading);
+      await _prefs!.remove(_keyNlpAutoAnalysis);
       await _prefs!.remove(_keyCompletedLessons);
       await _prefs!.remove(_keyTotalStars);
       await _prefs!.remove(_keyTotalExercises);
@@ -242,5 +226,10 @@ class ProgressService extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  /// Resets all student progress and statistics.
+  Future<void> resetProgress() async {
+    await resetSettingsToDefault();
   }
 }

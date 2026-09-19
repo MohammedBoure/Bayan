@@ -1418,7 +1418,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.star_rounded, color: AppTheme.accentAmber, size: 28),
+                    Icon(Icons.lightbulb_rounded, color: AppTheme.accentAmber, size: 28),
                     SizedBox(width: 8),
                     Text(
                       'خُلاصَةُ الدَّرْسِ لِلتَّلامِيذِ:',

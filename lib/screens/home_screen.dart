@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import 'grade_selection_screen.dart';
-import 'progress_results_screen.dart';
 import 'settings_screen.dart';
+
 
 /// [01] الشاشة الرئيسية (Home Screen)
 /// Scaled and optimized for Classroom Data Show projectors and lecture halls.
@@ -30,50 +30,18 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top App Bar with Data Show Badge & Star Tracker
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 16,
-                      runSpacing: 12,
+                    // Top App Bar with Data Show Badge & Settings
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Completed lessons badge
-                        ListenableBuilder(
-                          listenable: progressService,
-                          builder: (context, _) {
-                            final completedCount = progressService.progress.completedLessons.length;
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryTeal.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: AppTheme.primaryTeal, width: 2),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 28),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '$completedCount دُرُوسٌ مُنْجَزَةٌ',
-                                    style: const TextStyle(
-                                      color: AppTheme.primaryDark,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                         // Data Show Projection Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryTeal.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
+                            border: Border.all(color: AppTheme.primaryTeal, width: 1.8),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -85,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                                 style: TextStyle(
                                   color: AppTheme.primaryTeal,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 16,
                                 ),
                               ),
                             ],
@@ -233,11 +201,11 @@ class HomeScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(24),
                                   ),
                                 ),
-                                icon: const Icon(Icons.play_circle_filled_rounded, size: 40, color: Colors.white),
+                                icon: const Icon(Icons.menu_book_rounded, size: 38, color: Colors.white),
                                 label: const FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    'اِبْـدَأْ دَرْسَ اليَوْمِ فِي الصَّفِّ',
+                                    'دُخُولٌ إِلَى دُرُوسِ المِنْهَاجِ',
                                     style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
@@ -247,89 +215,35 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 16),
 
-                            // Sub-actions Row
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => ProgressResultsScreen(progressService: progressService),
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accentAmber.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: AppTheme.accentAmber, width: 2),
-                                      ),
-                                      child: const FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.emoji_events_rounded, color: AppTheme.accentAmber, size: 28),
-                                            SizedBox(width: 10),
-                                            Text(
-                                              'سِجِلُّ الإِنْجَازِ',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textDark,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                            // Classroom Settings Action
+                            SizedBox(
+                              height: 64,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => SettingsScreen(progressService: progressService),
                                     ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primaryTeal,
+                                  side: const BorderSide(color: AppTheme.primaryTeal, width: 2),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => SettingsScreen(progressService: progressService),
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryLight,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: AppTheme.primaryTeal, width: 2),
-                                      ),
-                                      child: const FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.tune_rounded, color: AppTheme.primaryTeal, size: 28),
-                                            SizedBox(width: 10),
-                                            Text(
-                                              'الإِعْدَادَاتُ',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.primaryDark,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                                icon: const Icon(Icons.tune_rounded, size: 28),
+                                label: const Text(
+                                  'إِعْدَادَاتُ العَرْضِ الصَّفِّيِّ',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         );

@@ -105,8 +105,7 @@ class LessonsListScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         ...List.generate(grade.lessons.length, (index) {
                           final lesson = grade.lessons[index];
-                          final isCompleted = progressService.progress.isLessonCompleted(lesson.id);
-                          return _buildLessonItem(context, lesson, index + 1, isCompleted);
+                          return _buildLessonItem(context, lesson, index + 1);
                         }),
                       ],
                     );
@@ -192,7 +191,7 @@ class LessonsListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLessonItem(BuildContext context, LessonModel lesson, int number, bool isCompleted) {
+  Widget _buildLessonItem(BuildContext context, LessonModel lesson, int number) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -213,8 +212,8 @@ class LessonsListScreen extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isCompleted ? AppTheme.successGreen : const Color(0xFFCBD5E1),
-              width: isCompleted ? 2.5 : 1.5,
+              color: const Color(0xFFCBD5E1),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
@@ -231,22 +230,18 @@ class LessonsListScreen extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? AppTheme.successGreen.withValues(alpha: 0.15)
-                      : AppTheme.primaryTeal.withValues(alpha: 0.12),
+                  color: AppTheme.primaryTeal.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: isCompleted
-                      ? const Icon(Icons.check_circle_rounded, color: AppTheme.successGreen, size: 34)
-                      : Text(
-                          '$number',
-                          style: const TextStyle(
-                            color: AppTheme.primaryTeal,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 24,
-                          ),
-                        ),
+                  child: Text(
+                    '$number',
+                    style: const TextStyle(
+                      color: AppTheme.primaryTeal,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 24,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 18),

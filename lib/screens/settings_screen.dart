@@ -21,9 +21,9 @@ class SettingsScreen extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('إِعَادَةُ ضَبْطِ سِجِلِّ الفَصْلِ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          title: const Text('اسْتِعَادَةُ الإِعْدَادَاتِ الاِفْتِرَاضِيَّةِ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           content: const Text(
-            'هل أنت متأكد من رغبتك في مسح تقدم الدروس المنجزة والبدء من جديد مع فوج آخر؟',
+            'هَلْ تَرْغَبُ فِي إِعَادَةِ ضَبْطِ جَمِيعِ إِعْدَادَاتِ العَرْضِ (حَجْمُ الخَطِّ، الصَّوْتُ، المُؤَقِّتُ) إِلَى الوَضْعِ الاِفْتِرَاضِيِّ؟',
             style: TextStyle(fontSize: 18),
           ),
           actions: [
@@ -33,16 +33,16 @@ class SettingsScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                await progressService.resetProgress();
+                await progressService.resetSettingsToDefault();
                 if (context.mounted) {
                   Navigator.of(ctx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تمت إعادة ضبط سجل الفصل بنجاح.')),
+                    const SnackBar(content: Text('تَمَّتِ اسْتِعَادَةُ الإِعْدَادَاتِ الاِفْتِرَاضِيَّةِ بِنَجَاحٍ.')),
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
-              child: const Text('نَعَمْ، إِعَادَةُ الضَّبْطِ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryTeal),
+              child: const Text('نَعَمْ، اسْتِعَادَةُ الاِفْتِرَاضِيِّ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -316,8 +316,8 @@ class SettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // 4. Data Management & Reset Section
-              _buildSectionHeader('إِدَارَةُ السِّجِلِّ وَالفُصُولِ الدِّرَاسِيَّةِ:'),
+              // 4. Reset Settings Section
+              _buildSectionHeader('إِعَادَةُ الضَّبْطِ:'),
               const SizedBox(height: 14),
 
               Container(
@@ -328,13 +328,13 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  leading: const Icon(Icons.restart_alt_rounded, color: AppTheme.errorRed, size: 36),
+                  leading: const Icon(Icons.restart_alt_rounded, color: AppTheme.primaryTeal, size: 36),
                   title: const Text(
-                    'إِعَادَةُ تَعْيِينِ سِجِلِّ الإِنْجَازِ لِفَصْلٍ جَدِيدٍ',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.errorRed, fontSize: 20),
+                    'اسْتِعَادَةُ إِعْدَادَاتِ العَرْضِ الاِفْتِرَاضِيَّةِ',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryTeal, fontSize: 20),
                   ),
                   subtitle: const Text(
-                    'إعادة تعيين الدروس المكتملة لبدء عرض جديد مع فوج أو فصل آخر',
+                    'إعادة ضبط حجم الخط، المؤقت، والصوت إلى القيم الأولية الافتراضية',
                     style: TextStyle(fontSize: 16),
                   ),
                   onTap: () => _confirmReset(context),

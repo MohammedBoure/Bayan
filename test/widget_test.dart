@@ -128,7 +128,7 @@ void main() {
 
     expect(find.textContaining('بُسْتَانُ النَّحْوِ'), findsWidgets);
     expect(find.textContaining('Data Show'), findsOneWidget);
-    expect(find.textContaining('دَرْسَ اليَوْمِ'), findsOneWidget);
+    expect(find.textContaining('دُخُولٌ إِلَى دُرُوسِ المِنْهَاجِ'), findsOneWidget);
   });
 
   test('Grade 3 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
