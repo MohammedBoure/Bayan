@@ -15,6 +15,9 @@ class ProgressService extends ChangeNotifier {
   static const String _keyTimerDuration = 'timer_duration';
   static const String _keySpotlightReading = 'spotlight_reading';
   static const String _keyNlpAutoAnalysis = 'nlp_auto_analysis';
+  static const String _keySelectedFontFamily = 'selected_font_family';
+
+  static const String defaultFontFamily = 'NotoNaskhArabic';
 
   SharedPreferences? _prefs;
   UserProgress _progress = UserProgress();
@@ -22,6 +25,7 @@ class ProgressService extends ChangeNotifier {
   bool _soundEnabled = true;
   bool _showTashkeel = true;
   double _fontSizeScale = 1.0;
+  String _selectedFontFamily = defaultFontFamily;
   bool _teacherModeEnabled = true;
   bool _revealAnswersDirectly = false;
   int _timerDuration = 45; // 0 = no timer, 30, 45, 60, 90 seconds
@@ -32,6 +36,7 @@ class ProgressService extends ChangeNotifier {
   bool get soundEnabled => _soundEnabled;
   bool get showTashkeel => _showTashkeel;
   double get fontSizeScale => _fontSizeScale;
+  String get selectedFontFamily => _selectedFontFamily;
   bool get teacherModeEnabled => _teacherModeEnabled;
   bool get revealAnswersDirectly => _revealAnswersDirectly;
   int get timerDuration => _timerDuration;
@@ -60,6 +65,7 @@ class ProgressService extends ChangeNotifier {
     _soundEnabled = _prefs!.getBool(_keySoundEnabled) ?? true;
     _showTashkeel = _prefs!.getBool(_keyShowTashkeel) ?? true;
     _fontSizeScale = _prefs!.getDouble(_keyFontSizeScale) ?? 1.0;
+    _selectedFontFamily = _prefs!.getString(_keySelectedFontFamily) ?? defaultFontFamily;
     _teacherModeEnabled = _prefs!.getBool(_keyTeacherModeEnabled) ?? true;
     _revealAnswersDirectly = _prefs!.getBool(_keyRevealAnswersDirectly) ?? false;
     _timerDuration = _prefs!.getInt(_keyTimerDuration) ?? 45;
@@ -164,6 +170,15 @@ class ProgressService extends ChangeNotifier {
     _fontSizeScale = scale;
     if (_prefs != null) {
       await _prefs!.setDouble(_keyFontSizeScale, scale);
+    }
+    notifyListeners();
+  }
+
+  /// Updates selected Arabic font family.
+  Future<void> setSelectedFontFamily(String family) async {
+    _selectedFontFamily = family;
+    if (_prefs != null) {
+      await _prefs!.setString(_keySelectedFontFamily, family);
     }
     notifyListeners();
   }

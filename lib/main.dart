@@ -27,15 +27,20 @@ class NahwApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'بستان النحو العربي',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: HomeScreen(progressService: progressService),
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: child ?? const SizedBox(),
+    return ListenableBuilder(
+      listenable: progressService,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'بستان النحو العربي',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildTheme(fontFamily: progressService.selectedFontFamily),
+          home: HomeScreen(progressService: progressService),
+          builder: (context, child) {
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: child ?? const SizedBox(),
+            );
+          },
         );
       },
     );

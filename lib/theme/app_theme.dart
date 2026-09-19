@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Centralized application theme optimized for Classroom Lectures & Data Show Projectors.
 /// Built specifically for elementary children (7-11 years old) with high-contrast,
-/// prominent, and large Arabic typography (Cairo), bold touch targets, and vibrant color coding.
+/// prominent, and large Arabic typography (Noto Naskh Arabic), bold touch targets, and vibrant color coding.
 class AppTheme {
   // Brand Palette - High Visibility on Projectors
   static const Color primaryTeal = Color(0xFF00796B); // Deep Emerald Teal
@@ -31,15 +30,56 @@ class AppTheme {
   static const Color errorRed = Color(0xFFB71C1C);
   static const Color cardShadow = Color(0x1E000000);
 
-  /// Light theme definition tuned for Data Show projectors & large screens
-  static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.cairoTextTheme();
+  /// Human-readable Arabic labels for available font families.
+  static String getFontLabel(String fontFamily) {
+    switch (fontFamily) {
+      case 'NotoNaskhArabic':
+        return 'خط النسخ المدرسي (المعتمد في المناهج والكتب المدرسية - موصى به)';
+      case 'ReadexPro':
+        return 'خط القراءة التعليمي السلس (Readex Pro - مريح ومبسط للأطفال)';
+      case 'Amiri':
+        return 'خط النسخ الأصيل (أميري - كلاسيكي شديد الوضوح)';
+      case 'Cairo':
+        return 'الخط الحديث (Cairo)';
+      default:
+        return fontFamily;
+    }
+  }
+
+  /// Default theme using the primary school Naskh font.
+  static ThemeData get lightTheme => buildTheme();
+
+  /// Builds application theme with the specified Arabic font family.
+  /// Designed specifically for elementary children (7-11 years old) with
+  /// crystal-clear diacritical marks (Tashkeel) and high visibility on classroom projectors.
+  static ThemeData buildTheme({String fontFamily = 'NotoNaskhArabic'}) {
+    final fallbacks = const ['NotoNaskhArabic', 'ReadexPro', 'Amiri', 'Segoe UI', 'Arial'];
+
+    TextStyle makeTextStyle({
+      required double fontSize,
+      FontWeight fontWeight = FontWeight.normal,
+      Color color = textDark,
+      double height = 1.6,
+      TextDecoration? decoration,
+    }) {
+      return TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fallbacks,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        height: height,
+        decoration: decoration,
+      );
+    }
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: primaryTeal,
       scaffoldBackgroundColor: backgroundLight,
+      fontFamily: fontFamily,
+      fontFamilyFallback: fallbacks,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryTeal,
         primary: primaryTeal,
@@ -48,45 +88,48 @@ class AppTheme {
         surface: surfaceWhite,
         error: errorRed,
       ),
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.cairo(
+      textTheme: TextTheme(
+        displayLarge: makeTextStyle(
           fontSize: 38,
           fontWeight: FontWeight.bold,
           color: textDark,
-          height: 1.3,
+          height: 1.45,
         ),
-        displayMedium: GoogleFonts.cairo(
+        displayMedium: makeTextStyle(
           fontSize: 30,
           fontWeight: FontWeight.bold,
           color: textDark,
-          height: 1.35,
+          height: 1.5,
         ),
-        titleLarge: GoogleFonts.cairo(
+        titleLarge: makeTextStyle(
           fontSize: 26,
           fontWeight: FontWeight.w800,
           color: textDark,
+          height: 1.55,
         ),
-        titleMedium: GoogleFonts.cairo(
+        titleMedium: makeTextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: textDark,
-        ),
-        bodyLarge: GoogleFonts.cairo(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textDark,
-          height: 1.65,
-        ),
-        bodyMedium: GoogleFonts.cairo(
-          fontSize: 17,
-          fontWeight: FontWeight.w500,
-          color: textMuted,
           height: 1.6,
         ),
-        labelLarge: GoogleFonts.cairo(
+        bodyLarge: makeTextStyle(
+          fontSize: 21,
+          fontWeight: FontWeight.w600,
+          color: textDark,
+          height: 1.85, // Generous line height ensures zero diacritical clipping
+        ),
+        bodyMedium: makeTextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+          color: textMuted,
+          height: 1.75,
+        ),
+        labelLarge: makeTextStyle(
           fontSize: 19,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+          height: 1.5,
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -94,10 +137,11 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.cairo(
+        titleTextStyle: makeTextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+          height: 1.4,
         ),
       ),
       cardTheme: CardThemeData(
@@ -118,9 +162,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          textStyle: GoogleFonts.cairo(
+          textStyle: makeTextStyle(
             fontSize: 19,
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),
@@ -132,9 +177,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          textStyle: GoogleFonts.cairo(
+          textStyle: makeTextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
+            color: primaryTeal,
           ),
         ),
       ),

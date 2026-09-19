@@ -13,3 +13,4 @@ This directory contains automated unit and widget test suites for the Arabic Gra
   7. Flutter application startup and home screen rendering for classroom projectors.
   8. Grade 3 authentic curriculum pack structure (5 pedagogical stages, authentic reading texts, and 16+ activities).
   9. Teacher presentation settings persistence and configuration (`ProgressService`).
+  10. Child-friendly typography and Arabic font family switching (`AppTheme.buildTheme`).

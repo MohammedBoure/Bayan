@@ -7,6 +7,7 @@ import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
+import 'package:nahw_app/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -175,6 +176,7 @@ void main() {
     expect(ps.timerDuration, equals(45));
     expect(ps.spotlightReading, isTrue);
     expect(ps.fontSizeScale, equals(1.0));
+    expect(ps.selectedFontFamily, equals('NotoNaskhArabic'));
     expect(ps.showTashkeel, isTrue);
 
     // Toggle teacher settings
@@ -193,6 +195,9 @@ void main() {
     await ps.setFontSizeScale(1.35);
     expect(ps.fontSizeScale, equals(1.35));
 
+    await ps.setSelectedFontFamily('ReadexPro');
+    expect(ps.selectedFontFamily, equals('ReadexPro'));
+
     await ps.setShowTashkeel(false);
     expect(ps.showTashkeel, isFalse);
 
@@ -202,6 +207,18 @@ void main() {
     await ps.setTimerDuration(45);
     await ps.setSpotlightReading(true);
     await ps.setFontSizeScale(1.2);
+    await ps.setSelectedFontFamily('NotoNaskhArabic');
     await ps.setShowTashkeel(true);
+  });
+
+  test('AppTheme builds child-friendly typography with custom font families', () {
+    final theme = AppTheme.buildTheme(fontFamily: 'NotoNaskhArabic');
+    expect(theme.textTheme.bodyLarge?.fontFamily, equals('NotoNaskhArabic'));
+    expect(theme.textTheme.displayLarge?.fontFamily, equals('NotoNaskhArabic'));
+    expect(theme.textTheme.bodyLarge?.height, greaterThanOrEqualTo(1.8));
+
+    final readexTheme = AppTheme.buildTheme(fontFamily: 'ReadexPro');
+    expect(readexTheme.textTheme.bodyLarge?.fontFamily, equals('ReadexPro'));
+    expect(AppTheme.getFontLabel('NotoNaskhArabic'), contains('النسخ المدرسي'));
   });
 }

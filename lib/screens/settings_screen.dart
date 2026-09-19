@@ -222,6 +222,85 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
+                    // Arabic Font Family Selector
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      leading: const Icon(Icons.font_download_rounded, color: AppTheme.primaryTeal, size: 34),
+                      title: const Text(
+                        'نَوْعُ الخَطِّ العَرَبِيِّ (Arabic Font Style)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                      subtitle: const Text(
+                        'اختر الخط المناسب للأطفال؛ خط النسخ المدرسي مخصص لسلامة رسم الحروف والتشكيل',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      trailing: DropdownButton<String>(
+                        value: progressService.selectedFontFamily,
+                        borderRadius: BorderRadius.circular(16),
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.primaryTeal),
+                        onChanged: (newFamily) {
+                          if (newFamily != null) {
+                            progressService.setSelectedFontFamily(newFamily);
+                          }
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'NotoNaskhArabic',
+                            child: Text('خَطُّ النَّسْخِ المَدْرَسِيِّ (مُوصَى بِهِ للأَطْفَال)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'ReadexPro',
+                            child: Text('خَطُّ القِرَاءَةِ التَّعْلِيمِيُّ (Readex Pro)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Amiri',
+                            child: Text('خَطُّ النَّسْخِ الأَصِيلُ (أميري)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Cairo',
+                            child: Text('الخَطُّ الرَّقْمِيُّ (Cairo)'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Live Font Preview
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3), width: 1.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.remove_red_eye_rounded, size: 20, color: AppTheme.primaryTeal),
+                              SizedBox(width: 8),
+                              Text(
+                                'مُعَايَنَةُ خَطِّ التَّشْكِيلِ وَالحُرُوفِ لِلتَّلَامِيذِ:',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '« قَرَأَ التِّلْمِيذُ النَّجِيبُ نَصَّ الْقِرَاءَةِ بِتَمَعُّنٍ، وَعَرَّفَ أَرْكَانَ الجُمْلَةِ الفِعْلِيَّةِ بِوُضُوحٍ. »',
+                            style: TextStyle(
+                              fontFamily: progressService.selectedFontFamily,
+                              fontSize: 22,
+                              height: 1.8,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, thickness: 1.2),
+
                     // Font Scaling Dropdown for Large Projection
                     ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
