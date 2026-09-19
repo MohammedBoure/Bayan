@@ -22,7 +22,6 @@
    - **المحلل اللغوي والصرفي الآلي**: تفكيك الجمل إلى رموز (Tokens)، تصنيف أقسام الكلمة (اسم، فعل، حرف)، وتحديد أزمنة الأفعال (ماضٍ، مضارع، أمر) والأركان التركيبية (فاعل، مفعول به، اسم مجرور).
    - **المُشكّل الآلي**: اقتراح التشكيل والضبط الإعرابي لأواخر الكلمات بناءً على قواعد النحو.
    - **المُدقق النحوي الذكي**: فحص الأخطاء الإعرابية الشائعة (مثل نصب الفاعل أو رفع المفعول به) وتقديم التغذية الراجعة الفورية.
-   - **المختبر اللغوي التفاعلي (`nlp_lab_screen.dart`)**: أداة حية تتيح للمعلم والمتعلم إدخال أي جملة وتحليلها وتدقيقها حاسوبياً فوراً.
 4. **الصور والمرفقات**:
    - تم تنزيل ودمج صور تعليمية ورسوم مناسبة للأطفال من مصادر مفتوحة وربطها ضمن مجلد `assets/images/`.
 
@@ -42,7 +41,7 @@
 | [`lib/data/`](file:///C:/Users/moham/Desktop/aze2/lib/data) | مناهج السنوات 3 و4 و5 والدروس المطابقة للكتاب المدرسي | [README.md](file:///C:/Users/moham/Desktop/aze2/lib/data/README.md) |
 | [`lib/services/`](file:///C:/Users/moham/Desktop/aze2/lib/services) | خدمات حفظ التقدم والنتائج وإعدادات المستخدم محلياً | [README.md](file:///C:/Users/moham/Desktop/aze2/lib/services/README.md) |
 | [`lib/widgets/`](file:///C:/Users/moham/Desktop/aze2/lib/widgets) | العناصر البصرية التفاعلية (الشاشات، تفكيك الجمل، نوافذ التعزيز) | [README.md](file:///C:/Users/moham/Desktop/aze2/lib/widgets/README.md) |
-| [`lib/screens/`](file:///C:/Users/moham/Desktop/aze2/lib/screens) | الشاشات التسع المعتمدة في وثيقة tasks.md بالإضافة للمختبر اللغوي | [README.md](file:///C:/Users/moham/Desktop/aze2/lib/screens/README.md) |
+| [`lib/screens/`](file:///C:/Users/moham/Desktop/aze2/lib/screens) | الشاشات الأساسية المعتمدة والمحسنة للعرض الصفي والبروجكتور | [README.md](file:///C:/Users/moham/Desktop/aze2/lib/screens/README.md) |
 | [`test/`](file:///C:/Users/moham/Desktop/aze2/test) | الاختبارات الآلية لمحرك اللسانيات الحاسوبية وواجهات التطبيق | [README.md](file:///C:/Users/moham/Desktop/aze2/test/README.md) |
 
 ---

@@ -107,6 +107,13 @@ class Grade3CurriculumPack {
           ComprehensionQuestion(question: 'لِمَاذَا تُعْتَبَرُ مِهْنَةُ الفَلَّاحِ شَاقَّةً وَمُتْعِبَةً؟', modelAnswer: 'لأَنَّهُ يَعْمَلُ بِسَاعِدَيْهِ فِي حَرِّ الشَّمْسِ وَيَبْذُلُ عَرَقَ جَبِينِهِ لِيَزْرَعَ لَنَا القَمْحَ.'),
           ComprehensionQuestion(question: 'مَنْ يَسْتَفِيدُ مِنْ خَيْرَاتِ هَذِهِ الأَرْضِ؟', modelAnswer: 'أَبْنَاءُ الوَطَنِ جَمِيعاً؛ فَنَحْنُ نَأْكُلُ الخُبْزَ وَالخُضَرَ وَالفَوَاكِهَ بِفَضْلِ جُهْدِ الفَلَّاحِ.'),
         ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ (خِدْمَةُ الأَرْضِ)',
+            assetPath: 'assets/sounds/3_1.wav',
+            paragraphIndices: [0, 1, 2, 3, 4],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         triggerSentences: [
@@ -267,6 +274,13 @@ class Grade3CurriculumPack {
           ComprehensionQuestion(question: 'مَاذَا كَانَ سَيَفْعَلُ عُمَرُ يَوْمَ الاسْتِقْلَالِ؟', modelAnswer: 'يَحْمِلُ رَايَتَهُ وَيَجُوبُ بِهَا شَوَارِعَ الجَزَائِرِ وَيُرَدِّدُ أَنَاشِيدَ الحُرِّيَّةِ.'),
           ComprehensionQuestion(question: 'مَا هِيَ الصِّفَاتُ الَّتِي تَحَلَّى بِهَا هَذَا البَطَلُ الصَّغِيرُ؟', modelAnswer: 'الإِرَادَةُ، الشَّجَاعَةُ، الذَّكَاءُ، وَاليَقَظَةُ.'),
           ComprehensionQuestion(question: 'كَيْفَ سَاعَدَ عُمَرُ رُفَقَاءَهُ المُجَاهِدِينَ فِي القَصَبَةِ؟', modelAnswer: 'كَانَ عَيْناً وَأُذُناً لَهُمْ، وَيَنْقُلُ الرَّسَائِلَ السِّرِّيَّةَ فِي مَحْفَظَتِهِ مُجْتَازاً الحَوَاجِزَ.'),
+        ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ (عُمَرُ يَاسَفُ)',
+            assetPath: 'assets/sounds/3_2.wav',
+            paragraphIndices: [0, 1, 2, 3, 4],
+          ),
         ],
       ),
       discovery: const GrammarDiscoveryModel(
@@ -433,6 +447,18 @@ class Grade3CurriculumPack {
           ComprehensionQuestion(question: 'كَيْفَ عَرَفَ حَمْدِي أَنَّ مَا تُخِيطُهُ أُمُّهُ هُوَ عَلَمُ الجَزَائِرِ؟', modelAnswer: 'مِنْ أَلْوَانِهِ: الأَبْيَضِ وَالأَخْضَرِ، وَالنَّجْمَةِ وَالهِلالِ الأَحْمَرَيْنِ فِي وَسَطِهِ.'),
           ComprehensionQuestion(question: 'بِمَاذَا حَذَّرَتِ الأُمُّ ابْنَهَا حَمْدِي؟', modelAnswer: 'قَالَتْ لَهُ: «احْذَرْ فَالْيَوْمَ مُظَاهَرَاتٌ فِي الشَّوَارِعِ!» مستعملةً فعل الأمر.'),
           ComprehensionQuestion(question: 'مَاذَا فَعَلَ حَمْدِي بِالعَلَمِ عِنْدَمَا وَصَلَ إِلَى الحَيِّ المُزْدَحِمِ؟', modelAnswer: 'أَخْرَجَهُ بِكُلِّ فَخْرٍ وَشَجَاعَةٍ وَأَطْلَقَهُ لِلرِّيحِ وَهَتَفَ: «تَحْيَا الجَزَائِرُ!» فِي الصَّفِّ الأَوَّلِ.'),
+        ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 1 (الفقرات 1 - 3)',
+            assetPath: 'assets/sounds/3_3/1.wav',
+            paragraphIndices: [0, 1, 2],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 2 (الفقرات 4 - 5)',
+            assetPath: 'assets/sounds/3_3/2.wav',
+            paragraphIndices: [3, 4],
+          ),
         ],
       ),
       discovery: const GrammarDiscoveryModel(

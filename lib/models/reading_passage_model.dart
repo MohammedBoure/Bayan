@@ -45,6 +45,19 @@ class GrammarDiscoveryModel {
   });
 }
 
+/// Represents an audio track for a reading passage (whole text or specific paragraphs).
+class ReadingAudioTrack {
+  final String title;
+  final String assetPath;
+  final List<int> paragraphIndices;
+
+  const ReadingAudioTrack({
+    required this.title,
+    required this.assetPath,
+    this.paragraphIndices = const [],
+  });
+}
+
 /// Represents the reading text and authentic context anchoring the grammar lesson.
 class ReadingPassageModel {
   final String title;
@@ -52,6 +65,7 @@ class ReadingPassageModel {
   final List<String> paragraphs;
   final List<VocabularyItem> vocabulary;
   final List<ComprehensionQuestion> comprehensionQuestions;
+  final List<ReadingAudioTrack> audioTracks;
 
   const ReadingPassageModel({
     required this.title,
@@ -59,7 +73,9 @@ class ReadingPassageModel {
     required this.paragraphs,
     required this.vocabulary,
     required this.comprehensionQuestions,
+    this.audioTracks = const [],
   });
 
   String get fullText => paragraphs.join('\n\n');
+  bool get hasAudio => audioTracks.isNotEmpty;
 }

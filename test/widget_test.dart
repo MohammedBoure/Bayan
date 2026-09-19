@@ -8,6 +8,7 @@ import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
 import 'package:nahw_app/theme/app_theme.dart';
+import 'package:nahw_app/widgets/celebration_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -220,5 +221,34 @@ void main() {
     final readexTheme = AppTheme.buildTheme(fontFamily: 'ReadexPro');
     expect(readexTheme.textTheme.bodyLarge?.fontFamily, equals('ReadexPro'));
     expect(AppTheme.getFontLabel('NotoNaskhArabic'), contains('النسخ المدرسي'));
+  });
+
+  testWidgets('FeedbackDialog displays both retry and continue options on wrong answer', (WidgetTester tester) async {
+    bool retried = false;
+    bool continued = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FeedbackDialog(
+            isCorrect: false,
+            title: 'إِجَابَةٌ غَيْرُ صَحِيحَةٍ',
+            message: 'حاول مجدداً',
+            ruleSummary: 'قاعدة النحو',
+            onRetry: () => retried = true,
+            onContinue: () => continued = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('إِعَادَةُ المُحَاوَلَةِ'), findsOneWidget);
+    expect(find.text('الإِكْمَالُ وَالمُتَابَعَةُ'), findsOneWidget);
+
+    await tester.tap(find.text('إِعَادَةُ المُحَاوَلَةِ'));
+    expect(retried, isTrue);
+
+    await tester.tap(find.text('الإِكْمَالُ وَالمُتَابَعَةُ'));
+    expect(continued, isTrue);
   });
 }

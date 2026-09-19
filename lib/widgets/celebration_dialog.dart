@@ -9,6 +9,7 @@ class FeedbackDialog extends StatelessWidget {
   final String message;
   final String ruleSummary;
   final VoidCallback onContinue;
+  final VoidCallback? onRetry;
 
   const FeedbackDialog({
     super.key,
@@ -17,6 +18,7 @@ class FeedbackDialog extends StatelessWidget {
     required this.message,
     required this.ruleSummary,
     required this.onContinue,
+    this.onRetry,
   });
 
   static Future<void> show({
@@ -26,6 +28,7 @@ class FeedbackDialog extends StatelessWidget {
     required String message,
     required String ruleSummary,
     required VoidCallback onContinue,
+    VoidCallback? onRetry,
   }) {
     return showDialog(
       context: context,
@@ -39,6 +42,12 @@ class FeedbackDialog extends StatelessWidget {
           Navigator.of(ctx).pop();
           onContinue();
         },
+        onRetry: onRetry == null
+            ? null
+            : () {
+                Navigator.of(ctx).pop();
+                onRetry();
+              },
       ),
     );
   }
@@ -128,28 +137,96 @@ class FeedbackDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
 
-                // Button: متابعة
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton.icon(
-                    onPressed: onContinue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: themeColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                    ),
-                    icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 28),
-                    label: const Text(
-                      'مُتَابَعَةُ التَّعَلُّمِ',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                // Actions: Retry and/or Continue
+                if (!isCorrect && onRetry != null)
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 460;
+                      final retryBtn = SizedBox(
+                        height: 60,
+                        child: ElevatedButton.icon(
+                          onPressed: onRetry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accentOrange,
+                            foregroundColor: Colors.white,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          icon: const Icon(Icons.replay_rounded, size: 28),
+                          label: const Text(
+                            'إِعَادَةُ المُحَاوَلَةِ',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+
+                      final continueBtn = SizedBox(
+                        height: 60,
+                        child: OutlinedButton.icon(
+                          onPressed: onContinue,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppTheme.primaryTeal, width: 2.5),
+                            foregroundColor: AppTheme.primaryTeal,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 28),
+                          label: const Text(
+                            'الإِكْمَالُ وَالمُتَابَعَةُ',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ),
+                      );
+
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            retryBtn,
+                            const SizedBox(height: 12),
+                            continueBtn,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: retryBtn),
+                          const SizedBox(width: 16),
+                          Expanded(child: continueBtn),
+                        ],
+                      );
+                    },
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton.icon(
+                      onPressed: onContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: themeColor,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 28),
+                      label: const Text(
+                        'مُتَابَعَةُ التَّعَلُّمِ',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

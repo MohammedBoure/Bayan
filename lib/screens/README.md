@@ -1,6 +1,6 @@
 # Screens Directory (`lib/screens`)
 
-This directory houses the 9 core application screens specified in `tasks.md` plus the enhanced offline Computational Linguistics Lab, fully optimized for classroom lectures on Data Show projector devices.
+This directory houses the 8 core application screens, fully optimized for classroom lectures on Data Show projector devices.
 
 ## Files:
 - [home_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/home_screen.dart): **[01] الصفحة الرئيسية** - Classroom landing dashboard featuring a 42px header, responsive 2-column widescreen layout, large start lesson button (76px height), and Data Show status indicator.
@@ -10,5 +10,4 @@ This directory houses the 9 core application screens specified in `tasks.md` plu
 - [interactive_activity_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/interactive_activity_screen.dart): **[05] النشاط التفاعلي الشامل** - Multi-engine interactive classroom screen supporting Multiple Choice, Drag-and-Drop blanks, 2-column and 3-column Categorization tables, Sentence word ordering, and Image matching with challenge timer and teacher answer reveals.
 - [quiz_evaluation_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/quiz_evaluation_screen.dart): **[07] التقويم** - Multi-question achievement quiz with 36px context sentences and prominent choices for whole-class engagement.
 - [progress_results_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/progress_results_screen.dart): **[08] النتيجة والتقدم** - Performance reports with a prominent percentage score badge, curriculum progression metrics (completed lessons, activities, and units), and grade achievement breakdown.
-- [settings_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/settings_screen.dart): **[09] شاشة الإعدادات الشاملة** - Configurable controls for Arabic Educational Font Styles (`NotoNaskhArabic`, `ReadexPro`, `Amiri`, `Cairo`) with real-time Tashkeel sample preview, Teacher Presentation Mode, Model Answer reveals, Classroom Challenge Timer duration, Reading Spotlight, Data Show font scaling, Tashkeel toggles, and offline NLP override management.
-- [nlp_lab_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/nlp_lab_screen.dart): **المختبر اللغوي الآلي الهجين** - Interactive Computational Linguistics interface featuring sentence type classification, bigram context analysis, automated diacritization, and an on-screen dialog for user overrides and feedback loops.
+- [settings_screen.dart](file:///C:/Users/moham/Desktop/aze2/lib/screens/settings_screen.dart): **[09] شاشة الإعدادات الشاملة** - Configurable controls for Arabic Educational Font Styles (`NotoNaskhArabic`, `ReadexPro`, `Amiri`, `Cairo`) with real-time Tashkeel sample preview, Teacher Presentation Mode, Model Answer reveals, Classroom Challenge Timer duration, Reading Spotlight, Data Show font scaling, Tashkeel toggles, and classroom cohort reset.

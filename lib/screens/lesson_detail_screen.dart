@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/lesson_model.dart';
 import '../models/reading_passage_model.dart';
-import '../nlp/arabic_clitic_stemmer.dart';
+import '../services/audio_player_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/audio_player_widget.dart';
 import '../widgets/sentence_parser_view.dart';
 import '../widgets/teacher_toolbar_widget.dart';
 import 'interactive_activity_screen.dart';
@@ -38,6 +39,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   int? _spotlightedParagraphIndex;
   int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها
   final Set<int> _revealedQuestionIndices = <int>{};
+  List<int> _audioHighlightedParagraphs = const [];
+
+  @override
+  void dispose() {
+    AudioPlayerService.instance.stop();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -49,6 +57,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       for (int i = 0; i < widget.lesson.readingPassage!.comprehensionQuestions.length; i++) {
         _revealedQuestionIndices.add(i);
       }
+    }
+    if (widget.lesson.readingPassage?.hasAudio == true) {
+      _audioHighlightedParagraphs = widget.lesson.readingPassage!.audioTracks.first.paragraphIndices;
     }
   }
 
@@ -79,94 +90,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     });
   }
 
-  void _inspectWord(String word) {
-    if (!widget.progressService.nlpAutoAnalysis) return;
-
-    final cleanWord = word.replaceAll(RegExp(r'[^\u0621-\u064A\u064B-\u0652]'), '');
-    if (cleanWord.isEmpty) return;
-
-    final stemResult = ArabicCliticStemmer.analyzeWord(cleanWord);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.smart_toy_rounded, color: AppTheme.verbColor, size: 30),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'التَّحْلِيلُ الصَّرْفِيُّ اللِّسَانِيُّ لِلْكَلِمَةِ:',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        const Text('الكَلِمَةُ', style: TextStyle(fontSize: 16, color: AppTheme.textMuted)),
-                        const SizedBox(height: 4),
-                        Text(cleanWord, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        const Text('السَّوَابِقُ (الـ، بـ، و...)', style: TextStyle(fontSize: 16, color: AppTheme.textMuted)),
-                        const SizedBox(height: 4),
-                        Text(
-                          stemResult.proclitics.isEmpty ? 'لا يُوجَد' : stemResult.proclitics.join(' + '),
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.particleColor),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        const Text('الأَصْلُ / الجِذْرُ', style: TextStyle(fontSize: 16, color: AppTheme.textMuted)),
-                        const SizedBox(height: 4),
-                        Text(
-                          stemResult.stem,
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.verbColor),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  icon: const Icon(Icons.check_rounded),
-                  label: const Text('إِغْلاقُ التَّحْلِيلِ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,6 +207,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         selected: isSelected,
                         onSelected: (selected) {
                           if (selected) {
+                            if (_activeStageIndex == 0 && idx != 0) {
+                              AudioPlayerService.instance.stop();
+                            }
                             setState(() {
                               _activeStageIndex = idx;
                             });
@@ -449,6 +375,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ),
           const Divider(height: 18, thickness: 1.2),
 
+          // Audio Narration Player
+          if (passage.hasAudio)
+            AudioPlayerWidget(
+              tracks: passage.audioTracks,
+              onTrackChanged: (indices) {
+                setState(() {
+                  _audioHighlightedParagraphs = indices;
+                });
+              },
+            ),
+
           // Paragraphs
           ...passage.paragraphs.asMap().entries.map((entry) {
             final idx = entry.key;
@@ -456,6 +393,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             final hasSpotlight = _spotlightedParagraphIndex != null;
             final isSpotlighted = _spotlightedParagraphIndex == idx;
             final isDimmed = hasSpotlight && !isSpotlighted;
+            final isAudioRelevant = _audioHighlightedParagraphs.contains(idx);
 
             return InkWell(
               onTap: () {
@@ -478,13 +416,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 decoration: BoxDecoration(
                   color: isSpotlighted
                       ? AppTheme.primaryLight
-                      : (isDimmed ? Colors.transparent : const Color(0xFFFAFAFA)),
+                      : (isAudioRelevant
+                          ? const Color(0xFFF0FDF4)
+                          : (isDimmed ? Colors.transparent : const Color(0xFFFAFAFA))),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isSpotlighted
                         ? AppTheme.primaryTeal
-                        : (isDimmed ? Colors.transparent : const Color(0xFFF1F5F9)),
-                    width: isSpotlighted ? 2.5 : 1,
+                        : (isAudioRelevant
+                            ? AppTheme.successGreen.withValues(alpha: 0.4)
+                            : (isDimmed ? Colors.transparent : const Color(0xFFF1F5F9))),
+                    width: isSpotlighted ? 2.5 : (isAudioRelevant ? 1.5 : 1),
                   ),
                   boxShadow: isSpotlighted
                       ? [
@@ -830,31 +772,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   color: AppTheme.primaryTeal,
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.psychology_alt_rounded, color: AppTheme.primaryTeal, size: 24),
-                    tooltip: 'تَحْلِيلٌ صَرْفِيٌّ لِسَانِيٌّ',
-                    onPressed: () => _inspectWord(vocab.word),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  'مَعْنًى',
+                  style: TextStyle(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryDark,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      'مَعْنًى',
-                      style: TextStyle(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryDark,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -928,11 +860,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     color: AppTheme.accentCoral,
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.psychology_alt_rounded, color: AppTheme.accentCoral, size: 24),
-                tooltip: 'تَحْلِيلٌ صَرْفِيٌّ لِسَانِيٌّ',
-                onPressed: () => _inspectWord(vocab.word),
               ),
             ],
           ),

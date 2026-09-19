@@ -38,6 +38,7 @@ class InteractiveActivityScreen extends StatefulWidget {
 
 class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   int _currentIndex = 0;
+  int _attemptKey = 0;
   int? _selectedOptionIndex;
   bool _submitted = false;
   bool _areAnswersRevealed = false;
@@ -93,32 +94,49 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _submitted = true;
     });
 
-    // Show [06] التغذية الراجعة (FeedbackDialog)
+    // Show [06] التغذية الراجعة (FeedbackDialog) with retry or continue options
     FeedbackDialog.show(
       context: context,
       isCorrect: isCorrect,
-      title: isCorrect ? 'أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ' : 'حَاوِلْ مَرَّةً أُخْرَى مَعَ مُعَلِّمِكَ',
+      title: isCorrect ? 'أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ' : 'إِجَابَةٌ غَيْرُ صَحِيحَةٍ - حَاوِلْ ثَانِيَةً',
       message: isCorrect ? _currentActivity.correctFeedback : _currentActivity.incorrectFeedback,
       ruleSummary: _currentActivity.ruleSummary,
-      onContinue: () {
-        if (_currentIndex < widget.activities.length - 1) {
-          setState(() {
-            _currentIndex++;
-            _selectedOptionIndex = null;
-            _submitted = false;
-            _categorizationValid = false;
-            _sentenceOrderValid = false;
-            _imageMatchValid = false;
-          });
-        } else {
-          // Completed all activities for this set
-          if (widget.lessonIdToComplete != null) {
-            widget.progressService.markLessonCompleted(widget.lessonIdToComplete!);
-          }
-          _showCompletionAlert();
-        }
-      },
+      onRetry: () => _retryCurrentActivity(),
+      onContinue: () => _proceedToNextActivity(),
     );
+  }
+
+  void _retryCurrentActivity() {
+    setState(() {
+      _attemptKey++;
+      _selectedOptionIndex = null;
+      _submitted = false;
+      _categorizationValid = false;
+      _sentenceOrderValid = false;
+      _imageMatchValid = false;
+      _areAnswersRevealed = false;
+    });
+  }
+
+  void _proceedToNextActivity() {
+    if (_currentIndex < widget.activities.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _attemptKey = 0;
+        _selectedOptionIndex = null;
+        _submitted = false;
+        _categorizationValid = false;
+        _sentenceOrderValid = false;
+        _imageMatchValid = false;
+        _areAnswersRevealed = false;
+      });
+    } else {
+      // Completed all activities for this set
+      if (widget.lessonIdToComplete != null) {
+        widget.progressService.markLessonCompleted(widget.lessonIdToComplete!);
+      }
+      _showCompletionAlert();
+    }
   }
 
   void _showCompletionAlert() {
@@ -244,7 +262,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                 if (widget.progressService.timerDuration > 0) ...[
                   const SizedBox(width: 20),
                   ClassroomTimerWidget(
-                    key: ValueKey(_currentIndex),
+                    key: ValueKey('${_currentIndex}_$_attemptKey'),
                     initialSeconds: widget.progressService.timerDuration,
                     onTimerFinished: () {
                       if (!_submitted) {
@@ -357,7 +375,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       case ActivityType.categorizationTwoCols:
       case ActivityType.categorizationThreeCols:
         return CategorizationBoardWidget(
-          key: ValueKey(_currentIndex),
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
           categories: _currentActivity.categories ?? ['الفئة الأولى', 'الفئة الثانية'],
           correctMapping: _currentActivity.categorizedItems ?? {},
           availableWords: _currentActivity.availableWords ?? _currentActivity.options,
@@ -368,7 +386,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
       case ActivityType.sentenceOrdering:
         return SentenceOrderingWidget(
-          key: ValueKey(_currentIndex),
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
           initialWords: _currentActivity.availableWords ?? _currentActivity.options,
           targetSequence: _currentActivity.orderedWords ?? _currentActivity.options,
           onValidationChanged: (isValid) {
@@ -378,7 +396,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
       case ActivityType.imageMatching:
         return ImageMatchingWidget(
-          key: ValueKey(_currentIndex),
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
           pairs: _currentActivity.imagePairs ?? {},
           onValidationChanged: (isValid) {
             _imageMatchValid = isValid;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/nlp_database_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
@@ -51,41 +50,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmClearOverrides(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('إِعَادَةُ تَعْيِينِ قَوَاعِدِ الأُسْتَاذِ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          content: const Text(
-            'هل تريد مسح التعديلات والإعرابات المخصصة التي تم حفظها في قاعدة بيانات المحلل المحلي والرجوع للضبط الافتراضي؟',
-            style: TextStyle(fontSize: 18),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إِلْغَاء', style: TextStyle(fontSize: 18)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await NlpDatabaseService.instance.clearAllUserCorrections();
-                if (context.mounted) {
-                  Navigator.of(ctx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تمت استعادة القواعد الافتراضية بنجاح.')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentOrange),
-              child: const Text('مَسْحُ التَّصْحِيحَاتِ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,22 +151,6 @@ class SettingsScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 16),
                       ),
                       secondary: const Icon(Icons.highlight_rounded, color: AppTheme.accentAmber, size: 32),
-                    ),
-                    const Divider(height: 1, thickness: 1.2),
-
-                    // Live NLP Tooltips on Reading
-                    SwitchListTile(
-                      value: progressService.nlpAutoAnalysis,
-                      onChanged: (val) => progressService.setNlpAutoAnalysis(val),
-                      title: const Text(
-                        'تَفْعِيلُ المُحَلِّلِ اللُّغَوِيِّ التَّفَاعُلِيِّ فِي النُّصُوصِ',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                      ),
-                      subtitle: const Text(
-                        'إمكانية لمس أي كلمة في نص القراءة لإعرابها وتجريد سوابقها فورياً',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      secondary: const Icon(Icons.auto_stories_rounded, color: AppTheme.verbColor, size: 32),
                     ),
                   ],
                 ),
@@ -365,44 +313,6 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
-
-              // 3. NLP Database & Teacher Overrides Section
-              _buildSectionHeader('المُحَلِّلُ اللُّغَوِيُّ وَقَاعِدَةُ بَيَانَاتِ الأُسْتَاذِ (Offline NLP Engine):'),
-              const SizedBox(height: 14),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.8),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      leading: const Icon(Icons.storage_rounded, color: AppTheme.verbColor, size: 34),
-                      title: const Text(
-                        'تَعْدِيلَاتُ وَقَوَاعِدُ الأُسْتَاذِ المَحْفُوظَةُ مَحَلِّيّاً',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                      ),
-                      subtitle: Text(
-                        'عدد الكلمات والإعرابات المخصصة المحفوظة: ${NlpDatabaseService.instance.currentOverrides.length} قاعدة',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      trailing: OutlinedButton.icon(
-                        onPressed: () => _confirmClearOverrides(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.accentOrange,
-                          side: const BorderSide(color: AppTheme.accentOrange, width: 2),
-                        ),
-                        icon: const Icon(Icons.cleaning_services_rounded, size: 20),
-                        label: const Text('مَسْحُ التَّعْدِيلَاتِ'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
               const SizedBox(height: 32),
 

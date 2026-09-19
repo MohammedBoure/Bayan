@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import 'grade_selection_screen.dart';
-import 'nlp_lab_screen.dart';
 import 'progress_results_screen.dart';
 import 'settings_screen.dart';
 
@@ -243,39 +242,6 @@ class HomeScreen extends StatelessWidget {
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-
-                            // Computational Linguistics Lab Button
-                            SizedBox(
-                              height: 66,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const NlpLabScreen(),
-                                    ),
-                                  );
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: AppTheme.verbColor, width: 3),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.smart_toy_rounded, size: 32, color: AppTheme.verbColor),
-                                label: const FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'المُخْتَبَرُ اللُّغَوِيُّ الذَّكِيُّ (المُحَلِّلُ الآلِيُّ)',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.verbColor,
                                     ),
                                   ),
                                 ),
