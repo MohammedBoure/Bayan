@@ -7,6 +7,7 @@ import 'package:nahw_app/models/reading_passage_model.dart';
 import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/screens/lesson_detail_screen.dart';
+import 'package:nahw_app/screens/settings_screen.dart';
 import 'package:nahw_app/services/audio_player_service.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
@@ -185,10 +186,11 @@ void main() {
     expect(ps.timerDuration, equals(45));
     expect(ps.spotlightReading, isTrue);
     expect(ps.fontSizeScale, equals(1.0));
+    expect(ps.uiScale, equals(1.0));
     expect(ps.selectedFontFamily, equals('NotoNaskhArabic'));
     expect(ps.showTashkeel, isTrue);
 
-    // Toggle teacher settings
+    // Toggle teacher settings and scaling
     await ps.setTeacherModeEnabled(false);
     expect(ps.teacherModeEnabled, isFalse);
 
@@ -204,6 +206,13 @@ void main() {
     await ps.setFontSizeScale(1.35);
     expect(ps.fontSizeScale, equals(1.35));
 
+    await ps.setUiScale(1.25);
+    expect(ps.uiScale, equals(1.25));
+
+    await ps.setDisplayProfile(uiScale: 0.85, fontScale: 1.15);
+    expect(ps.uiScale, equals(0.85));
+    expect(ps.fontSizeScale, equals(1.15));
+
     await ps.setSelectedFontFamily('ReadexPro');
     expect(ps.selectedFontFamily, equals('ReadexPro'));
 
@@ -215,7 +224,8 @@ void main() {
     await ps.setRevealAnswersDirectly(false);
     await ps.setTimerDuration(45);
     await ps.setSpotlightReading(true);
-    await ps.setFontSizeScale(1.2);
+    await ps.setUiScale(1.0);
+    await ps.setFontSizeScale(1.0);
     await ps.setSelectedFontFamily('NotoNaskhArabic');
     await ps.setShowTashkeel(true);
   });
@@ -409,5 +419,79 @@ void main() {
     expect(find.text('فَرَغَ'), findsOneWidget);
     expect(find.text('نَائِمَةً'), findsOneWidget);
     expect(find.text('إِخْفَاءُ جَمِيعِ الأَضْدَادِ'), findsOneWidget);
+  });
+
+  testWidgets('SettingsScreen allows configuring display profiles, general UI scale, and font scaling', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SettingsScreen(progressService: ps),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify sections exist
+    expect(find.textContaining('أَوْضَاعُ العَرْضِ الجَاهِزَةُ لِمُخْتَلِفِ الشَّاشَاتِ'), findsOneWidget);
+    expect(find.textContaining('حَاسُوبٌ مَحْمُولٌ'), findsOneWidget);
+    expect(find.textContaining('سَبُّورَةٌ ذَكِيَّةٌ'), findsOneWidget);
+    expect(find.textContaining('حَجْمُ البَرْنَامِجِ وَالوَاجِهَةِ بِصِفَةٍ عَامَّةٍ'), findsOneWidget);
+    expect(find.textContaining('حَجْمُ الخُطُوطِ وَالنُّصُوصِ التَّعْلِيمِيَّةِ'), findsOneWidget);
+
+    // Tap Laptop profile
+    final laptopFinder = find.text('حَاسُوبٌ مَحْمُولٌ');
+    await tester.ensureVisible(laptopFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(laptopFinder);
+    await tester.pumpAndSettle();
+    expect(ps.uiScale, equals(0.85));
+    expect(ps.fontSizeScale, equals(1.0));
+
+    // Tap Data Show profile
+    final dataShowFinder = find.text('جِهَازُ عَرْضٍ (Data Show)');
+    await tester.ensureVisible(dataShowFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(dataShowFinder);
+    await tester.pumpAndSettle();
+    expect(ps.uiScale, equals(1.25));
+    expect(ps.fontSizeScale, equals(1.30));
+
+    // Tap UI Scale preset chip 100%
+    final standardChipFinder = find.text('100% (قِيَاسِي - افْتِرَاضِي)');
+    await tester.ensureVisible(standardChipFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(standardChipFinder);
+    await tester.pumpAndSettle();
+    expect(ps.uiScale, equals(1.0));
+  });
+
+  testWidgets('NahwApp renders seamlessly under different UI scales and font scales', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setUiScale(1.25);
+    await ps.setFontSizeScale(1.20);
+
+    await tester.pumpWidget(NahwApp(progressService: ps));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('بُسْتَانُ النَّحْوِ'), findsWidgets);
+    final startFinder = find.textContaining('دُخُولٌ إِلَى دُرُوسِ المِنْهَاجِ');
+    expect(startFinder, findsOneWidget);
+
+    // Tap start lesson button when scaled
+    await tester.tap(startFinder);
+    await tester.pumpAndSettle();
+
+    // Verify navigating to Grade Selection screen worked accurately under scaled coordinates
+    expect(find.text('اخْتِيَارُ السَّنَةِ الدِّرَاسِيَّةِ'), findsOneWidget);
   });
 }

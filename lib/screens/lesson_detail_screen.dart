@@ -132,7 +132,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scale = widget.progressService.fontSizeScale;
+    // Font scaling is applied globally via MediaQuery.textScaler in main.dart
+    const scale = 1.0;
     final passage = widget.lesson.readingPassage;
     final discovery = widget.lesson.discovery;
 

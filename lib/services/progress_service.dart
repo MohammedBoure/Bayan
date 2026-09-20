@@ -10,6 +10,7 @@ class ProgressService extends ChangeNotifier {
   static const String _keySoundEnabled = 'sound_enabled';
   static const String _keyShowTashkeel = 'show_tashkeel';
   static const String _keyFontSizeScale = 'font_size_scale';
+  static const String _keyUiScale = 'ui_scale';
   static const String _keyTeacherModeEnabled = 'teacher_mode_enabled';
   static const String _keyRevealAnswersDirectly = 'reveal_answers_directly';
   static const String _keyTimerDuration = 'timer_duration';
@@ -25,6 +26,7 @@ class ProgressService extends ChangeNotifier {
   bool _soundEnabled = true;
   bool _showTashkeel = true;
   double _fontSizeScale = 1.0;
+  double _uiScale = 1.0;
   String _selectedFontFamily = defaultFontFamily;
   bool _teacherModeEnabled = true;
   bool _revealAnswersDirectly = false;
@@ -36,6 +38,7 @@ class ProgressService extends ChangeNotifier {
   bool get soundEnabled => _soundEnabled;
   bool get showTashkeel => _showTashkeel;
   double get fontSizeScale => _fontSizeScale;
+  double get uiScale => _uiScale;
   String get selectedFontFamily => _selectedFontFamily;
   bool get teacherModeEnabled => _teacherModeEnabled;
   bool get revealAnswersDirectly => _revealAnswersDirectly;
@@ -69,6 +72,7 @@ class ProgressService extends ChangeNotifier {
     _soundEnabled = _prefs!.getBool(_keySoundEnabled) ?? true;
     _showTashkeel = _prefs!.getBool(_keyShowTashkeel) ?? true;
     _fontSizeScale = _prefs!.getDouble(_keyFontSizeScale) ?? 1.0;
+    _uiScale = _prefs!.getDouble(_keyUiScale) ?? 1.0;
     _selectedFontFamily = _prefs!.getString(_keySelectedFontFamily) ?? defaultFontFamily;
     _teacherModeEnabled = _prefs!.getBool(_keyTeacherModeEnabled) ?? true;
     _revealAnswersDirectly = _prefs!.getBool(_keyRevealAnswersDirectly) ?? false;
@@ -139,6 +143,26 @@ class ProgressService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Updates overall app UI scaling factor (0.75 to 1.50) to adapt to different screen interfaces.
+  Future<void> setUiScale(double scale) async {
+    _uiScale = scale.clamp(0.75, 1.50);
+    if (_prefs != null) {
+      await _prefs!.setDouble(_keyUiScale, _uiScale);
+    }
+    notifyListeners();
+  }
+
+  /// Sets a predefined hardware display profile (Laptop, Desktop, Smart Board, Data Show).
+  Future<void> setDisplayProfile({required double uiScale, required double fontScale}) async {
+    _uiScale = uiScale.clamp(0.75, 1.50);
+    _fontSizeScale = fontScale.clamp(0.75, 1.60);
+    if (_prefs != null) {
+      await _prefs!.setDouble(_keyUiScale, _uiScale);
+      await _prefs!.setDouble(_keyFontSizeScale, _fontSizeScale);
+    }
+    notifyListeners();
+  }
+
   /// Updates selected Arabic font family.
   Future<void> setSelectedFontFamily(String family) async {
     _selectedFontFamily = family;
@@ -198,18 +222,20 @@ class ProgressService extends ChangeNotifier {
     _soundEnabled = true;
     _showTashkeel = true;
     _fontSizeScale = 1.0;
-    _selectedFontFamily = 'Amiri';
+    _uiScale = 1.0;
+    _selectedFontFamily = defaultFontFamily;
     _teacherModeEnabled = true;
     _revealAnswersDirectly = false;
-    _timerDuration = 60;
-    _spotlightReading = false;
-    _nlpAutoAnalysis = false;
+    _timerDuration = 45;
+    _spotlightReading = true;
+    _nlpAutoAnalysis = true;
     _progress = UserProgress();
 
     if (_prefs != null) {
       await _prefs!.remove(_keySoundEnabled);
       await _prefs!.remove(_keyShowTashkeel);
       await _prefs!.remove(_keyFontSizeScale);
+      await _prefs!.remove(_keyUiScale);
       await _prefs!.remove(_keySelectedFontFamily);
       await _prefs!.remove(_keyTeacherModeEnabled);
       await _prefs!.remove(_keyRevealAnswersDirectly);

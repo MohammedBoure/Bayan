@@ -30,15 +30,64 @@ class NahwApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: progressService,
       builder: (context, _) {
+        final uiScale = progressService.uiScale;
+        final fontScale = progressService.fontSizeScale;
+
         return MaterialApp(
           title: 'بستان النحو العربي',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.buildTheme(fontFamily: progressService.selectedFontFamily),
           home: HomeScreen(progressService: progressService),
           builder: (context, child) {
+            if (child == null) return const SizedBox();
+
+            final mediaQuery = MediaQuery.of(context);
+
+            Widget appContent = child;
+            if ((uiScale - 1.0).abs() > 0.001) {
+              appContent = LayoutBuilder(
+                builder: (context, constraints) {
+                  if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
+                    return MediaQuery(
+                      data: mediaQuery.copyWith(
+                        textScaler: TextScaler.linear(fontScale),
+                      ),
+                      child: child,
+                    );
+                  }
+
+                  final scaledWidth = constraints.maxWidth / uiScale;
+                  final scaledHeight = constraints.maxHeight / uiScale;
+
+                  return MediaQuery(
+                    data: mediaQuery.copyWith(
+                      size: Size(scaledWidth, scaledHeight),
+                      textScaler: TextScaler.linear(fontScale),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.fill,
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: scaledWidth,
+                        height: scaledHeight,
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+              );
+            } else {
+              appContent = MediaQuery(
+                data: mediaQuery.copyWith(
+                  textScaler: TextScaler.linear(fontScale),
+                ),
+                child: appContent,
+              );
+            }
+
             return Directionality(
               textDirection: TextDirection.rtl,
-              child: child ?? const SizedBox(),
+              child: appContent,
             );
           },
         );

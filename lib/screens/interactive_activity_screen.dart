@@ -192,7 +192,8 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scale = widget.progressService.fontSizeScale;
+    // Font scaling is applied globally via MediaQuery.textScaler in main.dart
+    const scale = 1.0;
     final total = widget.activities.length;
     final progressVal = (_currentIndex + 1) / total;
 
