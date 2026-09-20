@@ -6,6 +6,7 @@ import 'package:nahw_app/models/lesson_model.dart';
 import 'package:nahw_app/models/reading_passage_model.dart';
 import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
+import 'package:nahw_app/screens/lesson_detail_screen.dart';
 import 'package:nahw_app/services/audio_player_service.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
@@ -277,5 +278,70 @@ void main() {
     final duration2 = await AudioPlayerService.instance.getTrackDuration(track2);
     expect(duration2, greaterThan(50000));
     expect(duration2, lessThan(80000));
+  });
+
+  testWidgets('LessonDetailScreen renders discovery stage with correct sentence text and word ordering', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson1 = repo.getGradeById('grade3')!.lessons.firstWhere((l) => l.id == 'g3_l1');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        builder: (context, child) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: child!,
+        ),
+        home: LessonDetailScreen(
+          lesson: lesson1,
+          progressService: ps,
+        ),
+      ),
+    );
+
+    // Switch to stage 4 ("أُلاحِظُ وَأُمَيِّزُ")
+    await tester.tap(find.text('4. أُلاحِظُ وَأُمَيِّزُ'));
+    await tester.pumpAndSettle();
+
+    // Verify discovery title is shown
+    expect(find.textContaining('أُلاحِظُ وَأُمَيِّزُ'), findsWidgets);
+
+    // Find RichText widgets in discovery stage
+    final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+    final triggerRichText = richTexts.firstWhere(
+      (r) => r.text.toPlainText().contains('سَارَ') && r.text.toPlainText().contains('عَبْدُ الْقَادِرِ'),
+    );
+
+    // Verify plain text contains the entire sentence in exact grammatical order
+    final text1 = triggerRichText.text.toPlainText();
+    final idxSara = text1.indexOf('سَارَ');
+    final idxAbdu = text1.indexOf('عَبْدُ');
+    expect(idxSara, lessThan(idxAbdu));
+
+    // Check sentence 2
+    final trigger2 = richTexts.firstWhere(
+      (r) => r.text.toPlainText().contains('وَصَلَ') && r.text.toPlainText().contains('يَبْذُرُهَا'),
+    );
+    final text2 = trigger2.text.toPlainText();
+
+    // Verify word order: 'وصل' appears BEFORE 'تناول', 'تناول' BEFORE 'وضعها', 'وضعها' BEFORE 'راح'
+    final idxWasala = text2.indexOf('وَصَلَ');
+    final idxTanawala = text2.indexOf('تَنَاوَلَ');
+    final idxWadaaha = text2.contains('وَوَضَعَهَا') ? text2.indexOf('وَوَضَعَهَا') : text2.indexOf('وَضَعَهَا');
+    final idxRaha = text2.indexOf('رَاحَ');
+
+    expect(idxWasala, isNot(-1));
+    expect(idxTanawala, isNot(-1));
+    expect(idxWadaaha, isNot(-1));
+    expect(idxRaha, isNot(-1));
+
+    expect(idxWasala, lessThan(idxTanawala));
+    expect(idxTanawala, lessThan(idxWadaaha));
+    expect(idxWadaaha, lessThan(idxRaha));
   });
 }

@@ -357,8 +357,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Row(
                 children: [
@@ -1630,10 +1633,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
             children: const [
               Icon(Icons.find_in_page_rounded, color: AppTheme.primaryTeal, size: 34),
-              SizedBox(width: 12),
               Text(
                 'أُلاحِظُ وَأُمَيِّزُ (بِنَاءُ الظَّاهِرَةِ النَّحْوِيَّةِ اسْتِقْرَائِيّاً):',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textDark),
@@ -1666,10 +1670,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
               ),
-              child: Row(
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 10,
+                runSpacing: 6,
                 children: [
                   const Icon(Icons.auto_awesome_rounded, color: Color(0xFFDC2626), size: 24),
-                  const SizedBox(width: 10),
                   Text(
                     'الْكَلِمَاتُ الْمُسْتَهْدَفَةُ: ',
                     style: TextStyle(
@@ -1678,15 +1684,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       color: const Color(0xFFDC2626),
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      discovery.targetedPattern,
-                      style: TextStyle(
-                        fontSize: 20 * scale,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFFB91C1C),
-                        letterSpacing: 0.5,
-                      ),
+                  Text(
+                    discovery.targetedPattern,
+                    style: TextStyle(
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFB91C1C),
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
@@ -1776,25 +1780,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   /// Renders a discovery trigger sentence highlighting target grammatical verbs/words in bold red.
+  /// Uses pure TextSpans to guarantee natural right-to-left word ordering without BiDi WidgetSpan permutation.
   Widget _buildDiscoveryTriggerSentence(String sentence, List<String> targetWords, double scale) {
-    final trimmed = sentence.trim();
-    final hasLeadingGuillemet = trimmed.startsWith('«');
-    final hasTrailingGuillemet = trimmed.endsWith('»') || trimmed.endsWith('».') || trimmed.endsWith('»!');
-
-    final spans = <InlineSpan>[
-      if (!hasLeadingGuillemet)
-        TextSpan(
-          text: '« ',
-          style: TextStyle(
-            fontSize: 24 * scale,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF94A3B8),
-          ),
-        ),
-    ];
-
+    final spans = <InlineSpan>[];
     final regex = RegExp(r'([\u0600-\u06FF]+|[^\u0600-\u06FF]+)');
-    final matches = regex.allMatches(sentence);
+    final matches = regex.allMatches(sentence.trim());
 
     for (final match in matches) {
       final token = match.group(0) ?? '';
@@ -1805,26 +1795,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
       if (isTarget) {
         spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 2 * scale),
-              padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 3 * scale),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2), // Soft red badge background
-                borderRadius: BorderRadius.circular(8 * scale),
-                border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
-              ),
-              child: Text(
-                token,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontSize: 24 * scale,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFFDC2626), // Bold crimson red for discovery target
-                  height: 1.4,
-                ),
-              ),
+          TextSpan(
+            text: token,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFDC2626), // Bold crimson red for discovery target
+              backgroundColor: const Color(0xFFFFECEC), // Soft pastel red background highlight
+              height: 1.9,
             ),
           ),
         );
@@ -1841,19 +1819,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ),
         );
       }
-    }
-
-    if (!hasTrailingGuillemet) {
-      spans.add(
-        TextSpan(
-          text: ' »',
-          style: TextStyle(
-            fontSize: 24 * scale,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF94A3B8),
-          ),
-        ),
-      );
     }
 
     return Text.rich(
