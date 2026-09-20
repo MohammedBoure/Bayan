@@ -153,16 +153,21 @@ void main() {
     final lesson2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
     expect(lesson2.readingPassage!.title, equals('عُمَرُ يَاسَفُ'));
     expect(lesson2.activities.isNotEmpty, isTrue);
+    expect(lesson2.examples.length, equals(5));
+    expect(lesson2.discovery!.allTargetWords, contains('سَأَحْمِلُ'));
+    expect(lesson2.discovery!.allTargetWords, contains('تَسْتَحِقُّ'));
 
     // Check Lesson 3: فعل الأمر - من أجلك يا جزائر
     final lesson3 = grade3.lessons.firstWhere((l) => l.id == 'g3_l3');
     expect(lesson3.readingPassage!.title, equals('مِنْ أَجْلِكِ يَا جَزَائِرُ'));
     expect(lesson3.activities.isNotEmpty, isTrue);
+    expect(lesson3.discovery!.allTargetWords, contains('اِلْبِسْ'));
 
     // Check Lesson 4: الجملة الفعلية
     final lesson4 = grade3.lessons.firstWhere((l) => l.id == 'g3_l4');
     expect(lesson4.readingPassage!.title, equals('يَوْمٌ فِي الحَقْلِ'));
     expect(lesson4.activities.isNotEmpty, isTrue);
+    expect(lesson4.discovery!.allTargetWords, contains('يَحْرُثُ'));
 
     // Check total activities across Grade 3 equals at least 16 (currently 17 applied activities)
     final totalActivities = grade3.lessons.fold<int>(0, (sum, l) => sum + l.activities.length);

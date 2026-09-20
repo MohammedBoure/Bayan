@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/lesson_model.dart';
 import '../models/reading_passage_model.dart';
+import '../nlp/arabic_clitic_stemmer.dart';
 import '../services/audio_player_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
@@ -1641,7 +1642,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ),
           const Divider(height: 28, thickness: 1.5),
 
-          // Trigger Sentences
+          // Trigger Sentences with Target Words Highlighted in Red
           ...discovery.triggerSentences.map((sentence) {
             return Container(
               margin: const EdgeInsets.only(bottom: 14),
@@ -1651,19 +1652,49 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
               ),
-              child: Text(
-                '« $sentence »',
-                style: TextStyle(
-                  fontSize: 24 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                  height: 1.8,
-                ),
-              ),
+              child: _buildDiscoveryTriggerSentence(sentence, discovery.allTargetWords, scale),
             );
           }),
 
-          const SizedBox(height: 16),
+          // Target Pattern Banner
+          if (discovery.targetedPattern.isNotEmpty) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome_rounded, color: Color(0xFFDC2626), size: 24),
+                  const SizedBox(width: 10),
+                  Text(
+                    'الْكَلِمَاتُ الْمُسْتَهْدَفَةُ: ',
+                    style: TextStyle(
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFDC2626),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      discovery.targetedPattern,
+                      style: TextStyle(
+                        fontSize: 20 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFB91C1C),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 10),
           // Observation Prompt
           Container(
             padding: const EdgeInsets.all(18),
@@ -1703,6 +1734,132 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Determines whether a token matches one of the target grammatical words for the lesson.
+  bool _isDiscoveryTargetWord(String token, List<String> targetWords) {
+    if (targetWords.isEmpty) return false;
+
+    final cleanToken = ArabicCliticStemmer.stripDiacritics(token).trim();
+    final normToken = ArabicCliticStemmer.normalize(token);
+
+    for (final target in targetWords) {
+      final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+      final normTarget = ArabicCliticStemmer.normalize(target);
+
+      // 1. Exact match with diacritics
+      if (token.trim() == target.trim()) return true;
+
+      // 2. Match without diacritics
+      if (cleanToken == cleanTarget) return true;
+
+      // 3. Match normalized (unifying Alef / Yaa / Taa Marbuta)
+      if (normToken == normTarget) return true;
+
+      // 4. Handle conjunction proclitic 'و' or 'ف' (e.g. وَأَطُوفُ vs أَطُوفُ)
+      if (cleanToken.startsWith('و') && cleanToken.length > 2) {
+        final subClean = cleanToken.substring(1);
+        if (subClean == cleanTarget || ArabicCliticStemmer.normalize(subClean) == normTarget) {
+          return true;
+        }
+      }
+      if (cleanToken.startsWith('ف') && cleanToken.length > 2) {
+        final subClean = cleanToken.substring(1);
+        if (subClean == cleanTarget || ArabicCliticStemmer.normalize(subClean) == normTarget) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// Renders a discovery trigger sentence highlighting target grammatical verbs/words in bold red.
+  Widget _buildDiscoveryTriggerSentence(String sentence, List<String> targetWords, double scale) {
+    final trimmed = sentence.trim();
+    final hasLeadingGuillemet = trimmed.startsWith('«');
+    final hasTrailingGuillemet = trimmed.endsWith('»') || trimmed.endsWith('».') || trimmed.endsWith('»!');
+
+    final spans = <InlineSpan>[
+      if (!hasLeadingGuillemet)
+        TextSpan(
+          text: '« ',
+          style: TextStyle(
+            fontSize: 24 * scale,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF94A3B8),
+          ),
+        ),
+    ];
+
+    final regex = RegExp(r'([\u0600-\u06FF]+|[^\u0600-\u06FF]+)');
+    final matches = regex.allMatches(sentence);
+
+    for (final match in matches) {
+      final token = match.group(0) ?? '';
+      if (token.isEmpty) continue;
+
+      final isWord = RegExp(r'^[\u0600-\u06FF]+$').hasMatch(token);
+      final isTarget = isWord && _isDiscoveryTargetWord(token, targetWords);
+
+      if (isTarget) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 2 * scale),
+              padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 3 * scale),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2), // Soft red badge background
+                borderRadius: BorderRadius.circular(8 * scale),
+                border: Border.all(color: const Color(0xFFEF4444), width: 1.5),
+              ),
+              child: Text(
+                token,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFDC2626), // Bold crimson red for discovery target
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        );
+      } else {
+        spans.add(
+          TextSpan(
+            text: token,
+            style: TextStyle(
+              fontSize: 24 * scale,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDark,
+              height: 1.9,
+            ),
+          ),
+        );
+      }
+    }
+
+    if (!hasTrailingGuillemet) {
+      spans.add(
+        TextSpan(
+          text: ' »',
+          style: TextStyle(
+            fontSize: 24 * scale,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF94A3B8),
+          ),
+        ),
+      );
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
     );
   }
 

@@ -36,13 +36,25 @@ class GrammarDiscoveryModel {
   final String observationPrompt;
   final List<String> observations;
   final String targetedPattern;
+  final List<String> targetWords;
 
   const GrammarDiscoveryModel({
     required this.triggerSentences,
     required this.observationPrompt,
     required this.observations,
     this.targetedPattern = '',
+    this.targetWords = const [],
   });
+
+  List<String> get allTargetWords {
+    if (targetWords.isNotEmpty) return targetWords;
+    if (targetedPattern.isEmpty) return const [];
+    return targetedPattern
+        .split(RegExp(r'\s*[-–—]\s*'))
+        .map((w) => w.trim())
+        .where((w) => w.isNotEmpty)
+        .toList();
+  }
 }
 
 /// Represents an audio track for a reading passage (whole text or specific paragraphs).
