@@ -37,8 +37,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   late bool _isSpotlightActive;
   int _activeStageIndex = 0;
   int? _spotlightedParagraphIndex;
-  int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها
+  int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها / تعويض المرادفات
   final Set<int> _revealedQuestionIndices = <int>{};
+  final Set<int> _revealedSynonymIndices = <int>{};
   List<int> _audioHighlightedParagraphs = const [];
   bool _showAudioPlayer = false;
 
@@ -66,10 +67,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       for (int i = 0; i < widget.lesson.readingPassage!.comprehensionQuestions.length; i++) {
         _revealedQuestionIndices.add(i);
       }
+      for (int i = 0; i < widget.lesson.readingPassage!.synonymReplacements.length; i++) {
+        _revealedSynonymIndices.add(i);
+      }
     }
     if (widget.lesson.readingPassage?.hasAudio == true) {
       _audioHighlightedParagraphs = widget.lesson.readingPassage!.audioTracks.first.paragraphIndices;
     }
+  }
+
+  void _toggleAllSynonymReplacements(int total) {
+    setState(() {
+      if (_revealedSynonymIndices.length == total) {
+        _revealedSynonymIndices.clear();
+      } else {
+        _revealedSynonymIndices.addAll(List.generate(total, (i) => i));
+      }
+    });
   }
 
   void _toggleAllComprehensionAnswers(int totalQuestions) {
@@ -545,10 +559,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // 2. كلماتي الجديدة (منظمة ومفروزة بدقة بين شرح المعاني والكلمة وضدها)
+  // 2. كلماتي الجديدة (منظمة ومفروزة بدقة بين شرح المعاني، الأضداد، وتعويض المرادفات)
   Widget _buildStageVocabulary(double scale, ReadingPassageModel passage) {
     final meanings = passage.vocabulary.where((v) => !v.isAntonym).toList();
     final antonyms = passage.vocabulary.where((v) => v.isAntonym).toList();
+    final hasSynonyms = passage.hasSynonyms;
+    final totalCount = meanings.length + (hasSynonyms ? passage.synonymReplacements.length : antonyms.length);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -599,7 +615,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         ),
                       ),
                       Text(
-                        'مُفْرَدَاتُ النَّصِّ مُصَنَّفَةٌ بَيْنَ شَرْحِ المَعَانِي وَالأَضْدَادِ',
+                        hasSynonyms
+                            ? 'مُفْرَدَاتُ النَّصِّ مُصَنَّفَةٌ بَيْنَ شَرْحِ المَعَانِي وَتَعْوِيضِ المُرَادِفَاتِ'
+                            : 'مُفْرَدَاتُ النَّصِّ مُصَنَّفَةٌ بَيْنَ شَرْحِ المَعَانِي وَالأَضْدَادِ',
                         style: TextStyle(
                           fontSize: 13 * scale,
                           color: AppTheme.textMuted,
@@ -616,27 +634,38 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildVocabFilterChip(
-                    label: 'الكُلُّ (${passage.vocabulary.length})',
+                    label: 'الكُلُّ ($totalCount)',
                     icon: Icons.grid_view_rounded,
                     index: 0,
                     scale: scale,
                   ),
                   const SizedBox(width: 8),
-                  _buildVocabFilterChip(
-                    label: 'شَرْحُ المَعَانِي (${meanings.length})',
-                    icon: Icons.lightbulb_outline_rounded,
-                    index: 1,
-                    scale: scale,
-                    activeColor: AppTheme.primaryTeal,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildVocabFilterChip(
-                    label: 'الْكَلِمَةُ وَضِدُّهَا (${antonyms.length})',
-                    icon: Icons.compare_arrows_rounded,
-                    index: 2,
-                    scale: scale,
-                    activeColor: AppTheme.accentCoral,
-                  ),
+                  if (meanings.isNotEmpty) ...[
+                    _buildVocabFilterChip(
+                      label: 'شَرْحُ المَعَانِي (${meanings.length})',
+                      icon: Icons.lightbulb_outline_rounded,
+                      index: 1,
+                      scale: scale,
+                      activeColor: AppTheme.primaryTeal,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  if (antonyms.isNotEmpty)
+                    _buildVocabFilterChip(
+                      label: 'الْكَلِمَةُ وَضِدُّهَا (${antonyms.length})',
+                      icon: Icons.compare_arrows_rounded,
+                      index: 2,
+                      scale: scale,
+                      activeColor: AppTheme.accentCoral,
+                    ),
+                  if (hasSynonyms)
+                    _buildVocabFilterChip(
+                      label: 'تَعْوِيضُ المُرَادِفَاتِ (${passage.synonymReplacements.length})',
+                      icon: Icons.find_replace_rounded,
+                      index: 2,
+                      scale: scale,
+                      activeColor: const Color(0xFF2563EB),
+                    ),
                 ],
               ),
             ],
@@ -707,8 +736,346 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             runSpacing: 16,
             children: antonyms.map((vocab) => _buildAntonymCard(vocab, scale)).toList(),
           ),
+          const SizedBox(height: 22),
+        ],
+
+        // القسم الثالث: تمرين التعويض بالمرادفات (مطابق تماماً للكتاب المدرسي)
+        if ((_vocabFilter == 0 || _vocabFilter == 2) && hasSynonyms) ...[
+          _buildSynonymReplacementSection(passage, scale),
         ],
       ],
+    );
+  }
+
+  Widget _buildSynonymReplacementSection(ReadingPassageModel passage, double scale) {
+    final allRevealed = _revealedSynonymIndices.length == passage.synonymReplacements.length;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // شريط العنوان مع بنك الكلمات وزر التحكم
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 14,
+            runSpacing: 10,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.find_replace_rounded, color: Color(0xFF2563EB), size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'عَوِّضِ الْكَلِمَةَ الْمُلَوَّنَةَ بِكَلِمَةٍ لَهَا نَفْسُ الْمَعْنَى:',
+                    style: TextStyle(
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF1E3A8A),
+                    ),
+                  ),
+                ],
+              ),
+
+              ElevatedButton.icon(
+                onPressed: () => _toggleAllSynonymReplacements(passage.synonymReplacements.length),
+                icon: Icon(allRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
+                label: Text(
+                  allRevealed ? 'إِخْفَاءُ جَمِيعِ البَدَائِلِ' : 'إِظْهَارُ جَمِيعِ البَدَائِلِ',
+                  style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: allRevealed ? Colors.grey.shade700 : const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // بنك الكلمات المتاحة للتعويض
+          if (passage.availableSynonyms.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF93C5FD), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.category_rounded, color: Color(0xFF2563EB), size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    'بَنْكُ المُرَادِفَاتِ البَدِيلَةِ: ',
+                    style: TextStyle(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF1E40AF),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 6,
+                      children: passage.availableSynonyms.map((syn) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF3B82F6), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            syn,
+                            style: TextStyle(
+                              fontSize: 16 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF1D4ED8),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // قائمة الجمل
+          ...passage.synonymReplacements.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final item = entry.value;
+            final isRevealed = _revealedSynonymIndices.contains(idx);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isRevealed ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isRevealed ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // رقم الجملة
+                      Container(
+                        width: 32,
+                        height: 32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isRevealed ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${idx + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // نص الجملة مع إبراز الكلمة المستهدفة
+                      Expanded(
+                        child: _buildHighlightedSentence(item, scale),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // زر الإظهار / الإخفاء الفردي
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            if (isRevealed) {
+                              _revealedSynonymIndices.remove(idx);
+                            } else {
+                              _revealedSynonymIndices.add(idx);
+                            }
+                          });
+                        },
+                        icon: Icon(
+                          isRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                          size: 18,
+                          color: isRevealed ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                        ),
+                        label: Text(
+                          isRevealed ? 'إِخْفَاءُ البَدِيلِ' : 'كَشْفُ البَدِيلِ',
+                          style: TextStyle(
+                            fontSize: 13 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: isRevealed ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: isRevealed ? const Color(0xFF86EFAC) : const Color(0xFF93C5FD),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // الحل والتعليل عند الكشف
+                  if (isRevealed) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  fontSize: 16 * scale,
+                                  fontFamily: 'Cairo',
+                                  color: AppTheme.textDark,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: 'المُرَادِفُ البَدِيلُ هُوَ: ',
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                                  ),
+                                  TextSpan(
+                                    text: '«${item.replacementWord}» ',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF15803D),
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  if (item.note != null && item.note!.isNotEmpty)
+                                    TextSpan(
+                                      text: '(${item.note})',
+                                      style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighlightedSentence(SynonymReplacementItem item, double scale) {
+    final sentence = item.sentence;
+    final word = item.highlightedWord;
+    final index = sentence.indexOf(word);
+
+    if (index == -1) {
+      return Text(
+        sentence,
+        style: TextStyle(
+          fontSize: 18 * scale,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.textDark,
+          height: 1.6,
+        ),
+      );
+    }
+
+    final before = sentence.substring(0, index);
+    final after = sentence.substring(index + word.length);
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 18 * scale,
+          fontFamily: 'Cairo',
+          color: AppTheme.textDark,
+          height: 1.6,
+        ),
+        children: [
+          TextSpan(text: before),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+              ),
+              child: Text(
+                word,
+                style: TextStyle(
+                  fontSize: 18 * scale,
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFB45309),
+                ),
+              ),
+            ),
+          ),
+          TextSpan(text: after),
+        ],
+      ),
     );
   }
 

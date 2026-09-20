@@ -3,13 +3,13 @@
 This directory defines all structured data models used throughout the application.
 
 ## Files:
-- [nlp_token_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/nlp_token_model.dart): Data model for tokenized Arabic words with linguistic annotations (POS tag, subtype, case mark, pedagogical explanation).
-- [activity_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/activity_model.dart): Data model for interactive activities (verb identification, sentence ordering, feedback explanations).
-- [quiz_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/quiz_model.dart): Data model for evaluation quizzes, individual questions, answer keys, and linguistic justifications.
-- [lesson_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/lesson_model.dart): Data model for grammar lessons, containing instructional text, interactive examples, rules, and linked activities.
-- [curriculum_unit_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/curriculum_unit_model.dart): Data model for organizing lessons hierarchically into educational units (*الوحدات التعليمية*).
-- [grade_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/grade_model.dart): Data model for the three primary school grades (Years 3, 4, and 5) with curriculum units and metadata.
-- [reading_passage_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/reading_passage_model.dart): Data models for reading stories (`ReadingPassageModel`), audio tracks (`ReadingAudioTrack`), vocabulary glossary items (`VocabularyItem`), oral comprehension questions (`ComprehensionQuestion`), and inductive grammar discovery (`GrammarDiscoveryModel`).
-- [progress_model.dart](file:///C:/Users/moham/Desktop/aze2/lib/models/progress_model.dart): Data model for tracking student completion state, scores, stars, and achievements.
+- [nlp_token_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/nlp_token_model.dart): Data model for tokenized Arabic words with linguistic annotations (POS tag, subtype, case mark, pedagogical explanation).
+- [activity_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/activity_model.dart): Data model for interactive activities (verb identification, sentence ordering, feedback explanations).
+- [quiz_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/quiz_model.dart): Data model for evaluation quizzes, individual questions, answer keys, and linguistic justifications.
+- [lesson_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/lesson_model.dart): Data model for grammar lessons, containing instructional text, interactive examples, rules, and linked activities.
+- [curriculum_unit_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/curriculum_unit_model.dart): Data model for organizing lessons hierarchically into educational units (*الوحدات التعليمية*).
+- [grade_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/grade_model.dart): Data model for the three primary school grades (Years 3, 4, and 5) with curriculum units and metadata.
+- [reading_passage_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/reading_passage_model.dart): Data models for reading stories (`ReadingPassageModel`), audio tracks (`ReadingAudioTrack`), vocabulary glossary items (`VocabularyItem`), synonym replacement exercises (`SynonymReplacementItem`), oral comprehension questions (`ComprehensionQuestion`), and inductive grammar discovery (`GrammarDiscoveryModel`).
+- [progress_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/progress_model.dart): Data model for tracking student completion state, scores, stars, and achievements.
 
 

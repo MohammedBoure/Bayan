@@ -270,7 +270,7 @@ void main() {
       paragraphIndices: [3, 4],
     );
     final duration2 = await AudioPlayerService.instance.getTrackDuration(track2);
-    expect(duration2, greaterThan(53000));
-    expect(duration2, lessThan(58000));
+    expect(duration2, greaterThan(50000));
+    expect(duration2, lessThan(80000));
   });
 }

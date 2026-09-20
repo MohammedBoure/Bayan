@@ -58,6 +58,21 @@ class ReadingAudioTrack {
   });
 }
 
+/// Represents an item for substituting a highlighted word with its synonym (عَوِّضِ الكَلِمَةَ بِمُرَادِفِهَا).
+class SynonymReplacementItem {
+  final String sentence;
+  final String highlightedWord;
+  final String replacementWord;
+  final String? note;
+
+  const SynonymReplacementItem({
+    required this.sentence,
+    required this.highlightedWord,
+    required this.replacementWord,
+    this.note,
+  });
+}
+
 /// Represents the reading text and authentic context anchoring the grammar lesson.
 class ReadingPassageModel {
   final String title;
@@ -66,6 +81,8 @@ class ReadingPassageModel {
   final List<VocabularyItem> vocabulary;
   final List<ComprehensionQuestion> comprehensionQuestions;
   final List<ReadingAudioTrack> audioTracks;
+  final List<String> availableSynonyms;
+  final List<SynonymReplacementItem> synonymReplacements;
 
   const ReadingPassageModel({
     required this.title,
@@ -74,8 +91,11 @@ class ReadingPassageModel {
     required this.vocabulary,
     required this.comprehensionQuestions,
     this.audioTracks = const [],
+    this.availableSynonyms = const [],
+    this.synonymReplacements = const [],
   });
 
   String get fullText => paragraphs.join('\n\n');
   bool get hasAudio => audioTracks.isNotEmpty;
+  bool get hasSynonyms => synonymReplacements.isNotEmpty;
 }
