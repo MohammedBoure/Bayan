@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/license_service.dart';
 import 'services/nlp_database_service.dart';
 import 'services/progress_service.dart';
 import 'theme/app_theme.dart';
@@ -13,22 +14,32 @@ void main() async {
   final progressService = ProgressService();
   await progressService.init();
 
-  runApp(NahwApp(progressService: progressService));
+  final licenseService = LicenseService();
+  await licenseService.init();
+
+  runApp(NahwApp(
+    progressService: progressService,
+    licenseService: licenseService,
+  ));
 }
 
 /// Root Application Widget for the Arabic Grammar Educational System.
 class NahwApp extends StatelessWidget {
   final ProgressService progressService;
+  final LicenseService? licenseService;
 
   const NahwApp({
     super.key,
     required this.progressService,
+    this.licenseService,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLicense = licenseService ?? LicenseService();
+
     return ListenableBuilder(
-      listenable: progressService,
+      listenable: Listenable.merge([progressService, effectiveLicense]),
       builder: (context, _) {
         final uiScale = progressService.uiScale;
         final fontScale = progressService.fontSizeScale;
@@ -37,7 +48,10 @@ class NahwApp extends StatelessWidget {
           title: 'بستان النحو العربي',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.buildTheme(fontFamily: progressService.selectedFontFamily),
-          home: HomeScreen(progressService: progressService),
+          home: HomeScreen(
+            progressService: progressService,
+            licenseService: effectiveLicense,
+          ),
           builder: (context, child) {
             if (child == null) return const SizedBox();
 

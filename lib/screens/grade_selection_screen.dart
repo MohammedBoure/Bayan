@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../data/curriculum_data.dart';
 import '../models/grade_model.dart';
+import '../services/license_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/activation_dialog.dart';
 import '../widgets/app_scaffold.dart';
 import 'lessons_list_screen.dart';
 
@@ -11,10 +13,12 @@ import 'lessons_list_screen.dart';
 /// Uses a responsive multi-column layout across wide screens so students can compare and choose easily.
 class GradeSelectionScreen extends StatelessWidget {
   final ProgressService progressService;
+  final LicenseService? licenseService;
 
   const GradeSelectionScreen({
     super.key,
     required this.progressService,
+    this.licenseService,
   });
 
   @override
@@ -125,6 +129,10 @@ class GradeSelectionScreen extends StatelessWidget {
 
     return InkWell(
       onTap: () {
+        if (licenseService != null && !licenseService!.canAccessCurriculum) {
+          ActivationDialog.show(context, licenseService!);
+          return;
+        }
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => LessonsListScreen(

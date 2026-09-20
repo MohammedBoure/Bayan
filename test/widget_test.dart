@@ -9,9 +9,11 @@ import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
 import 'package:nahw_app/screens/lesson_detail_screen.dart';
 import 'package:nahw_app/screens/settings_screen.dart';
 import 'package:nahw_app/services/audio_player_service.dart';
+import 'package:nahw_app/services/license_service.dart';
 import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
 import 'package:nahw_app/theme/app_theme.dart';
+import 'package:nahw_app/widgets/activation_dialog.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -493,5 +495,151 @@ void main() {
 
     // Verify navigating to Grade Selection screen worked accurately under scaled coordinates
     expect(find.text('اخْتِيَارُ السَّنَةِ الدِّرَاسِيَّةِ'), findsOneWidget);
+  });
+
+  test('LicenseService manages 7-day trial, unique device code, and HMAC-SHA256 activation', () async {
+    SharedPreferences.setMockInitialValues({});
+    final license = LicenseService();
+    await license.init();
+
+    // 1. Verify Device Code formatting
+    expect(license.deviceCode, startsWith('BYN-'));
+    expect(RegExp(r'^BYN-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$').hasMatch(license.deviceCode), isTrue);
+
+    // 2. Initial state: Trial active for 7 days
+    expect(license.isTrialActive, isTrue);
+    expect(license.isActivated, isFalse);
+    expect(license.canAccessCurriculum, isTrue);
+    expect(license.daysRemaining, inInclusiveRange(1, 7));
+
+    // 3. Reject invalid keys
+    final failResult = await license.activateSoftware('ACT-DEAD-BEEF-0000');
+    expect(failResult, isFalse);
+    expect(license.isActivated, isFalse);
+
+    // 4. Test Keygen Algorithm correctness
+    final validKey = LicenseService.generateActivationKey(license.deviceCode);
+    expect(validKey, startsWith('ACT-'));
+    expect(RegExp(r'^ACT-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$').hasMatch(validKey), isTrue);
+
+    // 5. Successful activation
+    final successResult = await license.activateSoftware(validKey);
+    expect(successResult, isTrue);
+    expect(license.isActivated, isTrue);
+    expect(license.canAccessCurriculum, isTrue);
+    expect(license.status, equals(LicenseStatus.activated));
+  });
+
+  test('LicenseService restricts curriculum access upon trial expiry until activated', () async {
+    SharedPreferences.setMockInitialValues({});
+    final license = LicenseService();
+    await license.init();
+
+    // Simulate 7-day trial expiration
+    await license.expireTrialForTesting();
+    expect(license.isTrialActive, isFalse);
+    expect(license.isActivated, isFalse);
+    expect(license.canAccessCurriculum, isFalse);
+    expect(license.status, equals(LicenseStatus.trialExpired));
+
+    // Curriculum should be locked, then unlocked when developer key is entered
+    final validKey = LicenseService.generateActivationKey(license.deviceCode);
+    final activated = await license.activateSoftware(validKey);
+    expect(activated, isTrue);
+    expect(license.canAccessCurriculum, isTrue);
+    expect(license.isActivated, isTrue);
+  });
+
+  testWidgets('SettingsScreen displays license status, device code, and activation card', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    SharedPreferences.setMockInitialValues({});
+    final ps = ProgressService();
+    await ps.init();
+    final license = LicenseService();
+    await license.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: SettingsScreen(progressService: ps, licenseService: license),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Scroll down to the license section
+    final licenseFinder = find.textContaining('License & Activation');
+    await tester.scrollUntilVisible(
+      licenseFinder,
+      300.0,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(licenseFinder, findsOneWidget);
+    expect(find.textContaining(license.deviceCode), findsOneWidget);
+    expect(find.text('نَسْخُ الكُودِ'), findsOneWidget);
+    expect(find.text('إِدْخَالُ كُودِ التَّفْعِيلِ الآنَ'), findsOneWidget);
+  });
+
+  testWidgets('ActivationDialog accepts valid key and activates software', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    SharedPreferences.setMockInitialValues({});
+    final license = LicenseService();
+    await license.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => ActivationDialog.show(context, license),
+              child: const Text('Open Activation'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Open dialog
+    await tester.tap(find.text('Open Activation'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(license.deviceCode), findsOneWidget);
+
+    // Enter invalid key
+    final inputFinder = find.byType(TextField);
+    expect(inputFinder, findsOneWidget);
+    await tester.enterText(inputFinder, 'ACT-0000-0000-0000-0000');
+    await tester.pumpAndSettle();
+
+    final activateButtonFinder = find.text('تَفْعِيلُ البَرْنَامِجِ الآنَ');
+    expect(activateButtonFinder, findsOneWidget);
+    await tester.tap(activateButtonFinder);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('كَوْدُ التَّفْعِيلِ غَيْرُ صَحِيحٍ'), findsOneWidget);
+
+    // Enter valid key from Keygen algorithm
+    final validKey = LicenseService.generateActivationKey(license.deviceCode);
+    await tester.enterText(inputFinder, validKey);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('تَفْعِيلُ البَرْنَامِجِ الآنَ'));
+    await tester.pump();
+
+    expect(license.isActivated, isTrue);
+    expect(find.textContaining('تَمَّ تَفْعِيلُ البَرْنَامِجِ بِنَجَاحٍ'), findsOneWidget);
+
+    // Advance through the auto-dismiss delay
+    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pumpAndSettle();
   });
 }

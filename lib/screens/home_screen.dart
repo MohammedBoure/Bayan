@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import '../services/license_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/activation_dialog.dart';
 import 'grade_selection_screen.dart';
 import 'settings_screen.dart';
-
 
 /// [01] الشاشة الرئيسية (Home Screen)
 /// Scaled and optimized for Classroom Data Show projectors and lecture halls.
 /// Displays prominent Arabic typography, high contrast, and responsive widescreen space utilization.
 class HomeScreen extends StatelessWidget {
   final ProgressService progressService;
+  final LicenseService? licenseService;
 
   const HomeScreen({
     super.key,
     required this.progressService,
+    this.licenseService,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effLicense = licenseService ?? LicenseService();
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -30,34 +35,46 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top App Bar with Data Show Badge & Settings
+                    // Top App Bar with Data Show Badge, License Badge & Settings
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Data Show Projection Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryTeal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.primaryTeal, width: 1.8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.cast_for_education_rounded, color: AppTheme.primaryTeal, size: 24),
-                              SizedBox(width: 8),
-                              Text(
-                                'مُهيأ للعرض الصفي (Data Show)',
-                                style: TextStyle(
-                                  color: AppTheme.primaryTeal,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            // Data Show Projection Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryTeal.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.primaryTeal, width: 1.8),
                               ),
-                            ],
-                          ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.cast_for_education_rounded, color: AppTheme.primaryTeal, size: 24),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'مُهيأ للعرض الصفي (Data Show)',
+                                    style: TextStyle(
+                                      color: AppTheme.primaryTeal,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // License Status Badge
+                            ListenableBuilder(
+                              listenable: effLicense,
+                              builder: (context, _) => _buildLicenseBadge(context, effLicense),
+                            ),
+                          ],
                         ),
                         // Settings Shortcut Button
                         IconButton(
@@ -66,7 +83,10 @@ class HomeScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => SettingsScreen(progressService: progressService),
+                                builder: (_) => SettingsScreen(
+                                  progressService: progressService,
+                                  licenseService: effLicense,
+                                ),
                               ),
                             );
                           },
@@ -186,10 +206,17 @@ class HomeScreen extends StatelessWidget {
                             SizedBox(
                               height: 76, // Extra tall for classroom visibility
                               child: ElevatedButton.icon(
-                                onPressed: () {
+                                onPressed: () async {
+                                  if (!effLicense.canAccessCurriculum) {
+                                    await ActivationDialog.show(context, effLicense);
+                                    return;
+                                  }
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => GradeSelectionScreen(progressService: progressService),
+                                      builder: (_) => GradeSelectionScreen(
+                                        progressService: progressService,
+                                        licenseService: effLicense,
+                                      ),
                                     ),
                                   );
                                 },
@@ -224,7 +251,10 @@ class HomeScreen extends StatelessWidget {
                                 onPressed: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => SettingsScreen(progressService: progressService),
+                                      builder: (_) => SettingsScreen(
+                                        progressService: progressService,
+                                        licenseService: effLicense,
+                                      ),
                                     ),
                                   );
                                 },
@@ -273,6 +303,97 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLicenseBadge(BuildContext context, LicenseService license) {
+    if (license.isActivated) {
+      return InkWell(
+        onTap: () => ActivationDialog.show(context, license),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.successGreen.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.successGreen, width: 1.5),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.verified_rounded, color: AppTheme.successGreen, size: 20),
+              SizedBox(width: 6),
+              Text(
+                'البرنامج مفعل بصفة دائمة ✓',
+                style: TextStyle(
+                  color: AppTheme.successGreen,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (license.isTrialActive) {
+      return InkWell(
+        onTap: () => ActivationDialog.show(context, license),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.accentAmber.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.accentOrange, width: 1.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.access_time_rounded, color: AppTheme.accentOrange, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                'فترة تجريبية: متبقي ${license.daysRemaining} أيام ⏳',
+                style: const TextStyle(
+                  color: AppTheme.accentOrange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Trial expired
+    return InkWell(
+      onTap: () => ActivationDialog.show(context, license),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.errorRed.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.errorRed, width: 1.5),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock_rounded, color: AppTheme.errorRed, size: 20),
+            SizedBox(width: 6),
+            Text(
+              'انتهت الفترة التجريبية (التفعيل مطلوب) ⚠️',
+              style: TextStyle(
+                color: AppTheme.errorRed,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../services/license_service.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/activation_dialog.dart';
 import '../widgets/app_scaffold.dart';
 
 /// [09] شاشة الإعدادات الشاملة (Comprehensive Classroom & Teacher Settings)
@@ -8,10 +11,12 @@ import '../widgets/app_scaffold.dart';
 /// Data Show font scaling, reading spotlights, sound effects, and offline NLP overrides.
 class SettingsScreen extends StatelessWidget {
   final ProgressService progressService;
+  final LicenseService? licenseService;
 
   const SettingsScreen({
     super.key,
     required this.progressService,
+    this.licenseService,
   });
 
   void _confirmReset(BuildContext context) {
@@ -50,14 +55,15 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final effLicense = licenseService ?? LicenseService();
+
     return AppScaffold(
       title: 'إِعْدَادَاتُ المَنْظُومَةِ وَالعَرْضِ الصَّفِّيِّ',
       progressService: progressService,
       body: ListenableBuilder(
-        listenable: progressService,
+        listenable: Listenable.merge([progressService, effLicense]),
         builder: (context, _) {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -562,7 +568,19 @@ class SettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // 4. Reset Settings Section
+              // 4. License & Activation Section
+              _buildSectionHeader('تَرْخِيصُ البَرْنَامِجِ وَالتَّفْعِيلُ الدَّائِمُ (License & Activation):'),
+              const SizedBox(height: 8),
+              const Text(
+                'يَعْمَلُ البَرْنَامِجُ بِفَتْرَةٍ تَجْرِيبِيَّةٍ لِمُدَّةِ 7 أَيَّامٍ، ثُمَّ يَتَطَلَّبُ التَّفْعِيلَ لِمُتَابَعَةِ اسْتِخْدَامِ الدُّرُوسِ وَالأَنْشِطَةِ التَّفَاعُلِيَّةِ.',
+                style: TextStyle(fontSize: 16, color: AppTheme.textMuted, height: 1.5),
+              ),
+              const SizedBox(height: 14),
+              _buildLicenseCard(context, effLicense),
+
+              const SizedBox(height: 32),
+
+              // 5. Reset Settings Section
               _buildSectionHeader('إِعَادَةُ الضَّبْطِ:'),
               const SizedBox(height: 14),
 
@@ -799,6 +817,201 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLicenseCard(BuildContext context, LicenseService license) {
+    return ListenableBuilder(
+      listenable: license,
+      builder: (context, _) {
+        final isActivated = license.isActivated;
+        final isTrial = license.isTrialActive;
+        final statusColor = isActivated
+            ? AppTheme.successGreen
+            : (isTrial ? AppTheme.accentOrange : AppTheme.errorRed);
+        final statusBg = isActivated
+            ? const Color(0xFFECFDF5)
+            : (isTrial ? const Color(0xFFFFFBEB) : const Color(0xFFFEF2F2));
+        final statusBorder = isActivated
+            ? const Color(0xFFA7F3D0)
+            : (isTrial ? const Color(0xFFFDE68A) : const Color(0xFFFECACA));
+
+        final titleText = isActivated
+            ? 'البَرْنَامِجُ مُفَعَّلٌ بِنَجَاحٍ (نُسْخَةٌ كَامِلَةٌ دَائِمَةٌ)'
+            : (isTrial
+                ? 'فَتْرَةٌ تَجْرِيبِيَّةٌ نَشِطَةٌ (مُتَبَقٍّ ${license.daysRemaining} أَيَّام)'
+                : 'انْتَهَتِ الفَتْرَةُ التَّجْرِيبِيَّةُ (مَطْلُوبُ التَّفْعِيلِ)');
+
+        final descText = isActivated
+            ? 'شُكْرًا لَكَ، تَمَّ تَنْشِيطُ جَمِيعِ مُمَيِّزَاتِ وَدُرُوسِ مَنْظُومَةِ بَيَانٍ لِهَذَا الجِهَازِ بِنَجَاحٍ.'
+            : (isTrial
+                ? 'يُمْكِنُكَ اسْتِخْدَامُ كَافَّةِ الدُّرُوسِ وَالأَنْشِطَةِ أثْنَاءِ الفَتْرَةِ التَّجْرِيبِيَّةِ، أَوْ إِدْخَالُ كُودِ التَّفْعِيلِ لِلتَّنْشِيطِ الدَّائِمِ.'
+                : 'تَمَّ تَعْلِيقُ الوُصُولِ إِلَى الدُّرُوسِ وَالأَنْشِطَةِ التَّفَاعُلِيَّةِ. يُرْجَى إِدْخَالُ كُودِ التَّفْعِيلِ لِمُوَاصَلَةِ الاِسْتِخْدَامِ.');
+
+        final icon = isActivated
+            ? Icons.verified_rounded
+            : (isTrial ? Icons.hourglass_top_rounded : Icons.lock_clock_rounded);
+
+        return Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Status Box
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: statusBorder, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: statusColor, size: 30),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              titleText,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: statusColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              descText,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textDark,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Device Code Box
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.devices_rounded, size: 20, color: AppTheme.primaryTeal),
+                          SizedBox(width: 8),
+                          Text(
+                            'كُودُ الجِهَازِ الخَاصُّ بِكَ (Device Identifier):',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.4)),
+                              ),
+                              child: SelectableText(
+                                license.deviceCode,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'monospace',
+                                  letterSpacing: 2,
+                                  color: AppTheme.primaryDark,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: license.deviceCode));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تَمَّ نَسْخُ كُودِ الجِهَازِ إِلَى الحَافِظَةِ.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.copy_rounded, size: 18),
+                            label: const Text('نَسْخُ الكُودِ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryTeal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'قُمْ بِنَسْخِ هَذَا الكُودِ وَإِرْسَالِهِ لِلْمُطَوِّرِ لِلْحُصُولِ عَلَى كُودِ التَّفْعِيلِ المُنَاسِبِ لِجِهَازِكَ.',
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Action Button
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton.icon(
+                    onPressed: () => ActivationDialog.show(context, license),
+                    icon: Icon(
+                      isActivated ? Icons.check_circle_outline_rounded : Icons.key_rounded,
+                      size: 20,
+                    ),
+                    label: Text(
+                      isActivated ? 'إِعَادَةُ إِدْخَالِ التَّفْعِيلِ / الفَحْص' : 'إِدْخَالُ كُودِ التَّفْعِيلِ الآنَ',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isActivated ? Colors.grey[700] : AppTheme.accentOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
