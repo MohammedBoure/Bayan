@@ -41,6 +41,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   int _vocabFilter = 0; // 0 = الكل, 1 = المعاني والمفردات, 2 = الكلمة وضدها / تعويض المرادفات
   final Set<int> _revealedQuestionIndices = <int>{};
   final Set<int> _revealedSynonymIndices = <int>{};
+  final Set<int> _revealedAntonymIndices = <int>{};
   List<int> _audioHighlightedParagraphs = const [];
   bool _showAudioPlayer = false;
 
@@ -71,10 +72,24 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       for (int i = 0; i < widget.lesson.readingPassage!.synonymReplacements.length; i++) {
         _revealedSynonymIndices.add(i);
       }
+      final antonymsCount = widget.lesson.readingPassage!.vocabulary.where((v) => v.isAntonym).length;
+      for (int i = 0; i < antonymsCount; i++) {
+        _revealedAntonymIndices.add(i);
+      }
     }
     if (widget.lesson.readingPassage?.hasAudio == true) {
       _audioHighlightedParagraphs = widget.lesson.readingPassage!.audioTracks.first.paragraphIndices;
     }
+  }
+
+  void _toggleAllAntonyms(int total) {
+    setState(() {
+      if (_revealedAntonymIndices.length == total) {
+        _revealedAntonymIndices.clear();
+      } else {
+        _revealedAntonymIndices.addAll(List.generate(total, (i) => i));
+      }
+    });
   }
 
   void _toggleAllSynonymReplacements(int total) {
@@ -149,8 +164,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           },
           areAnswersRevealed: _areAnswersRevealed,
           onToggleAnswers: () {
-            final total = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
-            _toggleAllComprehensionAnswers(total);
+            final totalQuestions = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
+            final totalSynonyms = widget.lesson.readingPassage?.synonymReplacements.length ?? 0;
+            final totalAntonyms = widget.lesson.readingPassage?.vocabulary.where((v) => v.isAntonym).length ?? 0;
+            setState(() {
+              _areAnswersRevealed = !_areAnswersRevealed;
+              if (_areAnswersRevealed) {
+                _revealedQuestionIndices.addAll(List.generate(totalQuestions, (i) => i));
+                _revealedSynonymIndices.addAll(List.generate(totalSynonyms, (i) => i));
+                _revealedAntonymIndices.addAll(List.generate(totalAntonyms, (i) => i));
+              } else {
+                _revealedQuestionIndices.clear();
+                _revealedSynonymIndices.clear();
+                _revealedAntonymIndices.clear();
+              }
+            });
           },
           isSpotlightActive: _isSpotlightActive,
           onToggleSpotlight: () {
@@ -713,23 +741,85 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         // القسم الثاني: الكلمة وضدها
         if ((_vocabFilter == 0 || _vocabFilter == 2) && antonyms.isNotEmpty) ...[
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.accentCoral.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.3), width: 1.5),
             ),
-            child: Row(
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                const Icon(Icons.swap_horiz_rounded, color: AppTheme.accentCoral, size: 26),
-                const SizedBox(width: 10),
-                Text(
-                  '⚖️ الْكَلِمَةُ وَضِدُّهَا فِي النَّصِّ (${antonyms.length})',
-                  style: TextStyle(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.accentCoral,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.swap_horiz_rounded, color: AppTheme.accentCoral, size: 26),
+                    const SizedBox(width: 10),
+                    Text(
+                      '⚖️ الْكَلِمَةُ وَضِدُّهَا فِي النَّصِّ (${antonyms.length})',
+                      style: TextStyle(
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.accentCoral,
+                      ),
+                    ),
+                  ],
+                ),
+                // أزرار التحكم الصفي للأستاذ: إظهار جميع الأضداد / إخفاء الأضداد
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 10,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _revealedAntonymIndices.isNotEmpty
+                            ? AppTheme.accentCoral.withValues(alpha: 0.15)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _revealedAntonymIndices.isNotEmpty
+                              ? AppTheme.accentCoral.withValues(alpha: 0.4)
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Text(
+                        'المَعْرُوضُ: ${_revealedAntonymIndices.length} مِنْ ${antonyms.length}',
+                        style: TextStyle(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: _revealedAntonymIndices.isNotEmpty ? AppTheme.accentCoral : AppTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _toggleAllAntonyms(antonyms.length),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _revealedAntonymIndices.length == antonyms.length
+                            ? const Color(0xFF64748B)
+                            : AppTheme.accentCoral,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: Icon(
+                        _revealedAntonymIndices.length == antonyms.length
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        size: 18,
+                      ),
+                      label: Text(
+                        _revealedAntonymIndices.length == antonyms.length
+                            ? 'إِخْفَاءُ جَمِيعِ الأَضْدَادِ'
+                            : 'إِظْهَارُ جَمِيعِ الأَضْدَادِ',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -738,7 +828,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           Wrap(
             spacing: 16,
             runSpacing: 16,
-            children: antonyms.map((vocab) => _buildAntonymCard(vocab, scale)).toList(),
+            children: antonyms.asMap().entries.map((entry) {
+              return _buildAntonymCard(entry.value, entry.key, scale);
+            }).toList(),
           ),
           const SizedBox(height: 22),
         ],
@@ -1209,8 +1301,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // بطاقة الكلمة وضدها (تصميم مرجاني مميز مع إبراز التقابل اللغوي «الكلمة» ⟷ ≠ ⟷ «الضد»)
-  Widget _buildAntonymCard(VocabularyItem vocab, double scale) {
+  // بطاقة الكلمة وضدها (تدعم كشف وإخفاء الضد فردياً وجماعياً مع إخفاء مسبق لتفعيل مهارة البحث لدى التلاميذ)
+  Widget _buildAntonymCard(VocabularyItem vocab, int index, double scale) {
+    final isRevealed = _revealedAntonymIndices.contains(index);
+
     // تنظيف صيغة الضد إذا كانت مكتوبة كـ "ضدها: ..."
     String cleanExplanation = vocab.explanation;
     final regex = RegExp(r'ضِدُّهَا(?:\s+فِي\s+(?:النَّصِّ|المَعْنَى))?\s*:\s*', unicode: true);
@@ -1226,7 +1320,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.4), width: 1.8),
+        border: Border.all(
+          color: isRevealed
+              ? AppTheme.accentCoral.withValues(alpha: 0.6)
+              : const Color(0xFFCBD5E1),
+          width: 1.8,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1238,8 +1337,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1257,17 +1359,67 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   ),
                 ),
               ),
+              // زر تبديل كشف وإخفاء الضد للأستاذ
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    if (isRevealed) {
+                      _revealedAntonymIndices.remove(index);
+                    } else {
+                      _revealedAntonymIndices.add(index);
+                    }
+                  });
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isRevealed
+                        ? AppTheme.accentCoral.withValues(alpha: 0.12)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isRevealed ? AppTheme.accentCoral : const Color(0xFFCBD5E1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        color: isRevealed ? AppTheme.accentCoral : const Color(0xFF64748B),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isRevealed ? 'إِخْفَاءُ الضِّدِّ' : 'إِظْهَارُ الضِّدِّ',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: isRevealed ? AppTheme.accentCoral : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           // بطاقة المقابلة البصرية بين الكلمة وضدها
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: AppTheme.accentCoral.withValues(alpha: 0.05),
+              color: isRevealed
+                  ? AppTheme.accentCoral.withValues(alpha: 0.05)
+                  : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.15)),
+              border: Border.all(
+                color: isRevealed
+                    ? AppTheme.accentCoral.withValues(alpha: 0.2)
+                    : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1299,13 +1451,61 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    oppositeWord,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24 * scale,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.accentCoral,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isRevealed) {
+                          _revealedAntonymIndices.remove(index);
+                        } else {
+                          _revealedAntonymIndices.add(index);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isRevealed
+                            ? Colors.transparent
+                            : const Color(0xFFFFECEC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isRevealed
+                              ? Colors.transparent
+                              : const Color(0xFFFCA5A5),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: isRevealed
+                          ? Text(
+                              oppositeWord,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 24 * scale,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.accentCoral,
+                              ),
+                            )
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.help_outline_rounded, color: Color(0xFFDC2626), size: 18),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'انْقُرْ لِلْكَشْفِ',
+                                    style: TextStyle(
+                                      fontSize: 15 * scale,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFFDC2626),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                     ),
                   ),
                 ),

@@ -344,4 +344,70 @@ void main() {
     expect(idxTanawala, lessThan(idxWadaaha));
     expect(idxWadaaha, lessThan(idxRaha));
   });
+
+  testWidgets('Antonyms are hidden by default and teacher can reveal and hide them individually and collectively', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson1 = repo.getGradeById('grade3')!.lessons.firstWhere((l) => l.id == 'g3_l1');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        builder: (context, child) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: child!,
+        ),
+        home: LessonDetailScreen(
+          lesson: lesson1,
+          progressService: ps,
+        ),
+      ),
+    );
+
+    // Switch to stage 2 ("2. كَلِمَاتِي الجَدِيدَةُ")
+    await tester.tap(find.text('2. كَلِمَاتِي الجَدِيدَةُ'));
+    await tester.pumpAndSettle();
+
+    // Verify antonym section exists
+    expect(find.textContaining('الْكَلِمَةُ وَضِدُّهَا فِي النَّصِّ'), findsOneWidget);
+
+    // Verify antonym is HIDDEN by default (shows 'انْقُرْ لِلْكَشْفِ')
+    expect(find.text('انْقُرْ لِلْكَشْفِ'), findsWidgets);
+    // The opposite words 'فَرَغَ' and 'نَائِمَةً' should NOT be visible initially
+    expect(find.text('فَرَغَ'), findsNothing);
+    expect(find.text('نَائِمَةً'), findsNothing);
+
+    // Tap on the reveal slot of the first antonym card ('بَدَأَ')
+    final revealFinder = find.text('انْقُرْ لِلْكَشْفِ').first;
+    await tester.ensureVisible(revealFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(revealFinder);
+    await tester.pumpAndSettle();
+
+    // Now 'فَرَغَ' should be revealed!
+    expect(find.text('فَرَغَ'), findsOneWidget);
+
+    // Tap 'إِخْفَاءُ الضِّدِّ' to hide it again
+    final hideFinder = find.text('إِخْفَاءُ الضِّدِّ').first;
+    await tester.ensureVisible(hideFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(hideFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('فَرَغَ'), findsNothing);
+
+    // Tap the master button 'إِظْهَارُ جَمِيعِ الأَضْدَادِ'
+    final toggleAllFinder = find.text('إِظْهَارُ جَمِيعِ الأَضْدَادِ');
+    await tester.ensureVisible(toggleAllFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(toggleAllFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('فَرَغَ'), findsOneWidget);
+    expect(find.text('نَائِمَةً'), findsOneWidget);
+    expect(find.text('إِخْفَاءُ جَمِيعِ الأَضْدَادِ'), findsOneWidget);
+  });
 }
