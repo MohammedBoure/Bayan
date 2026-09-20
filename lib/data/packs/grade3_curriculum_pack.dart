@@ -73,11 +73,12 @@ class Grade3CurriculumPack {
       ruleSummary: 'الْفِعْلُ الْمَاضِي: هُوَ مَا دَلَّ عَلَى حَدَثٍ وَقَعَ فِي الْمَاضِي وَانْتَهَى.',
       detailedExplanation: '''
 مَرْحَباً بِكُمْ يَا أَبْطَالَ الصَّفِّ الثَّالِثِ!
-الفِعْلُ المَاضِي هُوَ عَمَلٌ قَامَ بِهِ الفَاعِلُ وَفَرَغَ مِنْهُ:
-• سَارَ عَبْدُ القَادِرِ إِلَى حَقْلِهِ.
-• تَنَاوَلَ الحُبُوبَ وَوَضَعَهَا فِي مِئْزَرِهِ.
-• كَتَبَ التِّلْمِيذُ وَاجِبَهُ أَمْسِ.
-علامته المميزة: يقبل في آخره تاء التأنيث الساكنة (سَارَتْ، كَتَبَتْ، شَرِبَتْ).
+الفِعْلُ المَاضِي هُوَ عَمَلٌ قَامَ بِهِ الفَاعِلُ وَفَرَغَ مِنْهُ فِي الزَّمَنِ المَاضِي:
+• سَارَ عَبْدُ الْقَادِرِ إِلَى حَقْلِهِ.
+• وَصَلَ إِلَى الْحَقْلِ.
+• رَاحَ يَبْذُرُهَا.
+• تَنَاوَلَ الْحُبُوبَ وَوَضَعَهَا فِي مِئْزَرِهِ.
+علامته المميزة: يقبل في آخره تاء التأنيث الساكنة (سَارَتْ، وَصَلَتْ، كَتَبَتْ).
 ''',
       readingPassage: const ReadingPassageModel(
         title: 'خِدْمَةُ الْأَرْضِ',
@@ -134,13 +135,35 @@ class Grade3CurriculumPack {
       ),
       examples: [
         LessonExample(
-          sentence: 'سَارَ عَبْدُ القَادِرِ إِلَى حَقْلِهِ',
+          sentence: 'سَارَ عَبْدُ الْقَادِرِ إِلَى حَقْلِهِ',
           tokens: [
             NlpToken(word: 'سَارَ', plainWord: 'سار', pos: 'فعل', subType: 'فعل ماضٍ', caseMark: 'مبني على الفتح الظاهر', explanation: 'فعل ماضٍ يدل على المشي في الزمن الماضي.', isTarget: true),
-            NlpToken(word: 'عَبْدُ', plainWord: 'عبد', pos: 'اسم', subType: 'فاعل', caseMark: 'مرفوع بالضمة', explanation: 'الفاعل الذي قام بالسير.'),
-            NlpToken(word: 'القَادِرِ', plainWord: 'القادر', pos: 'اسم', subType: 'مضاف إليه', caseMark: 'مجرور بالكسرة', explanation: 'مضاف إليه مجرور.'),
-            NlpToken(word: 'إِلَى', plainWord: 'إلى', pos: 'حرف', subType: 'حرف جر', explanation: 'حرف جر يفيد انتهاء الغاية.'),
-            NlpToken(word: 'حَقْلِهِ', plainWord: 'حقله', pos: 'اسم', subType: 'اسم مجرور', caseMark: 'مجرور بالكسرة', explanation: 'اسم مجرور بإلى.'),
+            NlpToken(word: 'عَبْدُ', plainWord: 'عبد', pos: 'اسم', subType: 'فاعل', caseMark: 'مرفوع بالضمة الظاهرة', explanation: 'الفاعل الذي قام بفعل السير وهو مضاف.'),
+            NlpToken(word: 'الْقَادِرِ', plainWord: 'القادر', pos: 'اسم', subType: 'مضاف إليه', caseMark: 'مجرور بالكسرة الظاهرة', explanation: 'مضاف إليه مجرور وعلامة جره الكسرة الظاهرة.'),
+            NlpToken(word: 'إِلَى', plainWord: 'إلى', pos: 'حرف', subType: 'حرف جر', caseMark: 'مبني على السكون', explanation: 'حرف جر يفيد انتهاء الغاية المكانية.'),
+            NlpToken(word: 'حَقْلِهِ', plainWord: 'حقله', pos: 'اسم', subType: 'اسم مجرور', caseMark: 'مجرور بالكسرة الظاهرة', explanation: 'اسم مجرور بإلى، والهاء ضمير متصل مضاف إليه.'),
+          ],
+        ),
+        LessonExample(
+          sentence: 'وَصَلَ إِلَى الْحَقْلِ',
+          tokens: [
+            NlpToken(word: 'وَصَلَ', plainWord: 'وصل', pos: 'فعل', subType: 'فعل ماضٍ', caseMark: 'مبني على الفتح الظاهر', explanation: 'فعل ماضٍ يدل على الوصول، وقع وانتهى في الزمن الماضي.', isTarget: true),
+            NlpToken(word: 'إِلَى', plainWord: 'إلى', pos: 'حرف', subType: 'حرف جر', caseMark: 'مبني على السكون', explanation: 'حرف جر يفيد انتهاء الغاية المكانية.'),
+            NlpToken(word: 'الْحَقْلِ', plainWord: 'الحقل', pos: 'اسم', subType: 'اسم مجرور', caseMark: 'مجرور بالكسرة الظاهرة', explanation: 'اسم مجرور بإلى وعلامة جره الكسرة الظاهرة على آخره.'),
+          ],
+        ),
+        LessonExample(
+          sentence: 'رَاحَ يَبْذُرُهَا',
+          tokens: [
+            NlpToken(word: 'رَاحَ', plainWord: 'راح', pos: 'فعل', subType: 'فعل ماضٍ', caseMark: 'مبني على الفتح الظاهر', explanation: 'فعل ماضٍ من أفعال الشروع (بمعنى بدأ وشرع)، مبني على الفتح الظاهر.', isTarget: true),
+            NlpToken(word: 'يَبْذُرُهَا', plainWord: 'يبذرها', pos: 'فعل', subType: 'فعل مضارع', caseMark: 'مرفوع بالضمة الظاهرة', explanation: 'فعل مضارع مرفوع، والفاعل ضمير مستتر، و(هَا) ضمير في محل نصب مفعول به.'),
+          ],
+        ),
+        LessonExample(
+          sentence: 'تَنَاوَلَ الْحُبُوبَ',
+          tokens: [
+            NlpToken(word: 'تَنَاوَلَ', plainWord: 'تناول', pos: 'فعل', subType: 'فعل ماضٍ', caseMark: 'مبني على الفتح الظاهر', explanation: 'فعل ماضٍ يدل على الأخذ والتناول، وقع وانتهى في الماضي.', isTarget: true),
+            NlpToken(word: 'الْحُبُوبَ', plainWord: 'الحبوب', pos: 'اسم', subType: 'مفعول به', caseMark: 'منصوب بالفتحة الظاهرة', explanation: 'مفعول به منصوب وعلامة نصبه الفتحة الظاهرة على آخره.'),
           ],
         ),
       ],
