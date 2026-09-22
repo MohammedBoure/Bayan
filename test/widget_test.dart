@@ -178,6 +178,54 @@ void main() {
     expect(totalActivities, greaterThanOrEqualTo(16));
   });
 
+  test('Grade 4 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
+    final repo = CurriculumRepository.instance;
+    final grade4 = repo.getGradeById('grade4')!;
+
+    // Verify all 3 authentic lessons exist across 2 units
+    expect(grade4.units.length, equals(2));
+    expect(grade4.lessons.length, equals(3));
+
+    // Check Lesson 1: الجملة الفعلية - التَّاجَمَاعْتُ
+    final lesson1 = grade4.lessons.firstWhere((l) => l.id == 'g4_l1');
+    expect(lesson1.readingPassage, isNotNull);
+    expect(lesson1.readingPassage!.title, equals('التَّاجَمَاعْتُ'));
+    expect(lesson1.readingPassage!.paragraphs.length, equals(4));
+    expect(lesson1.readingPassage!.vocabulary.length, equals(10));
+    expect(lesson1.readingPassage!.comprehensionQuestions.length, equals(11));
+    expect(lesson1.discovery, isNotNull);
+    expect(lesson1.discovery!.triggerSentences.isNotEmpty, isTrue);
+    expect(lesson1.discovery!.allTargetWords, contains('تَدَخَّلَ'));
+    expect(lesson1.activities.length, equals(5));
+
+    // Check Lesson 2: الفاعل - الْمُعَلِّمُ الْجَدِيدُ
+    final lesson2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
+    expect(lesson2.readingPassage!.title, equals('الْمُعَلِّمُ الْجَدِيدُ'));
+    expect(lesson2.readingPassage!.paragraphs.length, equals(5));
+    expect(lesson2.readingPassage!.vocabulary.length, equals(8));
+    expect(lesson2.readingPassage!.comprehensionQuestions.length, equals(11));
+    expect(lesson2.discovery!.allTargetWords, contains('السَّائِقُ'));
+    expect(lesson2.discovery!.allTargetWords, contains('المُعَلِّمُ'));
+    expect(lesson2.activities.length, equals(5));
+
+    // Check Lesson 3: المفعول به - بَيْنَ جَارَيْنِ
+    final lesson3 = grade4.lessons.firstWhere((l) => l.id == 'g4_l3');
+    expect(lesson3.readingPassage!.title, equals('بَيْنَ جَارَيْنِ'));
+    expect(lesson3.readingPassage!.paragraphs.length, equals(4));
+    expect(lesson3.readingPassage!.vocabulary.length, equals(10));
+    expect(lesson3.readingPassage!.comprehensionQuestions.length, equals(12));
+    expect(lesson3.discovery!.allTargetWords, contains('الحَائِطَ'));
+    expect(lesson3.activities.length, equals(6));
+
+    // Check total activities across Grade 4 equals 16 applied activities
+    final totalActivities = grade4.lessons.fold<int>(0, (sum, l) => sum + l.activities.length);
+    expect(totalActivities, equals(16));
+
+    // Check comprehensive quiz
+    expect(grade4.comprehensiveQuiz, isNotNull);
+    expect(grade4.comprehensiveQuiz!.questions.length, equals(5));
+  });
+
   test('ProgressService supports full teacher presentation configuration and persistence', () async {
     final ps = ProgressService();
     await ps.init();
