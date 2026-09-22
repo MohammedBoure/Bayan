@@ -35,63 +35,119 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top App Bar with Data Show Badge, License Badge & Settings
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            // Data Show Projection Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryTeal.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppTheme.primaryTeal, width: 1.8),
+                    // Top App Bar with Application Title, Logo, Badges & Settings
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 16,
+                        runSpacing: 12,
+                        children: [
+                          // Application Title & Brand Logo in Top Bar
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primaryTeal.withValues(alpha: 0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.asset(
+                                    'assets/images/app_logo.png',
+                                    width: 44,
+                                    height: 44,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
-                              child: const Row(
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.cast_for_education_rounded, color: AppTheme.primaryTeal, size: 24),
-                                  SizedBox(width: 8),
+                                children: const [
                                   Text(
-                                    'مُهيأ للعرض الصفي (Data Show)',
+                                    'بُسْتَانُ النَّحْوِ العَرَبِيِّ',
                                     style: TextStyle(
-                                      color: AppTheme.primaryTeal,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.primaryDark,
+                                    ),
+                                  ),
+                                  Text(
+                                    'مَنْظُومَةُ التَّعْلِيمِ الصَّفِّيِّ التَّفَاعُلِيِّ',
+                                    style: TextStyle(
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      color: AppTheme.primaryTeal,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            // License Status Badge
-                            ListenableBuilder(
-                              listenable: effLicense,
-                              builder: (context, _) => _buildLicenseBadge(context, effLicense),
-                            ),
-                          ],
-                        ),
-                        // Settings Shortcut Button
-                        IconButton(
-                          icon: const Icon(Icons.settings_rounded, color: AppTheme.primaryTeal, size: 34),
-                          tooltip: 'الإعدادات',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => SettingsScreen(
-                                  progressService: progressService,
-                                  licenseService: effLicense,
+                            ],
+                          ),
+                          // Badges & Settings Shortcut
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              // Data Show Projection Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryTeal.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: AppTheme.primaryTeal, width: 1.5),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.cast_for_education_rounded, color: AppTheme.primaryTeal, size: 22),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'مُهيأ للعرض الصفي (Data Show)',
+                                      style: TextStyle(
+                                        color: AppTheme.primaryTeal,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      ],
+                              // License Status Badge
+                              ListenableBuilder(
+                                listenable: effLicense,
+                                builder: (context, _) => _buildLicenseBadge(context, effLicense),
+                              ),
+                              // Settings Shortcut Button
+                              IconButton(
+                                icon: const Icon(Icons.settings_rounded, color: AppTheme.primaryTeal, size: 32),
+                                tooltip: 'الإعدادات',
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => SettingsScreen(
+                                        progressService: progressService,
+                                        licenseService: effLicense,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
 

@@ -223,7 +223,7 @@ void main() {
 
     // Check comprehensive quiz
     expect(grade4.comprehensiveQuiz, isNotNull);
-    expect(grade4.comprehensiveQuiz!.questions.length, equals(5));
+    expect(grade4.comprehensiveQuiz.questions.length, equals(5));
   });
 
   test('ProgressService supports full teacher presentation configuration and persistence', () async {
