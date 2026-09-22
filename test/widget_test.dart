@@ -196,6 +196,9 @@ void main() {
     expect(lesson1.discovery, isNotNull);
     expect(lesson1.discovery!.triggerSentences.isNotEmpty, isTrue);
     expect(lesson1.discovery!.allTargetWords, contains('تَدَخَّلَ'));
+    expect(lesson1.readingPassage!.hasAudio, isTrue);
+    expect(lesson1.readingPassage!.audioTracks.length, equals(3));
+    expect(lesson1.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_1/1.wav'));
     expect(lesson1.activities.length, equals(5));
 
     // Check Lesson 2: الفاعل - الْمُعَلِّمُ الْجَدِيدُ
@@ -206,6 +209,9 @@ void main() {
     expect(lesson2.readingPassage!.comprehensionQuestions.length, equals(11));
     expect(lesson2.discovery!.allTargetWords, contains('السَّائِقُ'));
     expect(lesson2.discovery!.allTargetWords, contains('المُعَلِّمُ'));
+    expect(lesson2.readingPassage!.hasAudio, isTrue);
+    expect(lesson2.readingPassage!.audioTracks.length, equals(3));
+    expect(lesson2.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_2/1.wav'));
     expect(lesson2.activities.length, equals(5));
 
     // Check Lesson 3: المفعول به - بَيْنَ جَارَيْنِ
@@ -215,6 +221,9 @@ void main() {
     expect(lesson3.readingPassage!.vocabulary.length, equals(10));
     expect(lesson3.readingPassage!.comprehensionQuestions.length, equals(12));
     expect(lesson3.discovery!.allTargetWords, contains('الحَائِطَ'));
+    expect(lesson3.readingPassage!.hasAudio, isTrue);
+    expect(lesson3.readingPassage!.audioTracks.length, equals(1));
+    expect(lesson3.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_3/1.wav'));
     expect(lesson3.activities.length, equals(6));
 
     // Check total activities across Grade 4 equals 16 applied activities

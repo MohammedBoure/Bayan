@@ -148,6 +148,23 @@ class Grade4CurriculumPack {
             note: 'تُعَوَّضُ بِـ «لَا مَأْوَى يَحْمِيهِمْ وَيَسْتُرُهُمْ».',
           ),
         ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 1 (الفقرة 1)',
+            assetPath: 'assets/sounds/4_1/1.wav',
+            paragraphIndices: [0],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 2 (الفقرتان 2 - 3)',
+            assetPath: 'assets/sounds/4_1/2.wav',
+            paragraphIndices: [1, 2],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 3 (الفقرة 4)',
+            assetPath: 'assets/sounds/4_1/3.wav',
+            paragraphIndices: [3],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         triggerSentences: [
@@ -383,6 +400,23 @@ class Grade4CurriculumPack {
             note: 'تُعَوَّضُ بِـ «تَوَقُّعُهُمْ وَظَنُّهُمْ».',
           ),
         ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 1 (الفقرتان 1 - 2)',
+            assetPath: 'assets/sounds/4_2/1.wav',
+            paragraphIndices: [0, 1],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 2 (الفقرة 3)',
+            assetPath: 'assets/sounds/4_2/2.wav',
+            paragraphIndices: [2],
+          ),
+          ReadingAudioTrack(
+            title: 'المَقْطَعُ 3 (الفقرتان 4 - 5)',
+            assetPath: 'assets/sounds/4_2/3.wav',
+            paragraphIndices: [3, 4],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         triggerSentences: [
@@ -612,6 +646,13 @@ class Grade4CurriculumPack {
             highlightedWord: 'الذَّنْبُ ذَنْبِي',
             replacementWord: 'الخَطَأُ خَطَئِي',
             note: 'تُعَوَّضُ بِـ «الخَطَأُ خَطَئِي وَأَنَا المَسْؤُولُ».',
+          ),
+        ],
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ (الفقرات 1 - 4)',
+            assetPath: 'assets/sounds/4_3/1.wav',
+            paragraphIndices: [0, 1, 2, 3],
           ),
         ],
       ),

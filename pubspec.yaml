@@ -72,6 +72,9 @@ flutter:
     - assets/sounds/3_1/
     - assets/sounds/3_2/
     - assets/sounds/3_3/
+    - assets/sounds/4_1/
+    - assets/sounds/4_2/
+    - assets/sounds/4_3/
 
   fonts:
     - family: NotoNaskhArabic

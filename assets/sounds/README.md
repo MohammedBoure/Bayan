@@ -8,3 +8,4 @@ This directory contains recorded audio narrations of Arabic reading texts for pr
 - [3_3](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/3_3): Segmented audio recordings for Grade 3, Lesson 3 reading passage (من أجلك يا جزائر).
 - [4_1](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_1): Segmented audio recordings for Grade 4, Lesson 1 reading passage (معا لنبني منزلا - التويزة).
 - [4_2](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_2): Segmented audio recordings for Grade 4, Lesson 2 reading passage (المعلم الجديد).
+- [4_3](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_3): Audio narration recording for Grade 4, Lesson 3 reading passage (بين جارين).
