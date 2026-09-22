@@ -45,7 +45,7 @@ class NahwApp extends StatelessWidget {
         final fontScale = progressService.fontSizeScale;
 
         return MaterialApp(
-          title: 'بستان النحو العربي',
+          title: 'Bayan',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.buildTheme(fontFamily: progressService.selectedFontFamily),
           home: HomeScreen(

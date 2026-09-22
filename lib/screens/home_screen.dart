@@ -73,16 +73,37 @@ class HomeScreen extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Text(
-                                    'بُسْتَانُ النَّحْوِ العَرَبِيِّ',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppTheme.primaryDark,
-                                    ),
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Bayan',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.primaryTeal,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        width: 1.5,
+                                        height: 18,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'بُسْتَانُ النَّحْوِ العَرَبِيِّ',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.primaryDark,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
+                                  const Text(
                                     'مَنْظُومَةُ التَّعْلِيمِ الصَّفِّيِّ التَّفَاعُلِيِّ',
                                     style: TextStyle(
                                       fontSize: 12,
