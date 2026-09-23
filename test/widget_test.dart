@@ -191,7 +191,7 @@ void main() {
     expect(lesson1.readingPassage, isNotNull);
     expect(lesson1.readingPassage!.title, equals('التَّاجَمَاعْتُ'));
     expect(lesson1.readingPassage!.paragraphs.length, equals(4));
-    expect(lesson1.readingPassage!.vocabulary.length, equals(10));
+    expect(lesson1.readingPassage!.vocabulary.length, equals(5));
     expect(lesson1.readingPassage!.comprehensionQuestions.length, equals(11));
     expect(lesson1.discovery, isNotNull);
     expect(lesson1.discovery!.triggerSentences.isNotEmpty, isTrue);

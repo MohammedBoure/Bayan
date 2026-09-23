@@ -731,10 +731,18 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: meanings.map((vocab) => _buildMeaningCard(vocab, scale)).toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth;
+              final crossAxisCount = availableWidth >= 1150 ? 3 : (availableWidth >= 720 ? 2 : 1);
+              final cardWidth = (availableWidth - (crossAxisCount - 1) * 16) / crossAxisCount;
+
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: meanings.map((vocab) => _buildMeaningCard(vocab, scale, width: cardWidth)).toList(),
+              );
+            },
           ),
           const SizedBox(height: 22),
         ],
@@ -826,12 +834,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: antonyms.asMap().entries.map((entry) {
-              return _buildAntonymCard(entry.value, entry.key, scale);
-            }).toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth;
+              final isTwoCol = availableWidth >= 960 && antonyms.length > 1;
+              final cardWidth = isTwoCol ? (availableWidth - 16) / 2 : availableWidth;
+
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: antonyms.asMap().entries.map((entry) {
+                  return _buildAntonymCard(entry.value, entry.key, scale, width: cardWidth);
+                }).toList(),
+              );
+            },
           ),
           const SizedBox(height: 22),
         ],
@@ -1231,9 +1247,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   // بطاقة شرح المعنى (تصميم زمردي مريح للعين مع تحليل صرفي اختياري)
-  Widget _buildMeaningCard(VocabularyItem vocab, double scale) {
+  Widget _buildMeaningCard(VocabularyItem vocab, double scale, {double? width}) {
     return Container(
-      width: 380,
+      width: width,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1253,14 +1269,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                vocab.word,
-                style: TextStyle(
-                  fontSize: 26 * scale,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryTeal,
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    vocab.word,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 26 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.primaryTeal,
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -1303,7 +1327,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   // بطاقة الكلمة وضدها (تدعم كشف وإخفاء الضد فردياً وجماعياً مع إخفاء مسبق لتفعيل مهارة البحث لدى التلاميذ)
-  Widget _buildAntonymCard(VocabularyItem vocab, int index, double scale) {
+  Widget _buildAntonymCard(VocabularyItem vocab, int index, double scale, {double? width}) {
     final isRevealed = _revealedAntonymIndices.contains(index);
 
     // تنظيف صيغة الضد إذا كانت مكتوبة كـ "ضدها: ..."
@@ -1315,8 +1339,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       oppositeWord = cleanExplanation.substring(match.end).replaceAll('.', '').trim();
     }
 
+    // استخراج البدائل المتعددة إذا كانت مفصولة بـ /
+    final oppositeAlternatives = oppositeWord
+        .split('/')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
     return Container(
-      width: 380,
+      width: width,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1330,7 +1361,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
+            blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
@@ -1338,28 +1369,34 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
+          // شريط رأس البطاقة: علامة التصنيف وزر الكشف/الإخفاء السريع للأستاذ
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppTheme.accentCoral.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppTheme.accentCoral.withValues(alpha: 0.3)),
                 ),
-                child: Text(
-                  'الكَلِمَةُ وَضِدُّهَا',
-                  style: TextStyle(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.accentCoral,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.compare_arrows_rounded, color: AppTheme.accentCoral, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'الكَلِمَةُ وَضِدُّهَا',
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.accentCoral,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
               // زر تبديل كشف وإخفاء الضد للأستاذ
               InkWell(
                 onTap: () {
@@ -1373,7 +1410,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 },
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: isRevealed
                         ? AppTheme.accentCoral.withValues(alpha: 0.12)
@@ -1391,7 +1428,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         color: isRevealed ? AppTheme.accentCoral : const Color(0xFF64748B),
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
                         isRevealed ? 'إِخْفَاءُ الضِّدِّ' : 'إِظْهَارُ الضِّدِّ',
                         style: TextStyle(
@@ -1406,51 +1443,115 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // بطاقة المقابلة البصرية بين الكلمة وضدها
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               color: isRevealed
-                  ? AppTheme.accentCoral.withValues(alpha: 0.05)
+                  ? AppTheme.accentCoral.withValues(alpha: 0.04)
                   : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isRevealed
-                    ? AppTheme.accentCoral.withValues(alpha: 0.2)
+                    ? AppTheme.accentCoral.withValues(alpha: 0.25)
                     : const Color(0xFFE2E8F0),
+                width: 1.5,
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // 1. الطرف الأيمن: الكلمة الأصلية في النص
                 Expanded(
-                  child: Text(
-                    vocab.word,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24 * scale,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentCoral,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '≠ ضِدُّ',
-                    style: TextStyle(
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.w900,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    decoration: BoxDecoration(
                       color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'الْكَلِمَةُ فِي النَّصِّ',
+                          style: TextStyle(
+                            fontSize: 11 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            vocab.word,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 24 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+
+                // 2. شارة التضاد المركزية (≠ ضِدُّهَا)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentCoral,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.accentCoral.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '≠',
+                          style: TextStyle(
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'ضِدُّهَا',
+                          style: TextStyle(
+                            fontSize: 11 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 3. الطرف الأيسر: الضد المقابل (تفاعلي للكشف والإخفاء)
                 Expanded(
                   child: InkWell(
                     onTap: () {
@@ -1462,44 +1563,101 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         }
                       });
                     },
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      duration: const Duration(milliseconds: 220),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                       decoration: BoxDecoration(
                         color: isRevealed
-                            ? Colors.transparent
-                            : const Color(0xFFFFECEC),
-                        borderRadius: BorderRadius.circular(10),
+                            ? Colors.white
+                            : const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isRevealed
-                              ? Colors.transparent
-                              : const Color(0xFFFCA5A5),
-                          width: 1.2,
+                              ? AppTheme.accentCoral.withValues(alpha: 0.4)
+                              : const Color(0xFFFDA4AF),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isRevealed
+                                ? AppTheme.accentCoral.withValues(alpha: 0.06)
+                                : const Color(0xFFF43F5E).withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: isRevealed
-                          ? Text(
-                              oppositeWord,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 24 * scale,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.accentCoral,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isRevealed ? 'الضِّدُّ الْمُقَابِلُ' : 'اسْتَخْرِجِ الضِّدَّ',
+                            style: TextStyle(
+                              fontSize: 11 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: isRevealed ? AppTheme.accentCoral : const Color(0xFFE11D48),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          if (isRevealed) ...[
+                            if (oppositeAlternatives.length > 1)
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: oppositeAlternatives.map((alt) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accentCoral.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: AppTheme.accentCoral.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        alt,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 18 * scale,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.accentCoral,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                            else
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  oppositeWord,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 24 * scale,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.accentCoral,
+                                  ),
+                                ),
                               ),
-                            )
-                          : FittedBox(
+                          ] else
+                            FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.help_outline_rounded, color: Color(0xFFDC2626), size: 18),
+                                  const Icon(Icons.touch_app_rounded, color: Color(0xFFDC2626), size: 18),
                                   const SizedBox(width: 4),
                                   Text(
                                     'انْقُرْ لِلْكَشْفِ',
                                     style: TextStyle(
-                                      fontSize: 15 * scale,
+                                      fontSize: 14 * scale,
                                       fontWeight: FontWeight.w900,
                                       color: const Color(0xFFDC2626),
                                     ),
@@ -1507,6 +1665,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 ],
                               ),
                             ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
