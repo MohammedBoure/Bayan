@@ -218,7 +218,7 @@ void main() {
     final lesson3 = grade4.lessons.firstWhere((l) => l.id == 'g4_l3');
     expect(lesson3.readingPassage!.title, equals('بَيْنَ جَارَيْنِ'));
     expect(lesson3.readingPassage!.paragraphs.length, equals(4));
-    expect(lesson3.readingPassage!.vocabulary.length, equals(10));
+    expect(lesson3.readingPassage!.vocabulary.length, equals(11));
     expect(lesson3.readingPassage!.comprehensionQuestions.length, equals(12));
     expect(lesson3.discovery!.allTargetWords, contains('الحَائِطَ'));
     expect(lesson3.readingPassage!.hasAudio, isTrue);
