@@ -143,6 +143,19 @@ class LinguisticEnrichmentModel {
   bool get hasDerivations => derivations.isNotEmpty;
 }
 
+/// Represents an item for matching a word to its meaning (اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا).
+class WordMeaningMatchItem {
+  final String word;
+  final String meaning;
+  final String? note;
+
+  const WordMeaningMatchItem({
+    required this.word,
+    required this.meaning,
+    this.note,
+  });
+}
+
 /// Represents the reading text and authentic context anchoring the grammar lesson.
 class ReadingPassageModel {
   final String title;
@@ -153,6 +166,9 @@ class ReadingPassageModel {
   final List<ReadingAudioTrack> audioTracks;
   final List<String> availableSynonyms;
   final List<SynonymReplacementItem> synonymReplacements;
+  final String meaningMatchPrompt;
+  final List<String> availableMeanings;
+  final List<WordMeaningMatchItem> meaningMatches;
   final LinguisticEnrichmentModel? enrichment;
 
   const ReadingPassageModel({
@@ -164,11 +180,15 @@ class ReadingPassageModel {
     this.audioTracks = const [],
     this.availableSynonyms = const [],
     this.synonymReplacements = const [],
+    this.meaningMatchPrompt = 'اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا:',
+    this.availableMeanings = const [],
+    this.meaningMatches = const [],
     this.enrichment,
   });
 
   String get fullText => paragraphs.join('\n\n');
   bool get hasAudio => audioTracks.isNotEmpty;
   bool get hasSynonyms => synonymReplacements.isNotEmpty;
+  bool get hasMeaningMatches => meaningMatches.isNotEmpty;
   bool get hasEnrichment => enrichment != null;
 }

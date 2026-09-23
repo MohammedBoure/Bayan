@@ -218,8 +218,10 @@ void main() {
     final lesson2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
     expect(lesson2.readingPassage!.title, equals('الْمُعَلِّمُ الْجَدِيدُ'));
     expect(lesson2.readingPassage!.paragraphs.length, equals(5));
-    expect(lesson2.readingPassage!.vocabulary.length, equals(8));
-    expect(lesson2.readingPassage!.comprehensionQuestions.length, equals(11));
+    expect(lesson2.readingPassage!.vocabulary.length, equals(3));
+    expect(lesson2.readingPassage!.hasMeaningMatches, isTrue);
+    expect(lesson2.readingPassage!.meaningMatches.length, equals(4));
+    expect(lesson2.readingPassage!.comprehensionQuestions.length, equals(10));
     expect(lesson2.discovery!.allTargetWords, contains('السَّائِقُ'));
     expect(lesson2.discovery!.allTargetWords, contains('المُعَلِّمُ'));
     expect(lesson2.readingPassage!.hasAudio, isTrue);
@@ -770,6 +772,68 @@ void main() {
     expect(find.text('كَتَبَ'), findsOneWidget);
     expect(find.text('سَاعَدَ'), findsOneWidget);
     expect(find.text('نَظَّفَ'), findsOneWidget);
+  });
+
+  testWidgets('LessonDetailScreen renders Grade 4 Lesson 2 authentic glossary (رصيدي الجديد) and word meaning matching', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson2 = repo.getGradeById('grade4')!.lessons.firstWhere((l) => l.id == 'g4_l2');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: lesson2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Switch to Stage 2: كَلِمَاتِي الجَدِيدَةُ
+    await tester.tap(find.text('2. كَلِمَاتِي الجَدِيدَةُ'));
+    await tester.pumpAndSettle();
+
+    // Verify رصيدي الجديد header with 3 words
+    expect(find.textContaining('رَصِيدِي الجَدِيدُ (3)'), findsWidgets);
+    expect(find.text('حَفَاوَةٌ'), findsOneWidget);
+    expect(find.text('الهِنْدَامُ'), findsOneWidget);
+    expect(find.text('الوَقَارُ'), findsOneWidget);
+
+    // Verify Meaning Matching section with prompt and bank
+    expect(find.textContaining('اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا'), findsWidgets);
+    expect(find.textContaining('بَنْكُ المَعَانِي المُتَاحَةِ'), findsOneWidget);
+    expect(find.text('جَرَّبَ وَعَرَفَ'), findsWidgets);
+    expect(find.text('بِعَدَمِ الرِّضَا'), findsWidgets);
+    expect(find.text('اطِّلاعٌ'), findsWidgets);
+    expect(find.text('تَوَقُّعُهُمْ'), findsWidgets);
+
+    // Target words in matching cards
+    expect(find.text('تَفَقَّدَ'), findsOneWidget);
+    expect(find.text('بِامْتِعَاضٍ'), findsOneWidget);
+    expect(find.text('حَدْسُهُمْ'), findsOneWidget);
+    expect(find.text('خَبِرَ'), findsOneWidget);
+
+    // Initially answers are hidden
+    expect(find.text('«اطِّلاعٌ»'), findsNothing);
+
+    // Click reveal button for all meaning matches
+    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ'));
+    await tester.pumpAndSettle();
+
+    // Now revealed
+    expect(find.text('«اطِّلاعٌ»'), findsOneWidget);
+    expect(find.text('«بِعَدَمِ الرِّضَا»'), findsOneWidget);
+    expect(find.text('«تَوَقُّعُهُمْ»'), findsOneWidget);
+    expect(find.text('«جَرَّبَ وَعَرَفَ»'), findsOneWidget);
   });
 }
 
