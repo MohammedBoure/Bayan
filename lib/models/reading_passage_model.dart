@@ -85,6 +85,64 @@ class SynonymReplacementItem {
   });
 }
 
+/// Represents a complementary word pair item (جِدِ الكَلِمَتَيْنِ المُتَكَامِلَتَيْنِ).
+class ComplementaryPairItem {
+  final String firstPart;
+  final String secondPart;
+  final String fullPhrase;
+  final String note;
+
+  const ComplementaryPairItem({
+    required this.firstPart,
+    required this.secondPart,
+    this.fullPhrase = '',
+    this.note = '',
+  });
+}
+
+/// Represents a morphological derivation item (ائْتِ بِمُشْتَقَّاتٍ عَلَى وَزْنِ...).
+class MorphologicalDerivationItem {
+  final String rootVerb;
+  final String pastForm;
+  final String activeParticiple;
+  final String verbalNoun;
+  final String passiveParticiple;
+  final String note;
+
+  const MorphologicalDerivationItem({
+    required this.rootVerb,
+    required this.pastForm,
+    required this.activeParticiple,
+    required this.verbalNoun,
+    required this.passiveParticiple,
+    this.note = '',
+  });
+}
+
+/// Represents the textbook linguistic enrichment section (أُثْرِي لُغَتِي).
+class LinguisticEnrichmentModel {
+  final String title;
+  final String pairPrompt;
+  final List<ComplementaryPairItem> complementaryPairs;
+  final List<String> availablePairTargets;
+  final String derivationPrompt;
+  final String derivationPatternExample;
+  final List<MorphologicalDerivationItem> derivations;
+
+  const LinguisticEnrichmentModel({
+    this.title = 'أُثْرِي لُغَتِي',
+    this.pairPrompt = 'انْقُلْ ثُمَّ أَنْجِزْ. جِدِ الْكَلِمَتَيْنِ الْمُتَكَامِلَتَيْنِ:',
+    this.complementaryPairs = const [],
+    this.availablePairTargets = const [],
+    this.derivationPrompt = 'ائْتِ بِمُشْتَقَّاتٍ عَلَى وَزْنِ: (اشْتَرَكَ / مُشْتَرِكٌ / اشْتِرَاكٌ / مُشْتَرَكٌ) لِلأَفْعَالِ التَّالِيَةِ:',
+    this.derivationPatternExample = 'اشْتَرَكَ / مُشْتَرِكٌ / اشْتِرَاكٌ / مُشْتَرَكٌ',
+    this.derivations = const [],
+  });
+
+  bool get hasPairs => complementaryPairs.isNotEmpty;
+  bool get hasDerivations => derivations.isNotEmpty;
+}
+
 /// Represents the reading text and authentic context anchoring the grammar lesson.
 class ReadingPassageModel {
   final String title;
@@ -95,6 +153,7 @@ class ReadingPassageModel {
   final List<ReadingAudioTrack> audioTracks;
   final List<String> availableSynonyms;
   final List<SynonymReplacementItem> synonymReplacements;
+  final LinguisticEnrichmentModel? enrichment;
 
   const ReadingPassageModel({
     required this.title,
@@ -105,9 +164,11 @@ class ReadingPassageModel {
     this.audioTracks = const [],
     this.availableSynonyms = const [],
     this.synonymReplacements = const [],
+    this.enrichment,
   });
 
   String get fullText => paragraphs.join('\n\n');
   bool get hasAudio => audioTracks.isNotEmpty;
   bool get hasSynonyms => synonymReplacements.isNotEmpty;
+  bool get hasEnrichment => enrichment != null;
 }

@@ -200,6 +200,9 @@ void main() {
     expect(lesson1.readingPassage!.hasAudio, isTrue);
     expect(lesson1.readingPassage!.audioTracks.length, equals(3));
     expect(lesson1.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_1/1.wav'));
+    expect(lesson1.readingPassage!.hasEnrichment, isTrue);
+    expect(lesson1.readingPassage!.enrichment!.complementaryPairs.length, equals(6));
+    expect(lesson1.readingPassage!.enrichment!.derivations.length, equals(4));
     expect(lesson1.activities.length, equals(5));
 
     // Check Lesson 2: الفاعل - الْمُعَلِّمُ الْجَدِيدُ
