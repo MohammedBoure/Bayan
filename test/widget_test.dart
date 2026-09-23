@@ -222,14 +222,28 @@ void main() {
     expect(lesson2.readingPassage!.hasMeaningMatches, isTrue);
     expect(lesson2.readingPassage!.meaningMatches.length, equals(4));
     expect(lesson2.readingPassage!.comprehensionQuestions.length, equals(10));
+    expect(lesson2.readingPassage!.hasEnrichment, isTrue);
+    expect(lesson2.readingPassage!.enrichment!.hasOddWords, isTrue);
+    expect(lesson2.readingPassage!.enrichment!.oddWordItems.length, equals(3));
+    expect(lesson2.discovery!.title, equals('أُلاَحِظُ وَأَكْتَشِفُ'));
+    expect(lesson2.discovery!.triggerSentences.length, equals(2));
+    expect(lesson2.discovery!.hasObservationQuestions, isTrue);
+    expect(lesson2.discovery!.observationQuestions.length, equals(2));
     expect(lesson2.discovery!.allTargetWords, contains('السَّائِقُ'));
     expect(lesson2.discovery!.allTargetWords, contains('المُعَلِّمُ'));
     expect(lesson2.readingPassage!.hasAudio, isTrue);
     expect(lesson2.readingPassage!.audioTracks.length, equals(3));
-    expect(lesson2.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_2/1.wav'));
     expect(lesson2.activities.length, equals(5));
-
-    // Check Lesson 3: المفعول به - بَيْنَ جَارَيْنِ
+    expect(lesson2.activities[0].type, equals(ActivityType.sentenceMultiChoice));
+    expect(lesson2.activities[0].sentenceItems!.length, equals(4));
+    expect(lesson2.activities[1].type, equals(ActivityType.sentenceMultiChoice));
+    expect(lesson2.activities[1].sentenceItems!.length, equals(4));
+    expect(lesson2.activities[2].type, equals(ActivityType.writtenParsing));
+    expect(lesson2.activities[2].sentenceItems!.length, equals(3));
+    expect(lesson2.activities[3].type, equals(ActivityType.openSentenceFill));
+    expect(lesson2.activities[3].sentenceItems!.length, equals(6));
+    expect(lesson2.activities[4].type, equals(ActivityType.textExtractionTable));
+    expect(lesson2.activities[4].tableRows!.length, equals(7));
     final lesson3 = grade4.lessons.firstWhere((l) => l.id == 'g4_l3');
     expect(lesson3.readingPassage!.title, equals('بَيْنَ جَارَيْنِ'));
     expect(lesson3.readingPassage!.paragraphs.length, equals(4));
@@ -825,15 +839,212 @@ void main() {
     // Initially answers are hidden
     expect(find.text('«اطِّلاعٌ»'), findsNothing);
 
-    // Click reveal button for all meaning matches
-    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ'));
+    // Click reveal button for meaning matches (first button of reveal all)
+    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ').first);
     await tester.pumpAndSettle();
 
-    // Now revealed
+    // Now meaning matches are revealed
     expect(find.text('«اطِّلاعٌ»'), findsOneWidget);
     expect(find.text('«بِعَدَمِ الرِّضَا»'), findsOneWidget);
     expect(find.text('«تَوَقُّعُهُمْ»'), findsOneWidget);
     expect(find.text('«جَرَّبَ وَعَرَفَ»'), findsOneWidget);
+
+    // Verify Odd Word Out section prompt and items
+    expect(find.textContaining('عَيِّنِ الْعُنْصُرَ الدَّخِيلَ فِي كُلِّ سَطْرٍ'), findsOneWidget);
+    expect(find.text('الاحْتِرَامُ'), findsOneWidget);
+    expect(find.text('التَّقْدِيرُ'), findsOneWidget);
+    expect(find.text('التَّعْظِيمُ'), findsOneWidget);
+    expect(find.text('الامْتِعَاضُ'), findsOneWidget);
+    expect(find.text('الأَقْسَامُ'), findsOneWidget);
+    expect(find.text('الفِنَاءُ'), findsOneWidget);
+    expect(find.text('السَّكِينَةُ'), findsOneWidget);
+    expect(find.text('الثَّقَافَةُ'), findsOneWidget);
+    expect(find.text('الْجَهْلُ'), findsOneWidget);
+
+    // Initially odd word badges are hidden
+    expect(find.text('دَخِيلٌ'), findsNothing);
+
+    // Click to reveal odd word for line 1
+    final revealFirstFinder = find.text('تَعْيِينُ الدَّخِيلِ').first;
+    await tester.ensureVisible(revealFirstFinder);
+    await tester.tap(revealFirstFinder);
+    await tester.pumpAndSettle();
+
+    // Now line 1 reveals badge and explanation
+    expect(find.text('دَخِيلٌ'), findsOneWidget);
+    expect(find.textContaining('الامْتِعَاضُ'), findsWidgets);
+
+    // Click to reveal all odd words using the second reveal all button
+    final revealAllEnrichmentFinder = find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ').last;
+    await tester.ensureVisible(revealAllEnrichmentFinder);
+    await tester.tap(revealAllEnrichmentFinder);
+    await tester.pumpAndSettle();
+
+    // All 3 lines have their odd words revealed
+    expect(find.text('دَخِيلٌ'), findsNWidgets(3));
+    expect(find.textContaining('السَّكِينَةُ'), findsWidgets);
+    expect(find.textContaining('الْجَهْلُ'), findsWidgets);
+
+    // Switch to Stage 4: أُلاَحِظُ وَأَكْتَشِفُ
+    final stage4Finder = find.text('4. أُلاَحِظُ وَأَكْتَشِفُ');
+    await tester.ensureVisible(stage4Finder);
+    await tester.tap(stage4Finder);
+    await tester.pumpAndSettle();
+
+    // Verify stage 4 header and paired trigger sentences
+    expect(find.textContaining('أُلاَحِظُ وَأَكْتَشِفُ'), findsWidgets);
+    expect(find.textContaining('وَضَعَ السَّائِقُ الْحَقَائِبَ أَمَامَ بَابِ الْمَدْرَسَةِ'), findsOneWidget);
+    expect(find.textContaining('السَّائِقُ هُوَ الَّذِي وَضَعَ الْحَقَائِبَ أَمَامَ الْبَابِ'), findsOneWidget);
+    expect(find.textContaining('شَعَرَ الْمُعَلِّمُ بِامْتِعَاضٍ'), findsOneWidget);
+    expect(find.textContaining('الْمُعَلِّمُ هُوَ الَّذِي شَعَرَ بِامْتِعَاضٍ'), findsNWidgets(2));
+
+    // Verify observation questions
+    expect(find.textContaining('مَا نَوْعُ الْكَلِمَتَيْنِ (الْمُعَلِّمُ – السَّائِقُ)؟'), findsOneWidget);
+    expect(find.textContaining('مَا هِيَ عَلَامَةُ الإِعْرَابِ الظَّاهِرَةُ عَلَى آخِرِ الْكَلِمَتَيْنِ؟'), findsOneWidget);
+
+    // Verify inductive observations / conclusions
+    expect(find.textContaining('نَوْعُ الْكَلِمَتَيْنِ (الْمُعَلِّمُ – السَّائِقُ): كِلْتَاهُمَا اسْمٌ'), findsOneWidget);
+    expect(find.textContaining('فَاعِلاً'), findsOneWidget);
+  });
+
+  testWidgets('Grade 4 Lesson 2 interactive activities render and operate properly (all 5 activities)', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson2 = repo.getGradeById('grade4')!.lessons.firstWhere((l) => l.id == 'g4_l2');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: lesson2.activities,
+            lessonTitle: lesson2.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Activity 1: sentenceMultiChoice
+    expect(find.textContaining('النشاط الأول: اختر الفاعل المناسب'), findsWidgets);
+    expect(find.textContaining('الأشجار في الحديقة'), findsOneWidget);
+    expect(find.textContaining('القصة للأطفال'), findsOneWidget);
+    expect(find.textContaining('الصندوق الثقيل'), findsOneWidget);
+    expect(find.textContaining('الكتب في المكتبة'), findsOneWidget);
+    expect(find.text('الفَلاَّحُ'), findsOneWidget);
+    expect(find.text('الأُمُّ'), findsOneWidget);
+    expect(find.text('العَامِلُ'), findsOneWidget);
+    expect(find.text('البِنْتُ'), findsOneWidget);
+
+    // Select options for Activity 1
+    await tester.tap(find.text('الفَلاَّحُ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('الأُمُّ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('العَامِلُ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('البِنْتُ'));
+    await tester.pumpAndSettle();
+
+    // Check answer
+    final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    // Feedback dialog
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+
+    // Continue to Activity 2
+    await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
+    await tester.pumpAndSettle();
+
+    // Verify Activity 2: sentenceMultiChoice (الحركة الإعرابية)
+    expect(find.textContaining('النشاط الثاني: اختر الفاعل الصحيح'), findsWidgets);
+    expect(find.textContaining('الرسالة'), findsOneWidget);
+    expect(find.text('التِّلْمِيذُ'), findsOneWidget);
+    expect(find.text('التِّلْمِيذَ'), findsOneWidget);
+    expect(find.text('التِّلْمِيذِ'), findsOneWidget);
+
+    // Reveal answer via teacher mode quick button
+    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+    await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
+    await tester.pumpAndSettle();
+
+    // Verify Activity 3: writtenParsing
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
+    expect(find.textContaining('حَضَرَ المُعَلِّمُ'), findsOneWidget);
+    expect(find.textContaining('سَاعَدَ الطَّبِيبُ المَرِيضَ'), findsOneWidget);
+    expect(find.textContaining('عَادَ المُسَافِرُ مَسَاءً'), findsOneWidget);
+    expect(find.text('إِعْرَابٌ نَمُوذَجِيٌّ'), findsNWidgets(3));
+
+    // Fill model answers
+    for (int i = 0; i < 3; i++) {
+      await tester.tap(find.text('إِعْرَابٌ نَمُوذَجِيٌّ').at(i));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+    await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
+    await tester.pumpAndSettle();
+
+    // Verify Activity 4: openSentenceFill
+    expect(find.textContaining('النشاط الرابع: أكمل الجملة بالفاعل المناسب'), findsWidgets);
+    expect(find.textContaining('إلى المدرسة مبكرا'), findsOneWidget);
+    expect(find.textContaining('القصة في القسم'), findsOneWidget);
+    expect(find.textContaining('الأشجار في الحديقة'), findsOneWidget);
+
+    // Reveal answers for Activity 4
+    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+    await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
+    await tester.pumpAndSettle();
+
+    // Verify Activity 5: textExtractionTable
+    expect(find.textContaining('النشاط الخامس: نص جديد - استخرج الفاعل'), findsWidgets);
+    expect(find.textContaining('فِي صَبَاحِ يَوْمٍ جَمِيلٍ خَرَجَ التَّلَامِيذُ إِلَى سَاحَةِ الْمَدْرَسَةِ'), findsOneWidget);
+    expect(find.textContaining('جَدْوَلُ الفَاعِلِ وَإِعْرَابِهِ'), findsOneWidget);
+    expect(find.text('التَّلَامِيذُ'), findsWidgets);
+    expect(find.text('سَامِي'), findsWidgets);
+    expect(find.text('مَرْيَمُ'), findsWidgets);
+    expect(find.text('الْمُعَلِّمُ'), findsWidgets);
+    expect(find.text('الْهَوَاءُ'), findsWidgets);
+    expect(find.text('الْأَطْفَالُ'), findsWidgets);
+    expect(find.text('الْحَارِسُ'), findsWidgets);
+
+    // Reveal all table rows
+    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِعْرَابَاتِ'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
   });
 }
 

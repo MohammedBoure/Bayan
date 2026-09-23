@@ -45,6 +45,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   final Set<int> _revealedAntonymIndices = <int>{};
   final Set<int> _revealedPairIndices = <int>{};
   final Set<int> _revealedDerivationIndices = <int>{};
+  final Set<int> _revealedOddWordIndices = <int>{};
   List<int> _audioHighlightedParagraphs = const [];
   bool _showAudioPlayer = false;
 
@@ -90,6 +91,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         for (int i = 0; i < passage.enrichment!.derivations.length; i++) {
           _revealedDerivationIndices.add(i);
         }
+        for (int i = 0; i < passage.enrichment!.oddWordItems.length; i++) {
+          _revealedOddWordIndices.add(i);
+        }
       }
     }
     if (widget.lesson.readingPassage?.hasAudio == true) {
@@ -127,16 +131,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     });
   }
 
-  void _toggleAllEnrichment(int totalPairs, int totalDerivations) {
+  void _toggleAllEnrichment(int totalPairs, int totalDerivations, int totalOddWords) {
     setState(() {
-      final allPairsRevealed = _revealedPairIndices.length == totalPairs;
-      final allDerivationsRevealed = _revealedDerivationIndices.length == totalDerivations;
-      if (allPairsRevealed && allDerivationsRevealed) {
+      final allPairsRevealed = totalPairs == 0 || _revealedPairIndices.length == totalPairs;
+      final allDerivationsRevealed = totalDerivations == 0 || _revealedDerivationIndices.length == totalDerivations;
+      final allOddWordsRevealed = totalOddWords == 0 || _revealedOddWordIndices.length == totalOddWords;
+
+      if (allPairsRevealed && allDerivationsRevealed && allOddWordsRevealed) {
         _revealedPairIndices.clear();
         _revealedDerivationIndices.clear();
+        _revealedOddWordIndices.clear();
       } else {
         _revealedPairIndices.addAll(List.generate(totalPairs, (i) => i));
         _revealedDerivationIndices.addAll(List.generate(totalDerivations, (i) => i));
+        _revealedOddWordIndices.addAll(List.generate(totalOddWords, (i) => i));
       }
     });
   }
@@ -181,7 +189,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       if (passage != null) '1. النَّصُّ القِرَائِيُّ',
       if (passage != null && passage.vocabulary.isNotEmpty) '2. كَلِمَاتِي الجَدِيدَةُ',
       if (passage != null && passage.comprehensionQuestions.isNotEmpty) '3. أَقْرَأُ وَأَفْهَمُ',
-      if (discovery != null) '4. أُلاحِظُ وَأُمَيِّزُ',
+      if (discovery != null)
+        discovery.title.isNotEmpty ? '4. ${discovery.title}' : '4. أُلاحِظُ وَأُمَيِّزُ',
       '5. القَاعِدَةُ النَّحْوِيَّةُ',
     ];
 
@@ -210,6 +219,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             final totalAntonyms = widget.lesson.readingPassage?.vocabulary.where((v) => v.isAntonym).length ?? 0;
             final totalPairs = widget.lesson.readingPassage?.enrichment?.complementaryPairs.length ?? 0;
             final totalDerivations = widget.lesson.readingPassage?.enrichment?.derivations.length ?? 0;
+            final totalOddWords = widget.lesson.readingPassage?.enrichment?.oddWordItems.length ?? 0;
             setState(() {
               _areAnswersRevealed = !_areAnswersRevealed;
               if (_areAnswersRevealed) {
@@ -219,6 +229,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 _revealedAntonymIndices.addAll(List.generate(totalAntonyms, (i) => i));
                 _revealedPairIndices.addAll(List.generate(totalPairs, (i) => i));
                 _revealedDerivationIndices.addAll(List.generate(totalDerivations, (i) => i));
+                _revealedOddWordIndices.addAll(List.generate(totalOddWords, (i) => i));
               } else {
                 _revealedQuestionIndices.clear();
                 _revealedSynonymIndices.clear();
@@ -226,6 +237,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 _revealedAntonymIndices.clear();
                 _revealedPairIndices.clear();
                 _revealedDerivationIndices.clear();
+                _revealedOddWordIndices.clear();
               }
             });
           },
@@ -650,7 +662,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         (hasSynonyms ? passage.synonymReplacements.length : 0) +
         antonyms.length +
         (hasMeaningMatches ? passage.meaningMatches.length : 0) +
-        (hasEnrichment ? (passage.enrichment!.complementaryPairs.length + passage.enrichment!.derivations.length) : 0);
+        (hasEnrichment ? (passage.enrichment!.complementaryPairs.length + passage.enrichment!.derivations.length + passage.enrichment!.oddWordItems.length) : 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -702,7 +714,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       ),
                       Text(
                         hasEnrichment
-                            ? 'مُفْرَدَاتُ النَّصِّ، تَعْوِيضُ المُرَادِفَاتِ، وَتَمَارِينُ إِثْرَاءِ اللُّغَةِ'
+                            ? (passage.enrichment!.hasOddWords
+                                ? 'مُفْرَدَاتُ النَّصِّ، رَصِيدِي الجَدِيدُ، وَتَمَارِينُ إِثْرَاءِ اللُّغَةِ (العُنْصُرُ الدَّخِيلُ)'
+                                : 'مُفْرَدَاتُ النَّصِّ، تَعْوِيضُ المُرَادِفَاتِ، وَتَمَارِينُ إِثْرَاءِ اللُّغَةِ')
                             : (hasMeaningMatches
                                 ? 'مُفْرَدَاتُ النَّصِّ، رَصِيدِي الجَدِيدُ، وَاخْتِيَارُ مَعَانِي الكَلِمَاتِ'
                                 : (hasSynonyms
@@ -1749,8 +1763,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget _buildEnrichmentSection(LinguisticEnrichmentModel enrichment, double scale) {
     final totalPairs = enrichment.complementaryPairs.length;
     final totalDerivations = enrichment.derivations.length;
-    final allRevealed = _revealedPairIndices.length == totalPairs &&
-        _revealedDerivationIndices.length == totalDerivations;
+    final totalOddWords = enrichment.oddWordItems.length;
+    final allRevealed = (totalPairs == 0 || _revealedPairIndices.length == totalPairs) &&
+        (totalDerivations == 0 || _revealedDerivationIndices.length == totalDerivations) &&
+        (totalOddWords == 0 || _revealedOddWordIndices.length == totalOddWords);
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -1801,7 +1817,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         ),
                       ),
                       Text(
-                        'تَمَارِينُ التَّرَاكِيبِ الْمُتَكَامِلَةِ وَالأَوْزَانِ الصَّرْفِيَّةِ لِتَنْمِيَةِ الفَصَاحَةِ',
+                        enrichment.hasOddWords
+                            ? 'تَمَارِينُ تَمْيِيزِ العُنْصُرِ الدَّخِيلِ لِتَنْمِيَةِ الفَصَاحَةِ وَالرَّصِيدِ اللُّغَوِيِّ'
+                            : 'تَمَارِينُ التَّرَاكِيبِ الْمُتَكَامِلَةِ وَالأَوْزَانِ الصَّرْفِيَّةِ لِتَنْمِيَةِ الفَصَاحَةِ',
                         style: TextStyle(
                           fontSize: 13 * scale,
                           color: AppTheme.textMuted,
@@ -1814,7 +1832,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
 
               ElevatedButton.icon(
-                onPressed: () => _toggleAllEnrichment(totalPairs, totalDerivations),
+                onPressed: () => _toggleAllEnrichment(totalPairs, totalDerivations, totalOddWords),
                 icon: Icon(allRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
                 label: Text(
                   allRevealed ? 'إِخْفَاءُ جَمِيعِ الإِجَابَاتِ' : 'إِظْهَارُ جَمِيعِ الإِجَابَاتِ',
@@ -2246,6 +2264,248 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         );
                       },
                     ),
+                  ],
+                ),
+              );
+            }),
+          ],
+
+          // 4. تمرين تعيين العنصر الدخيل في كل سطر (مطابق للكتاب المدرسي)
+          if (enrichment.hasOddWords) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDF2F8),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFBCFE8), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.rule_folder_rounded, color: Color(0xFFDB2777), size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      enrichment.oddOneOutPrompt,
+                      style: TextStyle(
+                        fontSize: 16 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF9D174D),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // قائمة أسطر الكلمات وتعيين العنصر الدخيل
+            ...enrichment.oddWordItems.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final item = entry.value;
+              final isRevealed = _revealedOddWordIndices.contains(idx);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isRevealed ? const Color(0xFFFFF1F2) : Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: isRevealed ? const Color(0xFFFDA4AF) : const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isRevealed ? const Color(0xFFE11D48) : const Color(0xFF7C3AED),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${idx + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'السَّطْرُ (${idx + 1}):',
+                          style: TextStyle(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.textDark,
+                          ),
+                        ),
+                        const Spacer(),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              if (isRevealed) {
+                                _revealedOddWordIndices.remove(idx);
+                              } else {
+                                _revealedOddWordIndices.add(idx);
+                              }
+                            });
+                          },
+                          icon: Icon(
+                            isRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                            size: 18,
+                            color: isRevealed ? const Color(0xFFE11D48) : const Color(0xFF7C3AED),
+                          ),
+                          label: Text(
+                            isRevealed ? 'إِخْفَاءُ الدَّخِيلِ' : 'تَعْيِينُ الدَّخِيلِ',
+                            style: TextStyle(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: isRevealed ? const Color(0xFFE11D48) : const Color(0xFF7C3AED),
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: isRevealed ? const Color(0xFFFDA4AF) : const Color(0xFFDDD6FE),
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // الكلمات في هذا السطر
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: item.words.map((w) {
+                        final isOdd = w == item.oddWord;
+                        final highlightOdd = isRevealed && isOdd;
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              if (isRevealed) {
+                                _revealedOddWordIndices.remove(idx);
+                              } else {
+                                _revealedOddWordIndices.add(idx);
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: highlightOdd
+                                  ? const Color(0xFFFFE4E6)
+                                  : (isRevealed ? Colors.white : const Color(0xFFF8FAFC)),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: highlightOdd
+                                    ? const Color(0xFFE11D48)
+                                    : (isRevealed ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+                                width: highlightOdd ? 2.2 : 1.2,
+                              ),
+                              boxShadow: highlightOdd
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0xFFE11D48).withValues(alpha: 0.18),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (highlightOdd) ...[
+                                  const Icon(Icons.highlight_off_rounded, color: Color(0xFFE11D48), size: 20),
+                                  const SizedBox(width: 8),
+                                ],
+                                Text(
+                                  w,
+                                  style: TextStyle(
+                                    fontSize: 18 * scale,
+                                    fontWeight: highlightOdd ? FontWeight.w900 : FontWeight.bold,
+                                    color: highlightOdd ? const Color(0xFFBE123C) : AppTheme.textDark,
+                                  ),
+                                ),
+                                if (highlightOdd) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE11D48),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'دَخِيلٌ',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    // التعليل والتوضيح عند الكشف
+                    if (isRevealed && item.explanation.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDA4AF), width: 1.2),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFE11D48), size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item.explanation,
+                                style: TextStyle(
+                                  fontSize: 14 * scale,
+                                  color: AppTheme.textDark,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );
@@ -3079,8 +3339,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // 4. ألاحظ وأميز
+  // 4. ألاحظ وأميز / ألاحظ وأكتشف
   Widget _buildStageDiscovery(double scale, GrammarDiscoveryModel discovery) {
+    final displayTitle = discovery.title.isNotEmpty ? discovery.title : 'أُلاَحِظُ وَأُمَيِّزُ';
+
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
@@ -3094,11 +3356,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 12,
-            children: const [
-              Icon(Icons.find_in_page_rounded, color: AppTheme.primaryTeal, size: 34),
+            children: [
+              const Icon(Icons.find_in_page_rounded, color: AppTheme.primaryTeal, size: 34),
               Text(
-                'أُلاحِظُ وَأُمَيِّزُ (بِنَاءُ الظَّاهِرَةِ النَّحْوِيَّةِ اسْتِقْرَائِيّاً):',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textDark),
+                '$displayTitle (بِنَاءُ الظَّاهِرَةِ النَّحْوِيَّةِ اسْتِقْرَائِيّاً):',
+                style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900, color: AppTheme.textDark),
               ),
             ],
           ),
@@ -3157,40 +3419,156 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           ],
 
           const SizedBox(height: 10),
-          // Observation Prompt
+          // Observation Prompt / Questions Card
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppTheme.accentAmber.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(18),
+              color: AppTheme.accentAmber.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppTheme.accentAmber, width: 2),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  discovery.observationPrompt,
-                  style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900, color: AppTheme.accentOrange),
-                ),
-                const SizedBox(height: 12),
-                ...discovery.observations.map((obs) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                if (discovery.hasObservationQuestions) ...[
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentOrange.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.help_outline_rounded, color: AppTheme.accentOrange, size: 24),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        discovery.observationPrompt.isNotEmpty
+                            ? discovery.observationPrompt
+                            : 'أَسْئِلَةُ الْمُلاَحَظَةِ وَالاكْتِشَافِ:',
+                        style: TextStyle(
+                          fontSize: 18 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.accentOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...discovery.observationQuestions.asMap().entries.map((qEntry) {
+                    final qIdx = qEntry.key;
+                    final qText = qEntry.value;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withValues(alpha: 0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.accentOrange,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${qIdx + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              qText,
+                              style: TextStyle(
+                                fontSize: 20 * scale,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.textDark,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  if (discovery.observations.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    const Divider(color: Color(0xFFFCD34D), thickness: 1.2),
+                    const SizedBox(height: 10),
+                  ],
+                ] else ...[
+                  Text(
+                    discovery.observationPrompt,
+                    style: TextStyle(
+                      fontSize: 22 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.accentOrange,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Observations / Conclusions
+                if (discovery.observations.isNotEmpty) ...[
+                  if (discovery.hasObservationQuestions) ...[
+                    Row(
                       children: [
-                        const Icon(Icons.arrow_right_rounded, color: AppTheme.accentOrange, size: 28),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            obs,
-                            style: TextStyle(fontSize: 20 * scale, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                        const Icon(Icons.lightbulb_rounded, color: Color(0xFFD97706), size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'الاسْتِنْتَاجَاتُ وَالمُلاَحَظَاتُ:',
+                          style: TextStyle(
+                            fontSize: 16 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFFB45309),
                           ),
                         ),
                       ],
                     ),
-                  );
-                }),
+                    const SizedBox(height: 10),
+                  ],
+                  ...discovery.observations.map((obs) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              obs,
+                              style: TextStyle(
+                                fontSize: 18 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textDark,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
           ),
@@ -3238,11 +3616,43 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   /// Renders a discovery trigger sentence highlighting target grammatical verbs/words in bold red.
-  /// Uses pure TextSpans to guarantee natural right-to-left word ordering without BiDi WidgetSpan permutation.
+  /// Handles paired sentences separated by ' / ' with a dedicated RTL separator badge.
   Widget _buildDiscoveryTriggerSentence(String sentence, List<String> targetWords, double scale) {
+    if (sentence.contains(' / ')) {
+      final parts = sentence.split(' / ');
+      return Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 14,
+        runSpacing: 10,
+        children: [
+          _buildDiscoveryRichText(parts[0].trim(), targetWords, scale),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryTeal.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              '/',
+              style: TextStyle(
+                fontSize: 22 * scale,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.primaryTeal,
+              ),
+            ),
+          ),
+          _buildDiscoveryRichText(parts[1].trim(), targetWords, scale),
+        ],
+      );
+    }
+    return _buildDiscoveryRichText(sentence, targetWords, scale);
+  }
+
+  Widget _buildDiscoveryRichText(String text, List<String> targetWords, double scale) {
     final spans = <InlineSpan>[];
     final regex = RegExp(r'([\u0600-\u06FF]+|[^\u0600-\u06FF]+)');
-    final matches = regex.allMatches(sentence.trim());
+    final matches = regex.allMatches(text.trim());
 
     for (final match in matches) {
       final token = match.group(0) ?? '';

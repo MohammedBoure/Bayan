@@ -8,18 +8,27 @@ import '../widgets/celebration_dialog.dart';
 import '../widgets/classroom_timer_widget.dart';
 import '../widgets/image_matching_widget.dart';
 import '../widgets/multi_select_sentences_widget.dart';
+import '../widgets/multi_sentence_choice_widget.dart';
 import '../widgets/multi_sentence_fill_widget.dart';
 import '../widgets/multi_sentence_order_widget.dart';
+import '../widgets/open_sentence_fill_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
 import '../widgets/teacher_toolbar_widget.dart';
+import '../widgets/text_extraction_table_widget.dart';
+import '../widgets/written_parsing_widget.dart';
 
 /// [05] النشاط التفاعلي الشامل (Comprehensive Interactive Activity Screen)
-/// Supports 6 activity engines:
+/// Supports 10 activity engines:
 /// 1. Multiple Choice with large whiteboard letters (أ، ب، ج)
 /// 2. Drag & Drop fill in the blanks
 /// 3. Categorization Boards (2-column & 3-column)
 /// 4. Sentence Word Ordering
 /// 5. Image & Verb Matching
+/// 6. Multi-sentence selection
+/// 7. Multi-sentence verb/subject placement
+/// 8. Multi-sentence choice per sentence
+/// 9. Written syntactic parsing with auto-correction
+/// 10. Open-ended sentence completion and text extraction table
 /// Includes Classroom Challenge Timer and Teacher Mode quick-controls.
 class InteractiveActivityScreen extends StatefulWidget {
   final List<ActivityModel> activities;
@@ -53,6 +62,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   bool _multiSelectValid = false;
   bool _multiFillValid = false;
   bool _multiOrderValid = false;
+  bool _multiChoiceValid = false;
+  bool _writtenParsingValid = false;
+  bool _openFillValid = false;
+  bool _extractionTableValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
@@ -84,6 +97,18 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         break;
       case ActivityType.multiSentenceOrder:
         isCorrect = _multiOrderValid;
+        break;
+      case ActivityType.sentenceMultiChoice:
+        isCorrect = _multiChoiceValid;
+        break;
+      case ActivityType.writtenParsing:
+        isCorrect = _writtenParsingValid;
+        break;
+      case ActivityType.openSentenceFill:
+        isCorrect = _openFillValid;
+        break;
+      case ActivityType.textExtractionTable:
+        isCorrect = _extractionTableValid;
         break;
       case ActivityType.multipleChoice:
       case ActivityType.dragDropFillBlank:
@@ -132,6 +157,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _multiSelectValid = false;
       _multiFillValid = false;
       _multiOrderValid = false;
+      _multiChoiceValid = false;
+      _writtenParsingValid = false;
+      _openFillValid = false;
+      _extractionTableValid = false;
       _areAnswersRevealed = false;
     });
   }
@@ -149,6 +178,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         _multiSelectValid = false;
         _multiFillValid = false;
         _multiOrderValid = false;
+        _multiChoiceValid = false;
+        _writtenParsingValid = false;
+        _openFillValid = false;
+        _extractionTableValid = false;
         _areAnswersRevealed = false;
       });
     } else {
@@ -339,7 +372,11 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                       _currentActivity.type != ActivityType.categorizationThreeCols &&
                       _currentActivity.type != ActivityType.multiSelect &&
                       _currentActivity.type != ActivityType.multiSentenceFill &&
-                      _currentActivity.type != ActivityType.multiSentenceOrder) ...[
+                      _currentActivity.type != ActivityType.multiSentenceOrder &&
+                      _currentActivity.type != ActivityType.sentenceMultiChoice &&
+                      _currentActivity.type != ActivityType.writtenParsing &&
+                      _currentActivity.type != ActivityType.openSentenceFill &&
+                      _currentActivity.type != ActivityType.textExtractionTable) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -470,6 +507,53 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           pairs: _currentActivity.imagePairs ?? {},
           onValidationChanged: (isValid) {
             _imageMatchValid = isValid;
+          },
+        );
+
+      case ActivityType.sentenceMultiChoice:
+        return MultiSentenceChoiceWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          optionsPerSentence: _currentActivity.sentenceChoiceOptions ?? {},
+          solutions: _currentActivity.sentenceSolutions ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _multiChoiceValid = isValid;
+          },
+        );
+
+      case ActivityType.writtenParsing:
+        return WrittenParsingWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          coloredWords: _currentActivity.coloredWordsMap ?? {},
+          modelParsings: _currentActivity.sentenceSolutions ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _writtenParsingValid = isValid;
+          },
+        );
+
+      case ActivityType.openSentenceFill:
+        return OpenSentenceFillWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          acceptableAnswers: _currentActivity.acceptableAnswersMap ?? {},
+          defaultModelAnswers: _currentActivity.sentenceSolutions ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _openFillValid = isValid;
+          },
+        );
+
+      case ActivityType.textExtractionTable:
+        return TextExtractionTableWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          passage: _currentActivity.contextParagraph ?? _currentActivity.sentence,
+          tableRows: _currentActivity.tableRows ?? [],
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _extractionTableValid = isValid;
           },
         );
 

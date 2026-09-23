@@ -30,21 +30,27 @@ class ComprehensionQuestion {
   bool get isMultipleChoice => choices != null && choices!.isNotEmpty;
 }
 
-/// Represents the inductive grammar observation stage (ألاحظ وأميز).
+/// Represents the inductive grammar observation stage (ألاحظ وأميز / ألاحظ وأكتشف).
 class GrammarDiscoveryModel {
+  final String title;
   final List<String> triggerSentences;
   final String observationPrompt;
+  final List<String> observationQuestions;
   final List<String> observations;
   final String targetedPattern;
   final List<String> targetWords;
 
   const GrammarDiscoveryModel({
+    this.title = '',
     required this.triggerSentences,
     required this.observationPrompt,
+    this.observationQuestions = const [],
     required this.observations,
     this.targetedPattern = '',
     this.targetWords = const [],
   });
+
+  bool get hasObservationQuestions => observationQuestions.isNotEmpty;
 
   List<String> get allTargetWords {
     if (targetWords.isNotEmpty) return targetWords;
@@ -119,6 +125,19 @@ class MorphologicalDerivationItem {
   });
 }
 
+/// Represents an odd-one-out exercise item (عَيِّنِ الْعُنْصُرَ الدَّخِيلَ فِي كُلِّ سَطْرٍ).
+class OddWordOutItem {
+  final List<String> words;
+  final String oddWord;
+  final String explanation;
+
+  const OddWordOutItem({
+    required this.words,
+    required this.oddWord,
+    this.explanation = '',
+  });
+}
+
 /// Represents the textbook linguistic enrichment section (أُثْرِي لُغَتِي).
 class LinguisticEnrichmentModel {
   final String title;
@@ -128,6 +147,8 @@ class LinguisticEnrichmentModel {
   final String derivationPrompt;
   final String derivationPatternExample;
   final List<MorphologicalDerivationItem> derivations;
+  final String oddOneOutPrompt;
+  final List<OddWordOutItem> oddWordItems;
 
   const LinguisticEnrichmentModel({
     this.title = 'أُثْرِي لُغَتِي',
@@ -137,10 +158,13 @@ class LinguisticEnrichmentModel {
     this.derivationPrompt = 'ائْتِ بِمُشْتَقَّاتٍ عَلَى وَزْنِ: (اشْتَرَكَ / مُشْتَرِكٌ / اشْتِرَاكٌ / مُشْتَرَكٌ) لِلأَفْعَالِ التَّالِيَةِ:',
     this.derivationPatternExample = 'اشْتَرَكَ / مُشْتَرِكٌ / اشْتِرَاكٌ / مُشْتَرَكٌ',
     this.derivations = const [],
+    this.oddOneOutPrompt = 'انْقُلْ ثُمَّ أَنْجِزْ. عَيِّنِ الْعُنْصُرَ الدَّخِيلَ فِي كُلِّ سَطْرٍ:',
+    this.oddWordItems = const [],
   });
 
   bool get hasPairs => complementaryPairs.isNotEmpty;
   bool get hasDerivations => derivations.isNotEmpty;
+  bool get hasOddWords => oddWordItems.isNotEmpty;
 }
 
 /// Represents an item for matching a word to its meaning (اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا).

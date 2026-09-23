@@ -14,6 +14,10 @@ enum ActivityType {
   multiSelect,
   multiSentenceFill,
   multiSentenceOrder,
+  sentenceMultiChoice,
+  writtenParsing,
+  openSentenceFill,
+  textExtractionTable,
 }
 
 /// Represents an interactive grammar activity designed for primary students.
@@ -44,6 +48,12 @@ class ActivityModel {
   final Map<String, List<String>>? sentenceOrderedMap;
   final String? contextParagraph;
 
+  // Advanced grammatical activities (Sentence Multiple Choice, Written Parsing, Open Sentence Fill, Extraction Table)
+  final Map<String, List<String>>? sentenceChoiceOptions;
+  final Map<String, String>? coloredWordsMap;
+  final Map<String, List<String>>? acceptableAnswersMap;
+  final List<Map<String, String>>? tableRows;
+
   const ActivityModel({
     required this.id,
     required this.title,
@@ -66,6 +76,10 @@ class ActivityModel {
     this.sentenceWordsMap,
     this.sentenceOrderedMap,
     this.contextParagraph,
+    this.sentenceChoiceOptions,
+    this.coloredWordsMap,
+    this.acceptableAnswersMap,
+    this.tableRows,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length
