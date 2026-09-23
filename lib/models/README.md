@@ -4,7 +4,7 @@ This directory defines all structured data models used throughout the applicatio
 
 ## Files:
 - [nlp_token_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/nlp_token_model.dart): Data model for tokenized Arabic words with linguistic annotations (POS tag, subtype, case mark, pedagogical explanation).
-- [activity_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/activity_model.dart): Data model for interactive activities (verb identification, sentence ordering, feedback explanations).
+- [activity_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/activity_model.dart): Data model for interactive activities (`ActivityModel`), supporting single/multiple-choice, drag-and-drop fill-in-the-blank, multi-sentence verb completion (`multiSentenceFill`), sentence multi-selection and paragraph extraction (`multiSelect`), 2-column & 3-column categorization boards, sentence word ordering, and nominal-to-verbal sentence transformation (`multiSentenceOrder`).
 - [quiz_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/quiz_model.dart): Data model for evaluation quizzes, individual questions, answer keys, and linguistic justifications.
 - [lesson_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/lesson_model.dart): Data model for grammar lessons, containing instructional text, interactive examples, rules, and linked activities.
 - [curriculum_unit_model.dart](file:///C:/Users/moham/Desktop/Bayan/lib/models/curriculum_unit_model.dart): Data model for organizing lessons hierarchically into educational units (*الوحدات التعليمية*).

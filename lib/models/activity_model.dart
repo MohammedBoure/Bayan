@@ -11,6 +11,9 @@ enum ActivityType {
   categorizationThreeCols,
   sentenceOrdering,
   imageMatching,
+  multiSelect,
+  multiSentenceFill,
+  multiSentenceOrder,
 }
 
 /// Represents an interactive grammar activity designed for primary students.
@@ -33,6 +36,14 @@ class ActivityModel {
   final List<String>? orderedWords;
   final Map<String, String>? imagePairs;
 
+  // Multi-item & classroom board interaction support
+  final List<int>? correctIndices;
+  final List<String>? sentenceItems;
+  final Map<String, String>? sentenceSolutions;
+  final Map<String, List<String>>? sentenceWordsMap;
+  final Map<String, List<String>>? sentenceOrderedMap;
+  final String? contextParagraph;
+
   const ActivityModel({
     required this.id,
     required this.title,
@@ -49,6 +60,12 @@ class ActivityModel {
     this.availableWords,
     this.orderedWords,
     this.imagePairs,
+    this.correctIndices,
+    this.sentenceItems,
+    this.sentenceSolutions,
+    this.sentenceWordsMap,
+    this.sentenceOrderedMap,
+    this.contextParagraph,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length

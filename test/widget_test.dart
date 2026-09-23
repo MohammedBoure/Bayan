@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nahw_app/data/curriculum_repository.dart';
 import 'package:nahw_app/main.dart';
+import 'package:nahw_app/models/activity_model.dart';
 import 'package:nahw_app/models/lesson_model.dart';
 import 'package:nahw_app/models/reading_passage_model.dart';
 import 'package:nahw_app/nlp/arabic_clitic_stemmer.dart';
 import 'package:nahw_app/nlp/arabic_hybrid_parser.dart';
+import 'package:nahw_app/screens/interactive_activity_screen.dart';
 import 'package:nahw_app/screens/lesson_detail_screen.dart';
 import 'package:nahw_app/screens/settings_screen.dart';
 import 'package:nahw_app/services/audio_player_service.dart';
@@ -203,7 +205,14 @@ void main() {
     expect(lesson1.readingPassage!.hasEnrichment, isTrue);
     expect(lesson1.readingPassage!.enrichment!.complementaryPairs.length, equals(6));
     expect(lesson1.readingPassage!.enrichment!.derivations.length, equals(4));
-    expect(lesson1.activities.length, equals(5));
+    expect(lesson1.activities.length, equals(6));
+    expect(lesson1.activities[0].type, equals(ActivityType.multiSelect));
+    expect(lesson1.activities[0].correctIndices, equals([0, 2, 4]));
+    expect(lesson1.activities[1].type, equals(ActivityType.multiSentenceFill));
+    expect(lesson1.activities[2].type, equals(ActivityType.multiSentenceOrder));
+    expect(lesson1.activities[3].type, equals(ActivityType.multiSentenceFill));
+    expect(lesson1.activities[4].type, equals(ActivityType.multiSelect));
+    expect(lesson1.activities[5].type, equals(ActivityType.multiSentenceOrder));
 
     // Check Lesson 2: الفاعل - الْمُعَلِّمُ الْجَدِيدُ
     final lesson2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
@@ -230,9 +239,9 @@ void main() {
     expect(lesson3.readingPassage!.audioTracks.first.assetPath, equals('assets/sounds/4_3/1.wav'));
     expect(lesson3.activities.length, equals(6));
 
-    // Check total activities across Grade 4 equals 16 applied activities
+    // Check total activities across Grade 4 equals 17 applied activities (6 + 5 + 6)
     final totalActivities = grade4.lessons.fold<int>(0, (sum, l) => sum + l.activities.length);
-    expect(totalActivities, equals(16));
+    expect(totalActivities, equals(17));
 
     // Check comprehensive quiz
     expect(grade4.comprehensiveQuiz, isNotNull);
@@ -703,4 +712,64 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1000));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('InteractiveActivityScreen renders Grade 4 Lesson 1 multi-selection, fill, and order activities', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson1 = repo.getGradeById('grade4')!.lessons.firstWhere((l) => l.id == 'g4_l1');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: lesson1.activities,
+            lessonTitle: lesson1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Activity 1: اخْتَرْ الجُمَلَ الفِعْلِيَّةَ
+    expect(find.textContaining('اخْتَرْ الجُمَلَ الفِعْلِيَّةَ'), findsWidgets);
+    expect(find.textContaining('تَدَخَّلَ الضَّامِنُ لِتَهْدِئَةِ الْوَضْعِ'), findsOneWidget);
+    expect(find.textContaining('الطَّالِبُ مُجْتَهِدٌ'), findsOneWidget);
+    expect(find.textContaining('سَاعَدَ الجِيرَانُ أَهْلَ الحَيِّ'), findsOneWidget);
+    expect(find.textContaining('الْمَدْرَسَةُ جَمِيلَةٌ'), findsOneWidget);
+    expect(find.textContaining('كَتَبَ التِّلْمِيذُ وَاجِبَهُ'), findsOneWidget);
+
+    // Tap sentences 1, 3, 5 to select them
+    await tester.tap(find.textContaining('تَدَخَّلَ الضَّامِنُ'));
+    await tester.tap(find.textContaining('سَاعَدَ الجِيرَانُ'));
+    await tester.tap(find.textContaining('كَتَبَ التِّلْمِيذُ'));
+    await tester.pumpAndSettle();
+
+    // Check answer
+    await tester.tap(find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ'));
+    await tester.pumpAndSettle();
+
+    // Success dialog shown
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+    expect(find.textContaining('أَحْسَنْتَ! لَقَدِ اخْتَرْتَ الأَفْعَالَ المُنَاسِبَةَ'), findsOneWidget);
+
+    // Continue to next activity
+    await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
+    await tester.pumpAndSettle();
+
+    // Activity 2: أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ
+    expect(find.textContaining('أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ'), findsWidgets);
+    expect(find.text('زَرَعَ'), findsOneWidget);
+    expect(find.text('كَتَبَ'), findsOneWidget);
+    expect(find.text('سَاعَدَ'), findsOneWidget);
+    expect(find.text('نَظَّفَ'), findsOneWidget);
+  });
 }
+

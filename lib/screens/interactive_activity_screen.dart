@@ -7,6 +7,9 @@ import '../widgets/categorization_board_widget.dart';
 import '../widgets/celebration_dialog.dart';
 import '../widgets/classroom_timer_widget.dart';
 import '../widgets/image_matching_widget.dart';
+import '../widgets/multi_select_sentences_widget.dart';
+import '../widgets/multi_sentence_fill_widget.dart';
+import '../widgets/multi_sentence_order_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
 import '../widgets/teacher_toolbar_widget.dart';
 
@@ -47,6 +50,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   bool _categorizationValid = false;
   bool _sentenceOrderValid = false;
   bool _imageMatchValid = false;
+  bool _multiSelectValid = false;
+  bool _multiFillValid = false;
+  bool _multiOrderValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
@@ -69,6 +75,15 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         break;
       case ActivityType.imageMatching:
         isCorrect = _imageMatchValid;
+        break;
+      case ActivityType.multiSelect:
+        isCorrect = _multiSelectValid;
+        break;
+      case ActivityType.multiSentenceFill:
+        isCorrect = _multiFillValid;
+        break;
+      case ActivityType.multiSentenceOrder:
+        isCorrect = _multiOrderValid;
         break;
       case ActivityType.multipleChoice:
       case ActivityType.dragDropFillBlank:
@@ -114,6 +129,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _categorizationValid = false;
       _sentenceOrderValid = false;
       _imageMatchValid = false;
+      _multiSelectValid = false;
+      _multiFillValid = false;
+      _multiOrderValid = false;
       _areAnswersRevealed = false;
     });
   }
@@ -128,6 +146,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         _categorizationValid = false;
         _sentenceOrderValid = false;
         _imageMatchValid = false;
+        _multiSelectValid = false;
+        _multiFillValid = false;
+        _multiOrderValid = false;
         _areAnswersRevealed = false;
       });
     } else {
@@ -315,7 +336,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                   ),
                   if (_currentActivity.sentence.isNotEmpty &&
                       _currentActivity.type != ActivityType.categorizationTwoCols &&
-                      _currentActivity.type != ActivityType.categorizationThreeCols) ...[
+                      _currentActivity.type != ActivityType.categorizationThreeCols &&
+                      _currentActivity.type != ActivityType.multiSelect &&
+                      _currentActivity.type != ActivityType.multiSentenceFill &&
+                      _currentActivity.type != ActivityType.multiSentenceOrder) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -373,6 +397,51 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
   Widget _buildInteractionEngine(double scale) {
     switch (_currentActivity.type) {
+      case ActivityType.multiSelect:
+        return MultiSelectSentencesWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? _currentActivity.options,
+          correctIndices: _currentActivity.correctIndices ?? [_currentActivity.correctIndex],
+          contextParagraph: _currentActivity.contextParagraph,
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _multiSelectValid = isValid;
+          },
+        );
+
+      case ActivityType.multiSentenceFill:
+        return MultiSentenceFillWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          availableWords: _currentActivity.availableWords ?? _currentActivity.options,
+          solutions: _currentActivity.sentenceSolutions ?? {
+            _currentActivity.sentence: _currentActivity.correctAnswer,
+          },
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _multiFillValid = isValid;
+          },
+        );
+
+      case ActivityType.multiSentenceOrder:
+        final sentenceItems = _currentActivity.sentenceItems ?? [_currentActivity.sentence];
+        return MultiSentenceOrderWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentenceItems: sentenceItems,
+          sentenceWordsMap: _currentActivity.sentenceWordsMap ?? {
+            for (var item in sentenceItems)
+              item: _currentActivity.availableWords ?? _currentActivity.options
+          },
+          targetSequences: _currentActivity.sentenceOrderedMap ?? {
+            for (var item in sentenceItems)
+              item: _currentActivity.orderedWords ?? _currentActivity.options
+          },
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _multiOrderValid = isValid;
+          },
+        );
+
       case ActivityType.categorizationTwoCols:
       case ActivityType.categorizationThreeCols:
         return CategorizationBoardWidget(
