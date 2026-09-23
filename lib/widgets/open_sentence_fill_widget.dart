@@ -11,6 +11,9 @@ class OpenSentenceFillWidget extends StatefulWidget {
   final Map<String, String> defaultModelAnswers;
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
+  final bool showSuggestions;
+  final String? instructionsText;
+  final String? hintText;
 
   const OpenSentenceFillWidget({
     super.key,
@@ -19,6 +22,9 @@ class OpenSentenceFillWidget extends StatefulWidget {
     required this.defaultModelAnswers,
     required this.areAnswersRevealed,
     required this.onValidationChanged,
+    this.showSuggestions = true,
+    this.instructionsText,
+    this.hintText,
   });
 
   @override
@@ -122,13 +128,14 @@ class _OpenSentenceFillWidgetState extends State<OpenSentenceFillWidget> {
             border: Border.all(color: const Color(0xFFBFDBFE), width: 1.5),
           ),
           child: Row(
-            children: const [
-              Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF2563EB), size: 24),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF2563EB), size: 24),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'أَكْمِلْ كُلَّ جُمْلَةٍ بِفَاعِلٍ مُنَاسِبٍ مِنْ عِنْدِكَ مَعَ مُرَاعَاةِ المَعْنَى وَحَرَكَةِ الضَّمَّةِ (ـُ).',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                  widget.instructionsText ??
+                      'أَكْمِلْ كُلَّ جُمْلَةٍ بِفَاعِلٍ مُنَاسِبٍ مِنْ عِنْدِكَ مَعَ مُرَاعَاةِ المَعْنَى وَحَرَكَةِ الضَّمَّةِ (ـُ).',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
                 ),
               ),
             ],
@@ -210,7 +217,7 @@ class _OpenSentenceFillWidgetState extends State<OpenSentenceFillWidget> {
                                 color: isValid ? const Color(0xFF15803D) : AppTheme.textDark,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'الفَاعِلُ...',
+                                hintText: widget.hintText ?? 'الكَلِمَةُ المُنَاسِبَةُ...',
                                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 16),
                                 isDense: true,
                                 filled: true,
@@ -252,7 +259,7 @@ class _OpenSentenceFillWidgetState extends State<OpenSentenceFillWidget> {
                 const SizedBox(height: 10),
 
                 // Quick suggestion chips
-                if (suggestions.isNotEmpty)
+                if (widget.showSuggestions && suggestions.isNotEmpty)
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,

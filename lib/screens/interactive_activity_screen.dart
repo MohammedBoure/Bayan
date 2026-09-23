@@ -13,8 +13,11 @@ import '../widgets/multi_sentence_fill_widget.dart';
 import '../widgets/multi_sentence_order_widget.dart';
 import '../widgets/open_sentence_fill_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
+import '../widgets/sentence_parts_analysis_widget.dart';
+import '../widgets/sentence_target_tap_widget.dart';
 import '../widgets/teacher_toolbar_widget.dart';
 import '../widgets/text_extraction_table_widget.dart';
+import '../widgets/text_word_extraction_widget.dart';
 import '../widgets/written_parsing_widget.dart';
 
 /// [05] النشاط التفاعلي الشامل (Comprehensive Interactive Activity Screen)
@@ -66,6 +69,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   bool _writtenParsingValid = false;
   bool _openFillValid = false;
   bool _extractionTableValid = false;
+  bool _targetTapValid = false;
+  bool _partsAnalysisValid = false;
+  bool _textWordExtractionValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
@@ -109,6 +115,15 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         break;
       case ActivityType.textExtractionTable:
         isCorrect = _extractionTableValid;
+        break;
+      case ActivityType.sentenceTargetTap:
+        isCorrect = _targetTapValid;
+        break;
+      case ActivityType.sentencePartsAnalysis:
+        isCorrect = _partsAnalysisValid;
+        break;
+      case ActivityType.textWordExtraction:
+        isCorrect = _textWordExtractionValid;
         break;
       case ActivityType.multipleChoice:
       case ActivityType.dragDropFillBlank:
@@ -161,6 +176,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _writtenParsingValid = false;
       _openFillValid = false;
       _extractionTableValid = false;
+      _targetTapValid = false;
+      _partsAnalysisValid = false;
+      _textWordExtractionValid = false;
       _areAnswersRevealed = false;
     });
   }
@@ -182,6 +200,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         _writtenParsingValid = false;
         _openFillValid = false;
         _extractionTableValid = false;
+        _targetTapValid = false;
+        _partsAnalysisValid = false;
+        _textWordExtractionValid = false;
         _areAnswersRevealed = false;
       });
     } else {
@@ -376,7 +397,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                       _currentActivity.type != ActivityType.sentenceMultiChoice &&
                       _currentActivity.type != ActivityType.writtenParsing &&
                       _currentActivity.type != ActivityType.openSentenceFill &&
-                      _currentActivity.type != ActivityType.textExtractionTable) ...[
+                      _currentActivity.type != ActivityType.textExtractionTable &&
+                      _currentActivity.type != ActivityType.sentenceTargetTap &&
+                      _currentActivity.type != ActivityType.sentencePartsAnalysis &&
+                      _currentActivity.type != ActivityType.textWordExtraction) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -540,6 +564,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
           acceptableAnswers: _currentActivity.acceptableAnswersMap ?? {},
           defaultModelAnswers: _currentActivity.sentenceSolutions ?? {},
+          showSuggestions: _currentActivity.showSuggestions,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _openFillValid = isValid;
@@ -554,6 +579,40 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _extractionTableValid = isValid;
+          },
+        );
+
+      case ActivityType.sentenceTargetTap:
+        return SentenceTargetTapWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          solutions: _currentActivity.sentenceSolutions ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _targetTapValid = isValid;
+          },
+        );
+
+      case ActivityType.sentencePartsAnalysis:
+        return SentencePartsAnalysisWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          sentencePartsMap: _currentActivity.sentencePartsMap ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _partsAnalysisValid = isValid;
+          },
+        );
+
+      case ActivityType.textWordExtraction:
+        return TextWordExtractionWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          passage: _currentActivity.contextParagraph ?? _currentActivity.sentence,
+          targetWords: _currentActivity.targetWordsList ?? _currentActivity.options,
+          wordContexts: _currentActivity.sentenceSolutions,
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _textWordExtractionValid = isValid;
           },
         );
 

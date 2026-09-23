@@ -18,6 +18,9 @@ enum ActivityType {
   writtenParsing,
   openSentenceFill,
   textExtractionTable,
+  sentenceTargetTap,
+  sentencePartsAnalysis,
+  textWordExtraction,
 }
 
 /// Represents an interactive grammar activity designed for primary students.
@@ -53,6 +56,9 @@ class ActivityModel {
   final Map<String, String>? coloredWordsMap;
   final Map<String, List<String>>? acceptableAnswersMap;
   final List<Map<String, String>>? tableRows;
+  final bool showSuggestions;
+  final Map<String, Map<String, String>>? sentencePartsMap;
+  final List<String>? targetWordsList;
 
   const ActivityModel({
     required this.id,
@@ -80,6 +86,9 @@ class ActivityModel {
     this.coloredWordsMap,
     this.acceptableAnswersMap,
     this.tableRows,
+    this.showSuggestions = true,
+    this.sentencePartsMap,
+    this.targetWordsList,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length

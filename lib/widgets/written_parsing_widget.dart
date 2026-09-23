@@ -12,6 +12,8 @@ class WrittenParsingWidget extends StatefulWidget {
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
 
+  final List<String>? helperChips;
+
   const WrittenParsingWidget({
     super.key,
     required this.sentences,
@@ -19,6 +21,7 @@ class WrittenParsingWidget extends StatefulWidget {
     required this.modelParsings,
     required this.areAnswersRevealed,
     required this.onValidationChanged,
+    this.helperChips,
   });
 
   @override
@@ -36,17 +39,47 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     'عَلَى آخِرِهِ',
   ];
 
+  static const List<String> _objectHelperChips = [
+    'مَفْعُولٌ بِهِ',
+    'مَنْصُوبٌ',
+    'وَعَلامَةُ نَصْبِهِ',
+    'الفَتْحَةُ الظَّاهِرَةُ',
+    'عَلَى آخِرِهِ',
+  ];
+
+  List<String> get _effectiveHelperChips {
+    if (widget.helperChips != null && widget.helperChips!.isNotEmpty) {
+      return widget.helperChips!;
+    }
+    final allModel = widget.modelParsings.values.join(' ');
+    if (allModel.contains('مَفْعُول') || allModel.contains('مفعول')) {
+      return _objectHelperChips;
+    }
+    return _helperChips;
+  }
+
   @override
   void initState() {
     super.initState();
     _initControllers();
   }
 
+  String _getModelParsing(String sentence, String target) {
+    if (widget.modelParsings.containsKey(target)) return widget.modelParsings[target]!;
+    if (widget.modelParsings.containsKey(sentence)) return widget.modelParsings[sentence]!;
+    final cleanT = ArabicCliticStemmer.stripDiacritics(target).trim();
+    for (var entry in widget.modelParsings.entries) {
+      final cleanK = ArabicCliticStemmer.stripDiacritics(entry.key).trim();
+      if (cleanK == cleanT) return entry.value;
+    }
+    return widget.modelParsings.values.isNotEmpty ? widget.modelParsings.values.first : '';
+  }
+
   void _initControllers() {
     _controllers = {};
     for (var sentence in widget.sentences) {
       final target = widget.coloredWords[sentence] ?? '';
-      final initialText = widget.areAnswersRevealed ? (widget.modelParsings[target] ?? '') : '';
+      final initialText = widget.areAnswersRevealed ? _getModelParsing(sentence, target) : '';
       final controller = TextEditingController(text: initialText);
       controller.addListener(_checkValidation);
       _controllers[target] = controller;
@@ -58,10 +91,11 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
   void didUpdateWidget(WrittenParsingWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.areAnswersRevealed && !oldWidget.areAnswersRevealed) {
-      for (var entry in widget.modelParsings.entries) {
-        final ctrl = _controllers[entry.key];
+      for (var sentence in widget.sentences) {
+        final target = widget.coloredWords[sentence] ?? '';
+        final ctrl = _controllers[target];
         if (ctrl != null) {
-          ctrl.text = entry.value;
+          ctrl.text = _getModelParsing(sentence, target);
         }
       }
       widget.onValidationChanged(true);
@@ -81,14 +115,25 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     super.dispose();
   }
 
-  bool _isInputValid(String input) {
+  bool _isInputValid(String input, String targetWord) {
     if (input.trim().isEmpty) return false;
     final normalized = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(input));
-    // Must contain core grammatical elements: فاعل AND مرفوع AND ضمة
-    final hasFaiel = normalized.contains('فاعل');
-    final hasMarfoo = normalized.contains('مرفوع');
-    final hasDamma = normalized.contains('ضمة') || normalized.contains('ضمه');
-    return hasFaiel && hasMarfoo && hasDamma;
+    final modelParsing = _getModelParsing('', targetWord);
+    final modelNorm = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(modelParsing));
+
+    if (modelNorm.contains('مفعول')) {
+      // Must contain core grammatical elements: مفعول AND منصوب AND فتحة
+      final hasMafoool = normalized.contains('مفعول');
+      final hasMansoub = normalized.contains('منصوب');
+      final hasFatha = normalized.contains('فتحة') || normalized.contains('فتحه');
+      return hasMafoool && hasMansoub && hasFatha;
+    } else {
+      // Must contain core grammatical elements: فاعل AND مرفوع AND ضمة
+      final hasFaiel = normalized.contains('فاعل');
+      final hasMarfoo = normalized.contains('مرفوع');
+      final hasDamma = normalized.contains('ضمة') || normalized.contains('ضمه');
+      return hasFaiel && hasMarfoo && hasDamma;
+    }
   }
 
   void _checkValidation() {
@@ -101,7 +146,7 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     for (var sentence in widget.sentences) {
       final target = widget.coloredWords[sentence] ?? '';
       final text = _controllers[target]?.text ?? '';
-      if (!_isInputValid(text)) {
+      if (!_isInputValid(text, target)) {
         allValid = false;
         break;
       }
@@ -159,8 +204,8 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
           final targetWord = widget.coloredWords[sentence] ?? '';
           final controller = _controllers[targetWord] ?? TextEditingController();
           final text = controller.text;
-          final isValid = _isInputValid(text) || widget.areAnswersRevealed;
-          final modelParsing = widget.modelParsings[targetWord] ?? '';
+          final isValid = _isInputValid(text, targetWord) || widget.areAnswersRevealed;
+          final modelParsing = _getModelParsing(sentence, targetWord);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 18),
@@ -270,7 +315,7 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
                       'مُسَاعِدُ الإِعْرَابِ: ',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
                     ),
-                    ..._helperChips.map((chip) {
+                    ..._effectiveHelperChips.map((chip) {
                       return ActionChip(
                         label: Text(chip, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                         backgroundColor: const Color(0xFFF1F5F9),
