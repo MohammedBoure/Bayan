@@ -17,6 +17,7 @@ import 'package:nahw_app/services/progress_service.dart';
 import 'package:nahw_app/theme/app_theme.dart';
 import 'package:nahw_app/widgets/activation_dialog.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
+import 'package:nahw_app/widgets/multi_sentence_fill_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -782,10 +783,10 @@ void main() {
 
     // Activity 2: أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ
     expect(find.textContaining('أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ'), findsWidgets);
-    expect(find.text('زَرَعَ'), findsOneWidget);
-    expect(find.text('كَتَبَ'), findsOneWidget);
-    expect(find.text('سَاعَدَ'), findsOneWidget);
-    expect(find.text('نَظَّفَ'), findsOneWidget);
+    expect(find.text('زَرَعَ'), findsWidgets);
+    expect(find.text('كَتَبَ'), findsWidgets);
+    expect(find.text('سَاعَدَ'), findsWidgets);
+    expect(find.text('نَظَّفَ'), findsWidgets);
   });
 
   testWidgets('LessonDetailScreen renders Grade 4 Lesson 2 authentic glossary (رصيدي الجديد) and word meaning matching', (WidgetTester tester) async {
@@ -1460,7 +1461,73 @@ void main() {
     expect(find.text('المَقْطَعُ الصَّوْتِيُّ'), findsOneWidget);
     expect(find.text('إِخْفَاءُ الصَّوْتِ'), findsNothing);
   });
+
+  testWidgets('MultiSentenceFillWidget supports reusable particles and direct inline chip selection', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    final activity = l1.activities.firstWhere((a) => a.id == 'g5_l1_a2');
+
+    bool isValid = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: MultiSentenceFillWidget(
+                sentences: activity.sentenceItems!,
+                availableWords: activity.availableWords!,
+                solutions: activity.sentenceSolutions!,
+                areAnswersRevealed: false,
+                onValidationChanged: (v) {
+                  isValid = v;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify header and 8 sentences exist
+    expect(find.textContaining('بَنْكُ الكَلِمَاتِ'), findsOneWidget);
+    expect(find.textContaining('اخْتَرْ مُبَاشَرَةً:'), findsNWidgets(8));
+
+    // Notice we have 4 words in bank: ['أَنْ', 'لَنْ', 'كَيْ', 'لِـ']
+    // And 8 sentences! They must be reusable.
+    // Let's place the solutions for each sentence using the in-place direct chips
+    for (int i = 0; i < activity.sentenceItems!.length; i++) {
+      final sentence = activity.sentenceItems![i];
+      final correctWord = activity.sentenceSolutions![sentence]!;
+
+      // Find the specific inline choice chip for sentence i
+      final chipKey = Key('sentence_${i}_word_$correctWord');
+      final chipFinder = find.byKey(chipKey);
+
+      // Ensure the chip is scrolled into view before tapping
+      await tester.ensureVisible(chipFinder);
+      await tester.pumpAndSettle();
+
+      await tester.tap(chipFinder);
+      await tester.pumpAndSettle();
+    }
+
+    // After placing words in multiple sentences, verify words never empty or disappear
+    expect(find.text('تم وضع جميع الكلمات في الجمل ✓'), findsNothing);
+
+    // Validation should succeed when correct
+    expect(isValid, isTrue);
+  });
 }
+
 
 
 
