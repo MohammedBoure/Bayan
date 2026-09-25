@@ -995,7 +995,10 @@ void main() {
 
     // Fill model answers
     for (int i = 0; i < 3; i++) {
-      await tester.tap(find.text('إِعْرَابٌ نَمُوذَجِيٌّ').at(i));
+      final btn = find.text('إِعْرَابٌ نَمُوذَجِيٌّ').at(i);
+      await tester.ensureVisible(btn);
+      await tester.pumpAndSettle();
+      await tester.tap(btn);
       await tester.pumpAndSettle();
     }
 
@@ -1164,7 +1167,10 @@ void main() {
 
     // Fill model answers
     for (int i = 0; i < 3; i++) {
-      await tester.tap(find.text('إِعْرَابٌ نَمُوذَجِيٌّ').at(i));
+      final btn = find.text('إِعْرَابٌ نَمُوذَجِيٌّ').at(i);
+      await tester.ensureVisible(btn);
+      await tester.pumpAndSettle();
+      await tester.tap(btn);
       await tester.pumpAndSettle();
     }
 

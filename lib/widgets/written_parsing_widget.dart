@@ -3,15 +3,24 @@ import '../nlp/arabic_clitic_stemmer.dart';
 import '../theme/app_theme.dart';
 
 /// Written Parsing widget (إجابة كتابية + تصحيح آلي) designed for classroom whiteboard and Data Show.
-/// Displays sentences with target words highlighted in green, accepts typed student parsing,
-/// provides helper word chips for touch boards, and validates accuracy automatically.
+/// Provides:
+/// 1) High-visibility sentence card with target word highlighted in emerald green.
+/// 2) Model Parsing Builder: A structured interactive toolbar of grammatical building blocks
+///    allowing the student to assemble the complete authentic parsing with 1-click chips:
+///    - Grammatical Status (فَاعِلٌ / مَفْعُولٌ بِهِ / فِعْلٌ مُضَارِعٌ...)
+///    - Case State (مَرْفُوعٌ / مَنْصُوبٌ / مَجْزُومٌ...)
+///    - Marker connector (وَعَلَامَةُ رَفْعِهِ / وَعَلَامَةُ نَصْبِهِ / وَعَلَامَةُ جَزْمِهِ...)
+///    - Syntactic Marks (الضَّمَّةُ الظَّاهِرَةُ / الفَتْحَةُ الظَّاهِرَةُ / السُّكُونُ / حَذْفُ النُّونِ...)
+///    - Position connector (عَلَى آخِرِهِ...)
+///    - Full Clause Builder chips for speed.
+/// 3) Direct Editing & Controls: Direct text input field, Backspace chip, Clear chip, and Model Answer reveal.
+/// 4) Smart validation supporting both exact syntactic combinations and fuzzy NLP verification.
 class WrittenParsingWidget extends StatefulWidget {
   final List<String> sentences;
   final Map<String, String> coloredWords;
   final Map<String, String> modelParsings;
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
-
   final List<String>? helperChips;
 
   const WrittenParsingWidget({
@@ -31,71 +40,87 @@ class WrittenParsingWidget extends StatefulWidget {
 class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
   late Map<String, TextEditingController> _controllers;
 
-  static const List<String> _helperChips = [
+  // Complete, categorized syntactic building blocks for Arabic parsing:
+  static const List<String> _subjectBuilderChips = [
     'فَاعِلٌ',
     'مَرْفُوعٌ',
-    'وَعَلامَةُ رَفْعِهِ',
+    'وَعَلَامَةُ رَفْعِهِ',
     'الضَّمَّةُ الظَّاهِرَةُ',
-    'عَلَى آخِرِهِ',
+    'عَلَى آخِرِهِ.',
+    'فَاعِلٌ مَرْفُوعٌ وَعَلامَةُ رَفْعِهِ الضَّمَّةُ الظَّاهِرَةُ عَلَى آخِرِهِ.',
   ];
 
-  static const List<String> _objectHelperChips = [
+  static const List<String> _objectBuilderChips = [
     'مَفْعُولٌ بِهِ',
     'مَنْصُوبٌ',
-    'وَعَلامَةُ نَصْبِهِ',
+    'وَعَلَامَةُ نَصْبِهِ',
     'الفَتْحَةُ الظَّاهِرَةُ',
-    'عَلَى آخِرِهِ',
+    'عَلَى آخِرِهِ.',
+    'مَفْعُولٌ بِهِ مَنْصُوبٌ وَعَلَامَةُ نَصْبِهِ الفَتْحَةُ الظَّاهِرَةُ عَلَى آخِرِهِ.',
   ];
 
-  static const List<String> _subjunctiveHelperChips = [
+  static const List<String> _subjunctiveBuilderChips = [
     'فِعْلٌ مُضَارِعٌ',
-    'مَنْصُوبٌ',
-    'وَعَلامَةُ نَصْبِهِ',
+    'مَنْصُوبٌ بِـ',
+    'أَنْ،',
+    'لَنْ،',
+    'كَيْ،',
+    'لَامِ التَّعْلِيلِ،',
+    'وَعَلَامَةُ نَصْبِهِ',
     'الفَتْحَةُ الظَّاهِرَةُ',
     'الفَتْحَةُ المُقَدَّرَةُ',
     'حَذْفُ النُّونِ',
-    'عَلَى آخِرِهِ',
+    'عَلَى آخِرِهِ.',
+    'لِلتَّعَذُّرِ.',
+    'لأَنَّهُ مِنَ الأَفْعَالِ الخَمْسَةِ.',
   ];
 
-  static const List<String> _jussiveHelperChips = [
+  static const List<String> _jussiveBuilderChips = [
     'فِعْلٌ مُضَارِعٌ',
-    'مَجْزُومٌ',
-    'وَعَلامَةُ جَزْمِهِ',
-    'السُّكُونُ',
+    'مَجْزُومٌ بِـ',
+    'لَمْ،',
+    'لَا النَّاهِيَةِ،',
+    'وَعَلَامَةُ جَزْمِهِ',
+    'السُّكُونُ،',
     'حَذْفُ النُّونِ',
-    'حَذْفُ حَرْفِ العِلَّةِ',
+    'حَذْفُ حَرْفِ العِلَّةِ،',
+    'لأَنَّهُ مِنَ الأَفْعَالِ الخَمْسَةِ،',
     'وَالفَاعِلُ ضَمِيرٌ مُسْتَتِرٌ',
   ];
 
-  static const List<String> _passiveHelperChips = [
+  static const List<String> _passiveBuilderChips = [
     'فِعْلٌ مَاضٍ',
     'فِعْلٌ مُضَارِعٌ',
     'مَبْنِيٌّ لِلْمَجْهُولِ',
     'نَائِبُ فَاعِلٍ',
     'مَرْفُوعٌ',
+    'وَعَلَامَةُ رَفْعِهِ',
     'الضَّمَّةُ الظَّاهِرَةُ',
     'الأَلِفُ',
     'الوَاوُ',
+    'عَلَى آخِرِهِ.',
   ];
 
-  List<String> get _effectiveHelperChips {
+  List<String> _getSpecificHelperChipsFor(String targetWord, String sentence) {
     if (widget.helperChips != null && widget.helperChips!.isNotEmpty) {
       return widget.helperChips!;
     }
-    final allModel = widget.modelParsings.values.join(' ');
-    if (allModel.contains('مَجْزُوم') || allModel.contains('مجزوم') || allModel.contains('جزم')) {
-      return _jussiveHelperChips;
+    final model = _getModelParsing(sentence, targetWord);
+    final norm = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(model));
+
+    if (norm.contains('مجزوم') || norm.contains('جزم')) {
+      return _jussiveBuilderChips;
     }
-    if (allModel.contains('مَبْنِيٌّ لِلْمَجْهُولِ') || allModel.contains('مجهول') || allModel.contains('نائب فاعل')) {
-      return _passiveHelperChips;
+    if (norm.contains('مجهول') || norm.contains('نائب فاعل')) {
+      return _passiveBuilderChips;
     }
-    if (allModel.contains('مَنْصُوب') && (allModel.contains('مُضَارِع') || allModel.contains('مضارع'))) {
-      return _subjunctiveHelperChips;
+    if (norm.contains('منصوب') && norm.contains('مضارع')) {
+      return _subjunctiveBuilderChips;
     }
-    if (allModel.contains('مَفْعُول') || allModel.contains('مفعول')) {
-      return _objectHelperChips;
+    if (norm.contains('مفعول')) {
+      return _objectBuilderChips;
     }
-    return _helperChips;
+    return _subjectBuilderChips;
   }
 
   @override
@@ -155,10 +180,10 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     super.dispose();
   }
 
-  bool _isInputValid(String input, String targetWord) {
+  bool _isInputValid(String input, String targetWord, String sentence) {
     if (input.trim().isEmpty) return false;
     final normalized = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(input));
-    final modelParsing = _getModelParsing('', targetWord);
+    final modelParsing = _getModelParsing(sentence, targetWord);
     final modelNorm = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(modelParsing));
 
     if (modelNorm.contains('مضارع') && modelNorm.contains('منصوب')) {
@@ -181,13 +206,11 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
       final hasMarfoo = normalized.contains('مرفوع');
       return hasNaeb && hasFaiel && hasMarfoo;
     } else if (modelNorm.contains('مفعول')) {
-      // Must contain core grammatical elements: مفعول AND منصوب AND فتحة
       final hasMafoool = normalized.contains('مفعول');
       final hasMansoub = normalized.contains('منصوب');
       final hasFatha = normalized.contains('فتحة') || normalized.contains('فتحه') || normalized.contains('ياء') || normalized.contains('كسرة');
       return hasMafoool && hasMansoub && hasFatha;
     } else {
-      // Must contain core grammatical elements: فاعل AND مرفوع AND ضمة
       final hasFaiel = normalized.contains('فاعل');
       final hasMarfoo = normalized.contains('مرفوع');
       final hasDamma = normalized.contains('ضمة') || normalized.contains('ضمه') || normalized.contains('الف') || normalized.contains('واو');
@@ -205,7 +228,7 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     for (var sentence in widget.sentences) {
       final target = widget.coloredWords[sentence] ?? '';
       final text = _controllers[target]?.text ?? '';
-      if (!_isInputValid(text, target)) {
+      if (!_isInputValid(text, target, sentence)) {
         allValid = false;
         break;
       }
@@ -221,9 +244,34 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     if (current.isEmpty) {
       ctrl.text = chipText;
     } else {
-      ctrl.text = '$current $chipText';
+      // If the chip itself is a full sentence or starts with punctuation, handle cleanly
+      if (current.endsWith('.') || current.endsWith('،')) {
+        ctrl.text = '$current $chipText';
+      } else {
+        ctrl.text = '$current $chipText';
+      }
     }
     ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+    setState(() {});
+  }
+
+  void _backspace(String targetWord) {
+    final ctrl = _controllers[targetWord];
+    if (ctrl == null || ctrl.text.isEmpty) return;
+
+    final words = ctrl.text.trim().split(RegExp(r'\s+'));
+    if (words.isNotEmpty) {
+      words.removeLast();
+      ctrl.text = words.join(' ');
+      ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+      setState(() {});
+    }
+  }
+
+  void _clearParsing(String targetWord) {
+    final ctrl = _controllers[targetWord];
+    if (ctrl == null) return;
+    ctrl.clear();
     setState(() {});
   }
 
@@ -234,27 +282,41 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
       children: [
         // Helper notice banner
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
             color: const Color(0xFFF0FDF4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFBBF7D0), width: 1.5),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFBBF7D0), width: 1.8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
-            children: const [
-              Icon(Icons.auto_fix_high_rounded, color: Color(0xFF16A34A), size: 22),
-              SizedBox(width: 10),
-              Expanded(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.auto_fix_high_rounded, color: Color(0xFF16A34A), size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
-                  'اكْتُبِ الإِعْرَابَ فِي الحَقْلِ أَوْ انْقُرْ عَلَى الكَلِمَاتِ المَسَاعِدَةِ لِبِنَاءِ الإِعْرَابِ النَّمُوذَجِيِّ.',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                  'أَدَوَاتُ الإِعْرَابِ النَّمُوذَجِيِّ: انْقُرْ عَلَى عِبَارَاتِ الإِعْرَابِ أَدْنَاهُ لِبِنَاءِ الإِعْرَابِ التَّامِّ خُطْوَةً بِخُطْوَةٍ، أَوْ اكْتُبْ مُبَاشَرَةً.',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF15803D), height: 1.5),
                 ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // List of parsing sentences
         ...widget.sentences.asMap().entries.map((entry) {
@@ -263,15 +325,16 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
           final targetWord = widget.coloredWords[sentence] ?? '';
           final controller = _controllers[targetWord] ?? TextEditingController();
           final text = controller.text;
-          final isValid = _isInputValid(text, targetWord) || widget.areAnswersRevealed;
+          final isValid = _isInputValid(text, targetWord, sentence) || widget.areAnswersRevealed;
           final modelParsing = _getModelParsing(sentence, targetWord);
+          final chips = _getSpecificHelperChipsFor(targetWord, sentence);
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 18),
-            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isValid ? const Color(0xFF16A34A) : (text.isNotEmpty ? AppTheme.accentOrange : const Color(0xFFCBD5E1)),
                 width: isValid ? 2.5 : 1.8,
@@ -291,11 +354,11 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: 16,
+                      radius: 18,
                       backgroundColor: isValid ? const Color(0xFF16A34A) : AppTheme.primaryTeal,
                       child: Text(
                         '${idx + 1}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -305,23 +368,23 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-                // Target word label and Input field
+                // Target word label and Input field with Action Buttons
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF86EFAC), width: 1.8),
                       ),
                       child: Text(
                         '$targetWord:',
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 22,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF15803D),
                         ),
@@ -331,29 +394,47 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
                     Expanded(
                       child: TextField(
                         controller: controller,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                        minLines: 1,
+                        maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'اكْتُبِ الإِعْرَابَ هُنَا (فَاعِلٌ مَرْفُوعٌ...)...',
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+                          hintText: 'اكْتُبِ الإِعْرَابَ هُنَا أَوْ اسْتَعْمِلِ الأَدَوَاتِ أَدْنَاهُ...',
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 16),
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          suffixIcon: isValid
-                              ? const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 26)
-                              : (text.isNotEmpty ? const Icon(Icons.edit_note_rounded, color: AppTheme.accentOrange) : null),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (text.isNotEmpty && !widget.areAnswersRevealed)
+                                IconButton(
+                                  tooltip: 'مَسْحُ الحَقْلِ',
+                                  icon: const Icon(Icons.cancel_rounded, color: Colors.grey, size: 22),
+                                  onPressed: () => _clearParsing(targetWord),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12, right: 6),
+                                child: isValid
+                                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 28)
+                                    : (text.isNotEmpty
+                                        ? const Icon(Icons.edit_note_rounded, color: AppTheme.accentOrange, size: 28)
+                                        : const Icon(Icons.edit_rounded, color: Color(0xFF94A3B8), size: 22)),
+                              ),
+                            ],
+                          ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
                               color: isValid ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1),
                               width: isValid ? 2 : 1,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
                           ),
                         ),
@@ -362,42 +443,126 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
-                // Helper Quick Chips for this row
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    const Text(
-                      'مُسَاعِدُ الإِعْرَابِ: ',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
-                    ),
-                    ..._effectiveHelperChips.map((chip) {
-                      return ActionChip(
-                        label: Text(chip, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        onPressed: () => _insertChip(targetWord, chip),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      );
-                    }),
-                    TextButton.icon(
-                      onPressed: () {
-                        controller.text = modelParsing;
-                        _checkValidation();
-                        setState(() {});
-                      },
-                      icon: const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF16A34A)),
-                      label: const Text(
-                        'إِعْرَابٌ نَمُوذَجِيٌّ',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                // Interactive Parsing Tools & Syntactic Building Blocks
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.dashboard_customize_rounded, size: 18, color: AppTheme.primaryTeal),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'أَدَوَاتُ بِنَاءِ الإِعْرَابِ (انْقُرْ لِلإِضَافَةِ إِلَى الحَقْلِ):',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.primaryDark),
+                          ),
+                          const Spacer(),
+                          // Quick backspace button
+                          if (text.isNotEmpty)
+                            InkWell(
+                              onTap: () => _backspace(targetWord),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Icons.backspace_rounded, size: 14, color: Colors.redAccent),
+                                    SizedBox(width: 4),
+                                    Text('حَذْفُ كَلِمَةٍ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+
+                      // Parsing Helper Chips
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          ...chips.map((chip) {
+                            return InkWell(
+                              onTap: () => _insertChip(targetWord, chip),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.4), width: 1.2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  chip,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+
+                          // 1-Click Complete Model Answer Button
+                          InkWell(
+                            onTap: () {
+                              controller.text = modelParsing;
+                              _checkValidation();
+                              setState(() {});
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF16A34A)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'إِعْرَابٌ نَمُوذَجِيٌّ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF15803D),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
