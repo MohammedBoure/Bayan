@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 /// Multi-Sentence Fill-in-the-Blank widget designed for classroom whiteboards and Data Show.
-/// Supports both:
-/// 1) In-place direct tap selection (inline choice chips right inside or below each sentence card,
-///    so pupils do not need to scroll or drag words down).
-/// 2) Tap-to-Place from the top word bank.
-/// 3) Drag-and-Drop from the top word bank.
-/// Words in the word bank can be reused multiple times whenever needed (e.g. particles/adawat).
+/// Supports:
+/// 1) In-place direct tap selection (inline choice chips right below each sentence card).
+/// 2) Rendering the blank slot EXACTLY in its syntactic position (beginning, middle, or end of sentence).
+/// 3) Tap-to-Place from the top word bank.
+/// 4) Drag-and-Drop from the top word bank.
+/// 5) Reusable particles/words across multiple sentences.
 class MultiSentenceFillWidget extends StatefulWidget {
   final List<String> sentences;
   final List<String> availableWords;
@@ -33,8 +33,6 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
   String? _selectedWord;
 
   /// Whether words are reusable indefinitely across sentences.
-  /// If availableWords count is less than sentences count, words MUST be reusable.
-  /// Even if equal, making words reusable or tracking counts avoids locking students out.
   bool get _isReusable =>
       widget.availableWords.length < widget.sentences.length ||
       widget.availableWords.toSet().length < widget.solutions.values.toSet().length ||
@@ -262,7 +260,7 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
         ),
         const SizedBox(height: 24),
 
-        // Sentence Cards with Blank Target Slots & Inline Selection Chips
+        // Sentence Cards with Blank Target Slots in Correct Positional Context
         ...widget.sentences.asMap().entries.map((entry) {
           final idx = entry.key;
           final sentence = entry.value;
@@ -270,8 +268,12 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
           final expectedWord = widget.solutions[sentence];
           final isCorrect = placedWord == expectedWord;
 
-          // Strip placeholder "______" from sentence display
-          final sentenceClean = sentence.replaceAll('______', '').trim();
+          // Split sentence by blank markers: 2 or more underscores or dots
+          // e.g. "يَحْرِصُ التِّلْمِيذُ _____ يُحَافِظَ..." -> ["يَحْرِصُ التِّلْمِيذُ", "يُحَافِظَ..."]
+          // e.g. "_____ أُهْمِلَ وَاجِبَاتِي..." -> ["", "أُهْمِلَ وَاجِبَاتِي..."]
+          final splitParts = sentence.split(RegExp(r'[_]{2,}|[\.]{3,}'));
+          final prefixText = splitParts.isNotEmpty ? splitParts[0].trim() : '';
+          final suffixText = splitParts.length > 1 ? splitParts.sublist(1).join(' ').trim() : '';
 
           return DragTarget<String>(
             onWillAcceptWithDetails: (details) => true,
@@ -305,7 +307,9 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // Sentence Number Badge
                         CircleAvatar(
                           radius: 18,
                           backgroundColor: AppTheme.primaryTeal,
@@ -316,71 +320,48 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
                         ),
                         const SizedBox(width: 16),
 
-                        // Blank Slot (Target)
-                        InkWell(
-                          onTap: () {
-                            if (placedWord != null) {
-                              _unplaceWord(sentence);
-                            } else if (_selectedWord != null) {
-                              _placeWord(_selectedWord!, sentence);
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            constraints: const BoxConstraints(minWidth: 120),
-                            decoration: BoxDecoration(
-                              color: placedWord != null
-                                  ? (widget.areAnswersRevealed
-                                      ? const Color(0xFFECFDF5)
-                                      : AppTheme.primaryLight)
-                                  : (_selectedWord != null ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: placedWord != null
-                                    ? (widget.areAnswersRevealed ? AppTheme.successGreen : AppTheme.primaryTeal)
-                                    : (_selectedWord != null ? AppTheme.accentAmber : Colors.grey.shade400),
-                                width: 2,
-                                strokeAlign: BorderSide.strokeAlignCenter,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+                        // Sentence Text with Blank Slot at its natural position
+                        Expanded(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 12,
+                            runSpacing: 10,
+                            children: [
+                              // 1. Text before blank (if any)
+                              if (prefixText.isNotEmpty)
                                 Text(
-                                  placedWord ?? (_selectedWord != null ? 'ضَعْ «$_selectedWord» هُنَا' : '______'),
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: placedWord != null
-                                        ? (widget.areAnswersRevealed ? const Color(0xFF047857) : AppTheme.primaryDark)
-                                        : (_selectedWord != null ? AppTheme.accentOrange : AppTheme.textMuted),
+                                  prefixText,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textDark,
                                   ),
                                 ),
-                                if (placedWord != null && !widget.areAnswersRevealed) ...[
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.cancel_rounded, size: 18, color: Colors.redAccent),
-                                ],
-                              ],
-                            ),
+
+                              // 2. The Target Blank Slot in its EXACT syntactic place!
+                              _buildTargetBlankSlot(
+                                sentence: sentence,
+                                placedWord: placedWord,
+                                isHovered: isHovered,
+                              ),
+
+                              // 3. Text after blank (if any)
+                              if (suffixText.isNotEmpty)
+                                Text(
+                                  suffixText,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 14),
 
-                        // Remainder of Sentence
-                        Expanded(
-                          child: Text(
-                            sentenceClean,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
-                            ),
-                          ),
-                        ),
-
+                        // Answer Feedback Badge (when revealed)
                         if (widget.areAnswersRevealed && placedWord != null) ...[
+                          const SizedBox(width: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
@@ -403,7 +384,7 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
                     // Direct In-Place Choice Chips
                     // Eliminates the need to scroll up and down or drag across long distances!
                     if (!widget.areAnswersRevealed) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
@@ -495,6 +476,65 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildTargetBlankSlot({
+    required String sentence,
+    required String? placedWord,
+    required bool isHovered,
+  }) {
+    return InkWell(
+      onTap: () {
+        if (placedWord != null) {
+          _unplaceWord(sentence);
+        } else if (_selectedWord != null) {
+          _placeWord(_selectedWord!, sentence);
+        }
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        constraints: const BoxConstraints(minWidth: 110),
+        decoration: BoxDecoration(
+          color: placedWord != null
+              ? (widget.areAnswersRevealed ? const Color(0xFFECFDF5) : AppTheme.primaryLight)
+              : (isHovered
+                  ? const Color(0xFFDCFCE7)
+                  : (_selectedWord != null ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9))),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: placedWord != null
+                ? (widget.areAnswersRevealed ? AppTheme.successGreen : AppTheme.primaryTeal)
+                : (isHovered
+                    ? AppTheme.successGreen
+                    : (_selectedWord != null ? AppTheme.accentAmber : Colors.grey.shade400)),
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignCenter,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              placedWord ?? (_selectedWord != null ? 'ضَعْ «$_selectedWord»' : '______'),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: placedWord != null
+                    ? (widget.areAnswersRevealed ? const Color(0xFF047857) : AppTheme.primaryDark)
+                    : (_selectedWord != null ? AppTheme.accentOrange : AppTheme.textMuted),
+              ),
+            ),
+            if (placedWord != null && !widget.areAnswersRevealed) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.cancel_rounded, size: 18, color: Colors.redAccent),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
