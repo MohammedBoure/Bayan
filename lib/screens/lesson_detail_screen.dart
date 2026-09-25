@@ -184,14 +184,16 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     final passage = widget.lesson.readingPassage;
     final discovery = widget.lesson.discovery;
 
+    final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
+
     // Build the stages available for this lesson
     final List<String> stageTitles = [
       if (passage != null) '1. النَّصُّ القِرَائِيُّ',
       if (passage != null && passage.vocabulary.isNotEmpty) '2. كَلِمَاتِي الجَدِيدَةُ',
       if (passage != null && passage.comprehensionQuestions.isNotEmpty) '3. أَقْرَأُ وَأَفْهَمُ',
       if (discovery != null)
-        discovery.title.isNotEmpty ? '4. ${discovery.title}' : '4. أُلاحِظُ وَأُمَيِّزُ',
-      '5. القَاعِدَةُ النَّحْوِيَّةُ',
+        isGrade4Or5 ? '4. أُلاَحِظُ وَأَكْتَشِفُ' : (discovery.title.isNotEmpty ? '4. ${discovery.title}' : '4. أُلاحِظُ وَأُمَيِّزُ'),
+      isGrade4Or5 ? '5. أُثْبِتُ' : '5. القَاعِدَةُ النَّحْوِيَّةُ',
     ];
 
     return AppScaffold(
@@ -3457,7 +3459,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   // 4. ألاحظ وأميز / ألاحظ وأكتشف
   Widget _buildStageDiscovery(double scale, GrammarDiscoveryModel discovery) {
-    final displayTitle = discovery.title.isNotEmpty ? discovery.title : 'أُلاَحِظُ وَأُمَيِّزُ';
+    final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
+    final stagePrefix = isGrade4Or5 ? 'أُلاَحِظُ وَأَكْتَشِفُ' : 'أُلاَحِظُ وَأُمَيِّزُ';
+    final displayTitle = discovery.title.isNotEmpty && discovery.title != stagePrefix
+        ? '$stagePrefix: ${discovery.title}'
+        : stagePrefix;
 
     return Container(
       padding: const EdgeInsets.all(26),
@@ -3836,12 +3842,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.lightbulb_rounded, color: AppTheme.accentAmber, size: 34),
-                  SizedBox(width: 10),
+                children: [
+                  const Icon(Icons.lightbulb_rounded, color: AppTheme.accentAmber, size: 34),
+                  const SizedBox(width: 10),
                   Text(
-                    'القَاعِدَةُ النَّحْوِيَّةُ الأَسَاسِيَّةُ (أَتَعَلَّمُ):',
-                    style: TextStyle(
+                    widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5'
+                        ? 'القَاعِدَةُ النَّحْوِيَّةُ (أُثْبِتُ):'
+                        : 'القَاعِدَةُ النَّحْوِيَّةُ الأَسَاسِيَّةُ (أَتَعَلَّمُ):',
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.textDark,
@@ -3865,14 +3873,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
         const SizedBox(height: 26),
 
-        // Interactive Examples
+        // Interactive Examples & Parsing Models
         ...widget.lesson.examples.map((example) {
+          final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
           return Padding(
             padding: const EdgeInsets.only(bottom: 22),
             child: SentenceParserView(
               tokens: example.tokens,
               showTashkeel: _showTashkeel,
-              title: 'مِثَالٌ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${example.sentence}"',
+              title: isGrade4Or5
+                  ? 'نَمُوذَجُ إِعْرَابٍ (عَلَى السَّبُّورَةِ التَّفَاعُلِيَّةِ): "${example.sentence}"'
+                  : 'مِثَالٌ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${example.sentence}"',
             ),
           );
         }),
