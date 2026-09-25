@@ -9,3 +9,6 @@ This directory contains recorded audio narrations of Arabic reading texts for pr
 - [4_1](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_1): Segmented audio recordings for Grade 4, Lesson 1 reading passage (معا لنبني منزلا - التويزة).
 - [4_2](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_2): Segmented audio recordings for Grade 4, Lesson 2 reading passage (المعلم الجديد).
 - [4_3](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/4_3): Audio narration recording for Grade 4, Lesson 3 reading passage (بين جارين).
+- [5_1](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/5_1): Audio narration recording for Grade 5, Lesson 1 reading passage (تاكفاريناس يتحدث).
+- [5_2](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/5_2): Audio narration recording for Grade 5, Lesson 2 reading passage (كلنا أبناء وطن واحد).
+- [5_3](file:///C:/Users/moham/Desktop/Bayan/assets/sounds/5_3): Audio narration recording for Grade 5, Lesson 3 reading passage (أرض غالية).

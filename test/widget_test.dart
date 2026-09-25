@@ -1364,6 +1364,93 @@ void main() {
 
     expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
   });
+
+  test('Grade 5 audio tracks are properly wired and WAV durations are accurately parsed', () async {
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+
+    // Lesson 1: تاكفاريناس يتحدث
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    expect(l1.readingPassage!.hasAudio, isTrue);
+    expect(l1.readingPassage!.audioTracks.length, equals(1));
+    final track1 = l1.readingPassage!.audioTracks.first;
+    expect(track1.assetPath, equals('assets/sounds/5_1/1.wav'));
+    expect(track1.paragraphIndices, equals([0, 1, 2, 3, 4, 5]));
+    final dur1 = await AudioPlayerService.instance.getTrackDuration(track1);
+    expect(dur1, greaterThan(130000));
+    expect(dur1, lessThan(140000));
+
+    // Lesson 2: كلنا أبناء وطن واحد
+    final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
+    expect(l2.readingPassage!.hasAudio, isTrue);
+    expect(l2.readingPassage!.audioTracks.length, equals(1));
+    final track2 = l2.readingPassage!.audioTracks.first;
+    expect(track2.assetPath, equals('assets/sounds/5_2/1.wav'));
+    expect(track2.paragraphIndices, equals([0, 1, 2]));
+    final dur2 = await AudioPlayerService.instance.getTrackDuration(track2);
+    expect(dur2, greaterThan(130000));
+    expect(dur2, lessThan(140000));
+
+    // Lesson 3: أرض غالية
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    expect(l3.readingPassage!.hasAudio, isTrue);
+    expect(l3.readingPassage!.audioTracks.length, equals(1));
+    final track3 = l3.readingPassage!.audioTracks.first;
+    expect(track3.assetPath, equals('assets/sounds/5_3/1.wav'));
+    expect(track3.paragraphIndices, equals([0, 1, 2, 3]));
+    final dur3 = await AudioPlayerService.instance.getTrackDuration(track3);
+    expect(dur3, greaterThan(140000));
+    expect(dur3, lessThan(155000));
+  });
+
+  testWidgets('LessonDetailScreen renders teacher audio toolbar button and controls for Grade 5 Lesson 1', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Teacher Header Audio Action button exists
+    final audioBtn = find.text('المَقْطَعُ الصَّوْتِيُّ');
+    expect(audioBtn, findsOneWidget);
+
+    // Audio player widget is initially not shown
+    expect(find.text('إِخْفَاءُ الصَّوْتِ'), findsNothing);
+
+    // Tap to open Audio Player Widget
+    await tester.tap(audioBtn);
+    await tester.pumpAndSettle();
+
+    // Audio player should now be visible with track title and close action
+    expect(find.text('إِخْفَاءُ الصَّوْتِ'), findsOneWidget);
+    expect(find.textContaining('تَاكْفَارِينَاسُ يَتَحَدَّثُ'), findsWidgets);
+
+    // Tap to hide audio player
+    await tester.tap(find.text('إِخْفَاءُ الصَّوْتِ'));
+    await tester.pumpAndSettle();
+
+    // Reverted back to closed state
+    expect(find.text('المَقْطَعُ الصَّوْتِيُّ'), findsOneWidget);
+    expect(find.text('إِخْفَاءُ الصَّوْتِ'), findsNothing);
+  });
 }
 
 

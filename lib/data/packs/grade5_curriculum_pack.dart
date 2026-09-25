@@ -181,6 +181,13 @@ class Grade5CurriculumPack {
             ),
           ],
         ),
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ: تَاكْفَارِينَاسُ يَتَحَدَّثُ (الفقرات 1 - 6)',
+            assetPath: 'assets/sounds/5_1/1.wav',
+            paragraphIndices: [0, 1, 2, 3, 4, 5],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         title: 'نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ',
@@ -504,6 +511,13 @@ class Grade5CurriculumPack {
             ),
           ],
         ),
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ: كُلُّنَا أَبْنَاءُ وَطَنٍ وَاحِدٍ (الفقرات 1 - 3)',
+            assetPath: 'assets/sounds/5_2/1.wav',
+            paragraphIndices: [0, 1, 2],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         title: 'جَوَازِمُ الْفِعْلِ الْمُضَارِعِ',
@@ -823,6 +837,13 @@ class Grade5CurriculumPack {
             ComplementaryPairItem(firstPart: 'عِقَابٍ', secondPart: 'شَرَّ عِقَابٍ', fullPhrase: 'عَاقَبَ الظَّالِمَ شَرَّ عِقَابٍ'),
           ],
         ),
+        audioTracks: [
+          ReadingAudioTrack(
+            title: 'النَّصُّ الكَامِلُ: أَرْضٌ غَالِيَةٌ (الفقرات 1 - 4)',
+            assetPath: 'assets/sounds/5_3/1.wav',
+            paragraphIndices: [0, 1, 2, 3],
+          ),
+        ],
       ),
       discovery: const GrammarDiscoveryModel(
         title: 'الْفِعْلُ الْمَبْنِيُّ لِلْمَجْهُولِ وَنَائِبُ الْفَاعِلِ',
