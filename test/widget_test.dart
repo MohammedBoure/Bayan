@@ -1206,6 +1206,9 @@ void main() {
     expect(l1.title, contains('نواصب الفعل المضارع'));
     expect(l1.readingPassage, isNotNull);
     expect(l1.readingPassage!.title, contains('تَاكْفَارِينَاسُ يَتَحَدَّثُ'));
+    for (final p in l1.readingPassage!.paragraphs) {
+      expect(p.contains(r'\n'), isFalse, reason: 'Paragraphs should not contain literal \\n string');
+    }
     expect(l1.readingPassage!.vocabulary.length, greaterThanOrEqualTo(3));
     expect(l1.readingPassage!.enrichment, isNotNull);
     expect(l1.readingPassage!.enrichment!.complementaryPairs.isNotEmpty, isTrue);
@@ -1218,6 +1221,9 @@ void main() {
     expect(l2.title, contains('جوازم الفعل المضارع'));
     expect(l2.readingPassage, isNotNull);
     expect(l2.readingPassage!.title, contains('كُلُّنَا أَبْنَاءُ وَطَنٍ وَاحِدٍ'));
+    for (final p in l2.readingPassage!.paragraphs) {
+      expect(p.contains(r'\n'), isFalse);
+    }
     expect(l2.readingPassage!.enrichment!.derivations.first.hasGroupedDerivations, isTrue);
     expect(l2.readingPassage!.enrichment!.derivations.first.derivedVerbs, isNotEmpty);
     expect(l2.readingPassage!.enrichment!.derivations.first.derivedNouns, isNotEmpty);
@@ -1228,6 +1234,9 @@ void main() {
     expect(l3.title, contains('الفعل المبني للمجهول ونائب الفاعل'));
     expect(l3.readingPassage, isNotNull);
     expect(l3.readingPassage!.title, contains('أَرْضٌ غَالِيَةٌ'));
+    for (final p in l3.readingPassage!.paragraphs) {
+      expect(p.contains(r'\n'), isFalse, reason: 'Paragraphs should not contain literal \\n string');
+    }
     expect(l3.activities.length, equals(5));
     expect(l3.activities[0].allowNoneOption, isTrue);
     expect(l3.activities[4].tableHeaders, isNotNull);
