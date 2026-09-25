@@ -47,11 +47,51 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     'عَلَى آخِرِهِ',
   ];
 
+  static const List<String> _subjunctiveHelperChips = [
+    'فِعْلٌ مُضَارِعٌ',
+    'مَنْصُوبٌ',
+    'وَعَلامَةُ نَصْبِهِ',
+    'الفَتْحَةُ الظَّاهِرَةُ',
+    'الفَتْحَةُ المُقَدَّرَةُ',
+    'حَذْفُ النُّونِ',
+    'عَلَى آخِرِهِ',
+  ];
+
+  static const List<String> _jussiveHelperChips = [
+    'فِعْلٌ مُضَارِعٌ',
+    'مَجْزُومٌ',
+    'وَعَلامَةُ جَزْمِهِ',
+    'السُّكُونُ',
+    'حَذْفُ النُّونِ',
+    'حَذْفُ حَرْفِ العِلَّةِ',
+    'وَالفَاعِلُ ضَمِيرٌ مُسْتَتِرٌ',
+  ];
+
+  static const List<String> _passiveHelperChips = [
+    'فِعْلٌ مَاضٍ',
+    'فِعْلٌ مُضَارِعٌ',
+    'مَبْنِيٌّ لِلْمَجْهُولِ',
+    'نَائِبُ فَاعِلٍ',
+    'مَرْفُوعٌ',
+    'الضَّمَّةُ الظَّاهِرَةُ',
+    'الأَلِفُ',
+    'الوَاوُ',
+  ];
+
   List<String> get _effectiveHelperChips {
     if (widget.helperChips != null && widget.helperChips!.isNotEmpty) {
       return widget.helperChips!;
     }
     final allModel = widget.modelParsings.values.join(' ');
+    if (allModel.contains('مَجْزُوم') || allModel.contains('مجزوم') || allModel.contains('جزم')) {
+      return _jussiveHelperChips;
+    }
+    if (allModel.contains('مَبْنِيٌّ لِلْمَجْهُولِ') || allModel.contains('مجهول') || allModel.contains('نائب فاعل')) {
+      return _passiveHelperChips;
+    }
+    if (allModel.contains('مَنْصُوب') && (allModel.contains('مُضَارِع') || allModel.contains('مضارع'))) {
+      return _subjunctiveHelperChips;
+    }
     if (allModel.contains('مَفْعُول') || allModel.contains('مفعول')) {
       return _objectHelperChips;
     }
@@ -121,17 +161,36 @@ class _WrittenParsingWidgetState extends State<WrittenParsingWidget> {
     final modelParsing = _getModelParsing('', targetWord);
     final modelNorm = ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(modelParsing));
 
-    if (modelNorm.contains('مفعول')) {
+    if (modelNorm.contains('مضارع') && modelNorm.contains('منصوب')) {
+      final hasModare = normalized.contains('مضارع');
+      final hasMansoub = normalized.contains('منصوب');
+      final hasMark = normalized.contains('فتحة') || normalized.contains('فتحه') || normalized.contains('حذف النون');
+      return hasModare && hasMansoub && hasMark;
+    } else if (modelNorm.contains('مضارع') && modelNorm.contains('مجزوم')) {
+      final hasModare = normalized.contains('مضارع');
+      final hasMajzoom = normalized.contains('مجزوم');
+      final hasMark = normalized.contains('سكون') || normalized.contains('حذف النون') || normalized.contains('حذف حرف العلة') || normalized.contains('العله');
+      return hasModare && hasMajzoom && hasMark;
+    } else if (modelNorm.contains('مبني للمجهول') || modelNorm.contains('مجهول')) {
+      final hasMajhool = normalized.contains('مجهول') || normalized.contains('المجهول');
+      final hasFeil = normalized.contains('فعل') || normalized.contains('ماض') || normalized.contains('مضارع');
+      return hasMajhool && hasFeil;
+    } else if (modelNorm.contains('نائب فاعل')) {
+      final hasNaeb = normalized.contains('نائب');
+      final hasFaiel = normalized.contains('فاعل');
+      final hasMarfoo = normalized.contains('مرفوع');
+      return hasNaeb && hasFaiel && hasMarfoo;
+    } else if (modelNorm.contains('مفعول')) {
       // Must contain core grammatical elements: مفعول AND منصوب AND فتحة
       final hasMafoool = normalized.contains('مفعول');
       final hasMansoub = normalized.contains('منصوب');
-      final hasFatha = normalized.contains('فتحة') || normalized.contains('فتحه');
+      final hasFatha = normalized.contains('فتحة') || normalized.contains('فتحه') || normalized.contains('ياء') || normalized.contains('كسرة');
       return hasMafoool && hasMansoub && hasFatha;
     } else {
       // Must contain core grammatical elements: فاعل AND مرفوع AND ضمة
       final hasFaiel = normalized.contains('فاعل');
       final hasMarfoo = normalized.contains('مرفوع');
-      final hasDamma = normalized.contains('ضمة') || normalized.contains('ضمه');
+      final hasDamma = normalized.contains('ضمة') || normalized.contains('ضمه') || normalized.contains('الف') || normalized.contains('واو');
       return hasFaiel && hasMarfoo && hasDamma;
     }
   }

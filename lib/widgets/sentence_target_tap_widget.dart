@@ -11,6 +11,10 @@ class SentenceTargetTapWidget extends StatefulWidget {
   final Map<String, String> solutions;
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
+  final String? instructionHeader;
+  final String? errorHintMessage;
+  final bool allowNoneOption;
+  final String noneOptionText;
 
   const SentenceTargetTapWidget({
     super.key,
@@ -18,6 +22,10 @@ class SentenceTargetTapWidget extends StatefulWidget {
     required this.solutions,
     required this.areAnswersRevealed,
     required this.onValidationChanged,
+    this.instructionHeader,
+    this.errorHintMessage,
+    this.allowNoneOption = false,
+    this.noneOptionText = 'لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ',
   });
 
   @override
@@ -82,7 +90,7 @@ class _SentenceTargetTapWidgetState extends State<SentenceTargetTapWidget> {
         _errorHints[sentenceIndex] = null;
       } else {
         _selectedWords.remove(sentenceIndex);
-        _errorHints[sentenceIndex] = 'هَذَا لَيْسَ المَفْعُولَ بِهِ، اسْأَلْ: مَاذَا فَعَلَ الفَاعِلُ؟';
+        _errorHints[sentenceIndex] = widget.errorHintMessage ?? 'هَذَا لَيْسَ المَفْعُولَ بِهِ، اسْأَلْ: مَاذَا فَعَلَ الفَاعِلُ؟';
       }
     });
 
@@ -144,10 +152,10 @@ class _SentenceTargetTapWidgetState extends State<SentenceTargetTapWidget> {
             children: [
               const Icon(Icons.touch_app_rounded, color: Color(0xFF2563EB), size: 28),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'انْقُرْ عَلَى المَفْعُولِ بِهِ فِي كُلِّ جُمْلَةٍ مِنَ الجُمَلِ الآتِيَةِ:',
-                  style: TextStyle(
+                  widget.instructionHeader ?? 'انْقُرْ عَلَى المَفْعُولِ بِهِ فِي كُلِّ جُمْلَةٍ مِنَ الجُمَلِ الآتِيَةِ:',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1E40AF),
@@ -161,7 +169,7 @@ class _SentenceTargetTapWidgetState extends State<SentenceTargetTapWidget> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'المَفَاعِيلُ بِهِ: $solved / $total',
+                  '$solved / $total',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -247,7 +255,7 @@ class _SentenceTargetTapWidgetState extends State<SentenceTargetTapWidget> {
                             Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 16),
                             SizedBox(width: 4),
                             Text(
-                              'مَفْعُولٌ بِهِ تَمَّ تَحْدِيدُهُ ✓',
+                              'تَمَّ التَّحْدِيدُ بِنَجَاحٍ ✓',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -328,6 +336,59 @@ class _SentenceTargetTapWidgetState extends State<SentenceTargetTapWidget> {
                     );
                   }).toList(),
                 ),
+
+                // Option to select "No target word" (e.g. active verb / no passive verb)
+                if (widget.allowNoneOption) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: InkWell(
+                      onTap: () => _onWordTapped(idx, widget.noneOptionText),
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: (selectedWord != null && _isWordMatchingTarget(selectedWord, widget.noneOptionText))
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: (selectedWord != null && _isWordMatchingTarget(selectedWord, widget.noneOptionText))
+                                ? const Color(0xFF15803D)
+                                : const Color(0xFF94A3B8),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              (selectedWord != null && _isWordMatchingTarget(selectedWord, widget.noneOptionText))
+                                  ? Icons.check_circle_rounded
+                                  : Icons.radio_button_unchecked_rounded,
+                              color: (selectedWord != null && _isWordMatchingTarget(selectedWord, widget.noneOptionText))
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.noneOptionText,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: (selectedWord != null && _isWordMatchingTarget(selectedWord, widget.noneOptionText))
+                                    ? Colors.white
+                                    : const Color(0xFF334155),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 // Error guidance message if wrong word was tapped
                 if (errorHint != null && !isSentenceSolved) ...[

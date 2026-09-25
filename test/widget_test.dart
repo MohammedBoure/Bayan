@@ -1191,5 +1191,180 @@ void main() {
 
     expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
   });
+
+  test('Grade 5 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5');
+    expect(grade5, isNotNull);
+    expect(grade5!.gradeNumber, equals(5));
+    expect(grade5.title, contains('السنة الخامسة'));
+    expect(grade5.units.length, equals(1));
+    expect(grade5.lessons.length, equals(3));
+
+    // Lesson 1: نواصب الفعل المضارع
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    expect(l1.title, contains('نواصب الفعل المضارع'));
+    expect(l1.readingPassage, isNotNull);
+    expect(l1.readingPassage!.title, contains('تَاكْفَارِينَاسُ يَتَحَدَّثُ'));
+    expect(l1.readingPassage!.vocabulary.length, greaterThanOrEqualTo(3));
+    expect(l1.readingPassage!.enrichment, isNotNull);
+    expect(l1.readingPassage!.enrichment!.complementaryPairs.isNotEmpty, isTrue);
+    expect(l1.discovery, isNotNull);
+    expect(l1.discovery!.targetWords, contains('يَقْبَلَ'));
+    expect(l1.activities.length, equals(5));
+
+    // Lesson 2: جوازم الفعل المضارع
+    final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
+    expect(l2.title, contains('جوازم الفعل المضارع'));
+    expect(l2.readingPassage, isNotNull);
+    expect(l2.readingPassage!.title, contains('كُلُّنَا أَبْنَاءُ وَطَنٍ وَاحِدٍ'));
+    expect(l2.readingPassage!.enrichment!.derivations.first.hasGroupedDerivations, isTrue);
+    expect(l2.readingPassage!.enrichment!.derivations.first.derivedVerbs, isNotEmpty);
+    expect(l2.readingPassage!.enrichment!.derivations.first.derivedNouns, isNotEmpty);
+    expect(l2.activities.length, equals(5));
+
+    // Lesson 3: الفعل المبني للمجهول ونائب الفاعل
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    expect(l3.title, contains('الفعل المبني للمجهول ونائب الفاعل'));
+    expect(l3.readingPassage, isNotNull);
+    expect(l3.readingPassage!.title, contains('أَرْضٌ غَالِيَةٌ'));
+    expect(l3.activities.length, equals(5));
+    expect(l3.activities[0].allowNoneOption, isTrue);
+    expect(l3.activities[4].tableHeaders, isNotNull);
+    expect(l3.activities[4].tableHeaders!.length, equals(5));
+
+    // Comprehensive Quiz for Grade 5
+    expect(grade5.comprehensiveQuiz, isNotNull);
+    expect(grade5.comprehensiveQuiz.questions.length, equals(10));
+  });
+
+  testWidgets('Grade 5 Lesson 1 (تاكفاريناس - نواصب المضارع) interactive activities test', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    final ps = ProgressService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l1.activities,
+            lessonTitle: l1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Activity 1: Target Tap for Subjunctive Verbs
+    expect(find.textContaining('النشاط الأول: أتعرف الفعل المضارع المنصوب'), findsWidgets);
+    expect(find.text('يَحْرِصُ'), findsOneWidget);
+
+    // Reveal answers for Activity 1 via teacher quick-control
+    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    await tester.pumpAndSettle();
+
+    // Check verification button
+    final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 5 Lesson 3 Activity 1 (أرض غالية - تمييز المبني للمجهول)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    final ps = ProgressService();
+
+    // Test Activity 1: Sentence target tap with allowNoneOption
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l3.activities,
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الأول: أَكْتَشِفُ الأَفْعَالَ المَبْنِيَّةَ لِلْمَجْهُولِ'), findsWidgets);
+    // Verify none option chip exists
+    expect(find.text('لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ'), findsWidgets);
+
+    // Reveal solutions for Activity 1
+    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    await tester.pumpAndSettle();
+
+    final checkBtn1 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn1);
+    await tester.tap(checkBtn1);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 5 Lesson 3 Activity 5 (استخراج وتحليل في جدول 5 أعمدة)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    final ps = ProgressService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [l3.activities[4]],
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الخامس: اسْتِخْرَاجٌ وَتَحْلِيلٌ مِنَ النَّصِّ'), findsWidgets);
+    expect(find.text('الفِعْلُ المَبْنِيُّ لِلْمَجْهُولِ'), findsOneWidget);
+    expect(find.text('زَمَنُ الفِعْلِ'), findsOneWidget);
+    expect(find.text('نَائِبُ الفَاعِلِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ بِنَاءِ/رَفْعِ الفِعْلِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ رَفْعِ نَائِبِ الفَاعِلِ'), findsOneWidget);
+
+    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    await tester.pumpAndSettle();
+
+    final checkBtn5 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn5);
+    await tester.tap(checkBtn5);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+  });
 }
+
+
 

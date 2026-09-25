@@ -51,14 +51,22 @@ class ActivityModel {
   final Map<String, List<String>>? sentenceOrderedMap;
   final String? contextParagraph;
 
-  // Advanced grammatical activities (Sentence Multiple Choice, Written Parsing, Open Sentence Fill, Extraction Table)
+  // Advanced grammatical activities (Sentence Multiple Choice, Written Parsing, Open Sentence Fill, Extraction Table, Target Tap)
   final Map<String, List<String>>? sentenceChoiceOptions;
   final Map<String, String>? coloredWordsMap;
   final Map<String, List<String>>? acceptableAnswersMap;
   final List<Map<String, String>>? tableRows;
+  final List<String>? tableHeaders;
+  final String? tableTitle;
+  final String? passageTitle;
   final bool showSuggestions;
   final Map<String, Map<String, String>>? sentencePartsMap;
   final List<String>? targetWordsList;
+  final String? instructionHeader;
+  final String? errorHintMessage;
+  final bool allowNoneOption;
+  final String noneOptionText;
+  final List<String>? helperChips;
 
   const ActivityModel({
     required this.id,
@@ -86,9 +94,17 @@ class ActivityModel {
     this.coloredWordsMap,
     this.acceptableAnswersMap,
     this.tableRows,
+    this.tableHeaders,
+    this.tableTitle,
+    this.passageTitle,
     this.showSuggestions = true,
     this.sentencePartsMap,
     this.targetWordsList,
+    this.instructionHeader,
+    this.errorHintMessage,
+    this.allowNoneOption = false,
+    this.noneOptionText = 'لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ',
+    this.helperChips,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length

@@ -552,6 +552,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
           coloredWords: _currentActivity.coloredWordsMap ?? {},
           modelParsings: _currentActivity.sentenceSolutions ?? {},
+          helperChips: _currentActivity.helperChips,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _writtenParsingValid = isValid;
@@ -576,6 +577,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           key: ValueKey('${_currentIndex}_$_attemptKey'),
           passage: _currentActivity.contextParagraph ?? _currentActivity.sentence,
           tableRows: _currentActivity.tableRows ?? [],
+          tableHeaders: _currentActivity.tableHeaders,
+          tableTitle: _currentActivity.tableTitle,
+          passageTitle: _currentActivity.passageTitle,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _extractionTableValid = isValid;
@@ -587,6 +591,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           key: ValueKey('${_currentIndex}_$_attemptKey'),
           sentences: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
           solutions: _currentActivity.sentenceSolutions ?? {},
+          instructionHeader: _currentActivity.instructionHeader,
+          errorHintMessage: _currentActivity.errorHintMessage,
+          allowNoneOption: _currentActivity.allowNoneOption,
+          noneOptionText: _currentActivity.noneOptionText,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _targetTapValid = isValid;

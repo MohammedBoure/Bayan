@@ -114,15 +114,21 @@ class MorphologicalDerivationItem {
   final String verbalNoun;
   final String passiveParticiple;
   final String note;
+  final List<String>? derivedVerbs;
+  final List<String>? derivedNouns;
 
   const MorphologicalDerivationItem({
     required this.rootVerb,
-    required this.pastForm,
-    required this.activeParticiple,
-    required this.verbalNoun,
-    required this.passiveParticiple,
+    this.pastForm = '',
+    this.activeParticiple = '',
+    this.verbalNoun = '',
+    this.passiveParticiple = '',
     this.note = '',
+    this.derivedVerbs,
+    this.derivedNouns,
   });
+
+  bool get hasGroupedDerivations => derivedVerbs != null && derivedVerbs!.isNotEmpty;
 }
 
 /// Represents an odd-one-out exercise item (عَيِّنِ الْعُنْصُرَ الدَّخِيلَ فِي كُلِّ سَطْرٍ).

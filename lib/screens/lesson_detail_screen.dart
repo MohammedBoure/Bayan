@@ -2130,21 +2130,35 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFF59E0B)),
                     ),
-                    child: Wrap(
-                      alignment: WrapAlignment.spaceAround,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        _buildDerivationHeaderPill('الفِعْلُ المَاضِي', 'اشْتَرَكَ', scale),
-                        const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
-                        _buildDerivationHeaderPill('اسْمُ الفَاعِلِ', 'مُشْتَرِكٌ', scale),
-                        const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
-                        _buildDerivationHeaderPill('المَصْدَرُ', 'اشْتِرَاكٌ', scale),
-                        const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
-                        _buildDerivationHeaderPill('اسْمُ المَفْعُولِ', 'مُشْتَرَكٌ', scale),
-                      ],
-                    ),
+                    child: enrichment.derivationPatternExample.contains('سَبَقَ')
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            child: Text(
+                              'مِثَالٌ نَمُوذَجِيٌّ: ${enrichment.derivationPatternExample}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 15 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFFB45309),
+                                height: 1.5,
+                              ),
+                            ),
+                          )
+                        : Wrap(
+                            alignment: WrapAlignment.spaceAround,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              _buildDerivationHeaderPill('الفِعْلُ المَاضِي', 'اشْتَرَكَ', scale),
+                              const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
+                              _buildDerivationHeaderPill('اسْمُ الفَاعِلِ', 'مُشْتَرِكٌ', scale),
+                              const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
+                              _buildDerivationHeaderPill('المَصْدَرُ', 'اشْتِرَاكٌ', scale),
+                              const Icon(Icons.arrow_back_rounded, color: Color(0xFFD97706), size: 18),
+                              _buildDerivationHeaderPill('اسْمُ المَفْعُولِ', 'مُشْتَرَكٌ', scale),
+                            ],
+                          ),
                   ),
                 ],
               ),
@@ -2245,25 +2259,127 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // شبكة المشتقات الأربعة
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = constraints.maxWidth;
-                        final crossAxisCount = width >= 800 ? 4 : (width >= 450 ? 2 : 1);
-                        final itemWidth = (width - (crossAxisCount - 1) * 10) / crossAxisCount;
-
-                        return Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
+                    if (item.hasGroupedDerivations) ...[
+                      // مجموعة الأفعال المشتقة
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildDerivationCell('الفِعْلُ المَاضِي', item.pastForm, isRevealed, itemWidth, scale, const Color(0xFF2563EB)),
-                            _buildDerivationCell('اسْمُ الفَاعِلِ', item.activeParticiple, isRevealed, itemWidth, scale, const Color(0xFF0D9488)),
-                            _buildDerivationCell('المَصْدَرُ', item.verbalNoun, isRevealed, itemWidth, scale, const Color(0xFFD97706)),
-                            _buildDerivationCell('اسْمُ المَفْعُولِ', item.passiveParticiple, isRevealed, itemWidth, scale, const Color(0xFF7C3AED)),
+                            Text(
+                              'الأَفْعَالُ المُمْكِنَةُ:',
+                              style: TextStyle(
+                                fontSize: 14 * scale,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF1D4ED8),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (isRevealed)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: (item.derivedVerbs ?? []).map((v) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF3B82F6), width: 1.2),
+                                  ),
+                                  child: Text(
+                                    v,
+                                    style: TextStyle(
+                                      fontSize: 16 * scale,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF1E40AF),
+                                    ),
+                                  ),
+                                )).toList(),
+                              )
+                            else
+                              Text(
+                                'انْقُرْ كَشْفَ المُشْتَقَّاتِ أَعْلَاهُ لِعَرْضِ الأَفْعَالِ',
+                                style: TextStyle(fontSize: 13 * scale, color: const Color(0xFF64748B)),
+                              ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // مجموعة الأسماء المشتقة
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAF5FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE9D5FF)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'الأَسْمَاءُ المُمْكِنَةُ:',
+                              style: TextStyle(
+                                fontSize: 14 * scale,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF7E22CE),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (isRevealed)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: (item.derivedNouns ?? []).map((n) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF9333EA), width: 1.2),
+                                  ),
+                                  child: Text(
+                                    n,
+                                    style: TextStyle(
+                                      fontSize: 16 * scale,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF6B21A8),
+                                    ),
+                                  ),
+                                )).toList(),
+                              )
+                            else
+                              Text(
+                                'انْقُرْ كَشْفَ المُشْتَقَّاتِ أَعْلَاهُ لِعَرْضِ الأَسْمَاءِ',
+                                style: TextStyle(fontSize: 13 * scale, color: const Color(0xFF64748B)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      // شبكة المشتقات الأربعة
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          final crossAxisCount = width >= 800 ? 4 : (width >= 450 ? 2 : 1);
+                          final itemWidth = (width - (crossAxisCount - 1) * 10) / crossAxisCount;
+
+                          return Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              _buildDerivationCell('الفِعْلُ المَاضِي', item.pastForm, isRevealed, itemWidth, scale, const Color(0xFF2563EB)),
+                              _buildDerivationCell('اسْمُ الفَاعِلِ', item.activeParticiple, isRevealed, itemWidth, scale, const Color(0xFF0D9488)),
+                              _buildDerivationCell('المَصْدَرُ', item.verbalNoun, isRevealed, itemWidth, scale, const Color(0xFFD97706)),
+                              _buildDerivationCell('اسْمُ المَفْعُولِ', item.passiveParticiple, isRevealed, itemWidth, scale, const Color(0xFF7C3AED)),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ],
                 ),
               );
