@@ -183,28 +183,33 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
     });
   }
 
+  void _switchActivity(int newIndex) {
+    if (newIndex < 0 || newIndex >= widget.activities.length) return;
+    setState(() {
+      _currentIndex = newIndex;
+      _attemptKey = 0;
+      _selectedOptionIndex = null;
+      _submitted = false;
+      _categorizationValid = false;
+      _sentenceOrderValid = false;
+      _imageMatchValid = false;
+      _multiSelectValid = false;
+      _multiFillValid = false;
+      _multiOrderValid = false;
+      _multiChoiceValid = false;
+      _writtenParsingValid = false;
+      _openFillValid = false;
+      _extractionTableValid = false;
+      _targetTapValid = false;
+      _partsAnalysisValid = false;
+      _textWordExtractionValid = false;
+      _areAnswersRevealed = false;
+    });
+  }
+
   void _proceedToNextActivity() {
     if (_currentIndex < widget.activities.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _attemptKey = 0;
-        _selectedOptionIndex = null;
-        _submitted = false;
-        _categorizationValid = false;
-        _sentenceOrderValid = false;
-        _imageMatchValid = false;
-        _multiSelectValid = false;
-        _multiFillValid = false;
-        _multiOrderValid = false;
-        _multiChoiceValid = false;
-        _writtenParsingValid = false;
-        _openFillValid = false;
-        _extractionTableValid = false;
-        _targetTapValid = false;
-        _partsAnalysisValid = false;
-        _textWordExtractionValid = false;
-        _areAnswersRevealed = false;
-      });
+      _switchActivity(_currentIndex + 1);
     } else {
       // Completed all activities for this set
       if (widget.lessonIdToComplete != null) {
@@ -352,6 +357,120 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
               ],
             ),
 
+            // Free Activity Navigation Tabs Bar (شريط التبديل الحر بين الأنشطة)
+            if (total > 1) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Previous Activity Button
+                    IconButton(
+                      tooltip: 'النَّشَاطُ السَّابِقُ',
+                      onPressed: _currentIndex > 0
+                          ? () => _switchActivity(_currentIndex - 1)
+                          : null,
+                      icon: const Icon(Icons.arrow_forward_ios_rounded, size: 20),
+                      style: IconButton.styleFrom(
+                        backgroundColor: _currentIndex > 0 ? AppTheme.primaryLight : const Color(0xFFF1F5F9),
+                        foregroundColor: _currentIndex > 0 ? AppTheme.primaryTeal : Colors.grey.shade400,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Scrollable Activity Selection Chips
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: widget.activities.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final act = entry.value;
+                            final isSelected = _currentIndex == idx;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: ChoiceChip(
+                                key: Key('activity_tab_$idx'),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected && _currentIndex != idx) {
+                                    _switchActivity(idx);
+                                  }
+                                },
+                                selectedColor: AppTheme.primaryTeal,
+                                backgroundColor: const Color(0xFFF8FAFC),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: BorderSide(
+                                    color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
+                                    width: isSelected ? 2.0 : 1.2,
+                                  ),
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                label: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: isSelected ? Colors.white : AppTheme.primaryTeal.withValues(alpha: 0.15),
+                                      child: Text(
+                                        '${idx + 1}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                          color: isSelected ? AppTheme.primaryTeal : AppTheme.primaryDark,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      act.title.isNotEmpty ? act.title : 'النشاط ${idx + 1}',
+                                      style: TextStyle(
+                                        fontSize: 16 * scale,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? Colors.white : AppTheme.textDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Next Activity Button
+                    IconButton(
+                      tooltip: 'النَّشَاطُ التَّالِي',
+                      onPressed: _currentIndex < total - 1
+                          ? () => _switchActivity(_currentIndex + 1)
+                          : null,
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                      style: IconButton.styleFrom(
+                        backgroundColor: _currentIndex < total - 1 ? AppTheme.primaryLight : const Color(0xFFF1F5F9),
+                        foregroundColor: _currentIndex < total - 1 ? AppTheme.primaryTeal : Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 24),
 
             // Prompt Card
@@ -432,23 +551,74 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
             const SizedBox(height: 32),
 
-            // Submit Button
-            SizedBox(
-              height: 72,
-              child: ElevatedButton.icon(
-                onPressed: _submitAnswer,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryTeal,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            // Bottom Action Bar: Navigation and Verification
+            Row(
+              children: [
+                // Previous Activity Action (if available)
+                if (total > 1 && _currentIndex > 0) ...[
+                  SizedBox(
+                    height: 72,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _switchActivity(_currentIndex - 1),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryTeal,
+                        side: const BorderSide(color: AppTheme.primaryTeal, width: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      ),
+                      icon: const Icon(Icons.arrow_forward_ios_rounded, size: 22),
+                      label: Text(
+                        'السَّابِقُ',
+                        style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                ],
+
+                // Main Submit Button
+                Expanded(
+                  child: SizedBox(
+                    height: 72,
+                    child: ElevatedButton.icon(
+                      onPressed: _submitAnswer,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryTeal,
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      icon: const Icon(Icons.check_circle_rounded, size: 36),
+                      label: Text(
+                        'تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ',
+                        style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
                 ),
-                icon: const Icon(Icons.check_circle_rounded, size: 36),
-                label: Text(
-                  'تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ',
-                  style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900),
-                ),
-              ),
+
+                // Next Activity Action (if available)
+                if (total > 1 && _currentIndex < total - 1) ...[
+                  const SizedBox(width: 14),
+                  SizedBox(
+                    height: 72,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _switchActivity(_currentIndex + 1),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryTeal,
+                        side: const BorderSide(color: AppTheme.primaryTeal, width: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      ),
+                      icon: Text(
+                        'التَّالِي',
+                        style: TextStyle(fontSize: 18 * scale, fontWeight: FontWeight.bold),
+                      ),
+                      label: const Icon(Icons.arrow_back_ios_new_rounded, size: 22),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

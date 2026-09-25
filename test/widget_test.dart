@@ -945,13 +945,28 @@ void main() {
     expect(find.text('البِنْتُ'), findsOneWidget);
 
     // Select options for Activity 1
-    await tester.tap(find.text('الفَلاَّحُ'));
+    final opt1 = find.text('الفَلاَّحُ');
+    await tester.ensureVisible(opt1);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('الأُمُّ'));
+    await tester.tap(opt1);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('العَامِلُ'));
+
+    final opt2 = find.text('الأُمُّ');
+    await tester.ensureVisible(opt2);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('البِنْتُ'));
+    await tester.tap(opt2);
+    await tester.pumpAndSettle();
+
+    final opt3 = find.text('العَامِلُ');
+    await tester.ensureVisible(opt3);
+    await tester.pumpAndSettle();
+    await tester.tap(opt3);
+    await tester.pumpAndSettle();
+
+    final opt4 = find.text('البِنْتُ');
+    await tester.ensureVisible(opt4);
+    await tester.pumpAndSettle();
+    await tester.tap(opt4);
     await tester.pumpAndSettle();
 
     // Check answer
@@ -1532,7 +1547,85 @@ void main() {
     // Validation should succeed when correct
     expect(isValid, isTrue);
   });
+
+  testWidgets('InteractiveActivityScreen supports free non-linear navigation between activities via tabs and prev/next buttons', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade4 = repo.getGradeById('grade4')!;
+    final l2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l2.activities,
+            lessonTitle: l2.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Starts on Activity 1
+    expect(find.textContaining('النشاط الأول: اختر الفاعل المناسب'), findsWidgets);
+
+    // Verify activity tabs exist (all 5 activities are directly selectable)
+    expect(find.byKey(const Key('activity_tab_0')), findsOneWidget);
+    expect(find.byKey(const Key('activity_tab_1')), findsOneWidget);
+    expect(find.byKey(const Key('activity_tab_2')), findsOneWidget);
+    expect(find.byKey(const Key('activity_tab_3')), findsOneWidget);
+    expect(find.byKey(const Key('activity_tab_4')), findsOneWidget);
+
+    // 2. Jump directly to Activity 4 (Open Sentence Fill) without doing 1, 2, 3!
+    final tab3 = find.byKey(const Key('activity_tab_3'));
+    await tester.ensureVisible(tab3);
+    await tester.pumpAndSettle();
+    await tester.tap(tab3);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الرابع: أكمل الجملة بالفاعل المناسب'), findsWidgets);
+    expect(find.textContaining('إلى المدرسة مبكرا'), findsOneWidget);
+
+    // 3. Jump directly to Activity 3 (Written Parsing)
+    final tab2 = find.byKey(const Key('activity_tab_2'));
+    await tester.ensureVisible(tab2);
+    await tester.pumpAndSettle();
+    await tester.tap(tab2);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
+    expect(find.textContaining('حَضَرَ المُعَلِّمُ'), findsOneWidget);
+
+    // 4. Test Next button (moves to Activity 4)
+    final nextBtn = find.text('التَّالِي');
+    expect(nextBtn, findsOneWidget);
+    await tester.ensureVisible(nextBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(nextBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الرابع: أكمل الجملة بالفاعل المناسب'), findsWidgets);
+
+    // 5. Test Previous button (moves back to Activity 3)
+    final prevBtn = find.text('السَّابِقُ');
+    expect(prevBtn, findsOneWidget);
+    await tester.ensureVisible(prevBtn);
+    await tester.pumpAndSettle();
+    await tester.tap(prevBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
+  });
 }
+
 
 
 
