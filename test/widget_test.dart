@@ -1249,6 +1249,7 @@ void main() {
     expect(l2.readingPassage!.enrichment!.derivations.first.hasGroupedDerivations, isTrue);
     expect(l2.readingPassage!.enrichment!.derivations.first.derivedVerbs, isNotEmpty);
     expect(l2.readingPassage!.enrichment!.derivations.first.derivedNouns, isNotEmpty);
+    expect(l2.readingPassage!.comprehensionQuestions.any((q) => q.question.contains('كَيْفَ يَعِيشُ الجَزَائِرِيُّونَ الْيَوْمَ')), isTrue);
     expect(l2.activities.length, equals(5));
 
     // Lesson 3: الفعل المبني للمجهول ونائب الفاعل
