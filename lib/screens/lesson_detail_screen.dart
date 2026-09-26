@@ -213,36 +213,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               }
             });
           },
-          areAnswersRevealed: _areAnswersRevealed,
-          onToggleAnswers: () {
-            final totalQuestions = widget.lesson.readingPassage?.comprehensionQuestions.length ?? 0;
-            final totalSynonyms = widget.lesson.readingPassage?.synonymReplacements.length ?? 0;
-            final totalMeaningMatches = widget.lesson.readingPassage?.meaningMatches.length ?? 0;
-            final totalAntonyms = widget.lesson.readingPassage?.vocabulary.where((v) => v.isAntonym).length ?? 0;
-            final totalPairs = widget.lesson.readingPassage?.enrichment?.complementaryPairs.length ?? 0;
-            final totalDerivations = widget.lesson.readingPassage?.enrichment?.derivations.length ?? 0;
-            final totalOddWords = widget.lesson.readingPassage?.enrichment?.oddWordItems.length ?? 0;
-            setState(() {
-              _areAnswersRevealed = !_areAnswersRevealed;
-              if (_areAnswersRevealed) {
-                _revealedQuestionIndices.addAll(List.generate(totalQuestions, (i) => i));
-                _revealedSynonymIndices.addAll(List.generate(totalSynonyms, (i) => i));
-                _revealedMeaningMatchIndices.addAll(List.generate(totalMeaningMatches, (i) => i));
-                _revealedAntonymIndices.addAll(List.generate(totalAntonyms, (i) => i));
-                _revealedPairIndices.addAll(List.generate(totalPairs, (i) => i));
-                _revealedDerivationIndices.addAll(List.generate(totalDerivations, (i) => i));
-                _revealedOddWordIndices.addAll(List.generate(totalOddWords, (i) => i));
-              } else {
-                _revealedQuestionIndices.clear();
-                _revealedSynonymIndices.clear();
-                _revealedMeaningMatchIndices.clear();
-                _revealedAntonymIndices.clear();
-                _revealedPairIndices.clear();
-                _revealedDerivationIndices.clear();
-                _revealedOddWordIndices.clear();
-              }
-            });
-          },
+
           isSpotlightActive: _isSpotlightActive,
           onToggleSpotlight: () {
             setState(() {
@@ -776,7 +747,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                   if (hasMeaningMatches)
                     _buildVocabFilterChip(
-                      label: 'اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا (${passage.meaningMatches.length})',
+                      label: passage.meaningMatchPrompt.contains('اسْتَخْرِجْ')
+                          ? 'اسْتِخْرَاجُ المَعَانِي (${passage.meaningMatches.length})'
+                          : 'اخْتَرْ لِكُلِّ كَلِمَةٍ مَعْنَاهَا (${passage.meaningMatches.length})',
                       icon: Icons.checklist_rounded,
                       index: 2,
                       scale: scale,
@@ -1384,7 +1357,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     onPressed: () => _toggleAllMeaningMatches(passage.meaningMatches.length),
                     icon: Icon(allRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
                     label: Text(
-                      allRevealed ? 'إِخْفَاءُ جَمِيعِ الإِجَابَاتِ' : 'إِظْهَارُ جَمِيعِ الإِجَابَاتِ',
+                      allRevealed
+                          ? (passage.meaningMatchPrompt.contains('اسْتَخْرِجْ') ? 'إِخْفَاءُ جَمِيعِ العِبَارَاتِ' : 'إِخْفَاءُ جَمِيعِ الإِجَابَاتِ')
+                          : (passage.meaningMatchPrompt.contains('اسْتَخْرِجْ') ? 'إِظْهَارُ جَمِيعِ العِبَارَاتِ' : 'إِظْهَارُ جَمِيعِ الإِجَابَاتِ'),
                       style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -1421,7 +1396,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       const Icon(Icons.category_rounded, color: Color(0xFF0284C7), size: 22),
                       const SizedBox(width: 8),
                       Text(
-                        'بَنْكُ المَعَانِي المُتَاحَةِ: ',
+                        passage.meaningMatchPrompt.contains('اسْتَخْرِجْ')
+                            ? 'المَعَانِي المَطْلُوبَةُ مِنَ النَّصِّ: '
+                            : 'بَنْكُ المَعَانِي المُتَاحَةِ: ',
                         style: TextStyle(
                           fontSize: 15 * scale,
                           fontWeight: FontWeight.w900,
@@ -1523,7 +1500,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                     ),
                                   )
                                 : Text(
-                                    'انْقُرْ لِكَشْفِ المَعْنَى المُنَاسِبِ ...',
+                                    passage.meaningMatchPrompt.contains('اسْتَخْرِجْ')
+                                        ? 'انْقُرْ لِكَشْفِ العِبَارَةِ مِنَ النَّصِّ ...'
+                                        : 'انْقُرْ لِكَشْفِ المَعْنَى المُنَاسِبِ ...',
                                     style: TextStyle(
                                       fontSize: 14 * scale,
                                       fontWeight: FontWeight.bold,
@@ -1552,7 +1531,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       color: isRevealed ? const Color(0xFF16A34A) : const Color(0xFF0284C7),
                     ),
                     label: Text(
-                      isRevealed ? 'إِخْفَاءُ المَعْنَى' : 'كَشْفُ المَعْنَى',
+                      isRevealed
+                          ? (passage.meaningMatchPrompt.contains('اسْتَخْرِجْ') ? 'إِخْفَاءُ العِبَارَةِ' : 'إِخْفَاءُ المَعْنَى')
+                          : (passage.meaningMatchPrompt.contains('اسْتَخْرِجْ') ? 'كَشْفُ العِبَارَةِ' : 'كَشْفُ المَعْنَى'),
                       style: TextStyle(
                         fontSize: 13 * scale,
                         fontWeight: FontWeight.bold,

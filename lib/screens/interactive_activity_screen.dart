@@ -15,7 +15,6 @@ import '../widgets/open_sentence_fill_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
 import '../widgets/sentence_parts_analysis_widget.dart';
 import '../widgets/sentence_target_tap_widget.dart';
-import '../widgets/teacher_toolbar_widget.dart';
 import '../widgets/text_extraction_table_widget.dart';
 import '../widgets/text_word_extraction_widget.dart';
 import '../widgets/written_parsing_widget.dart';
@@ -79,6 +78,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   void initState() {
     super.initState();
     _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
+    if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
+      _selectedOptionIndex = _currentActivity.correctIndex;
+    }
   }
 
   void _submitAnswer() {
@@ -179,7 +181,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _targetTapValid = false;
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
-      _areAnswersRevealed = false;
+      _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
+      if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
+        _selectedOptionIndex = _currentActivity.correctIndex;
+      }
     });
   }
 
@@ -188,7 +193,10 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
     setState(() {
       _currentIndex = newIndex;
       _attemptKey = 0;
-      _selectedOptionIndex = null;
+      _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
+      _selectedOptionIndex = _areAnswersRevealed && _currentActivity.correctIndex >= 0
+          ? _currentActivity.correctIndex
+          : null;
       _submitted = false;
       _categorizationValid = false;
       _sentenceOrderValid = false;
@@ -203,7 +211,6 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _targetTapValid = false;
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
-      _areAnswersRevealed = false;
     });
   }
 
@@ -280,20 +287,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
     return AppScaffold(
       title: 'الأَنْشِطَةُ التَّفَاعُلِيَّةُ: ${widget.lessonTitle}',
       progressService: widget.progressService,
-      actions: [
-        TeacherHeaderActions(
-          progressService: widget.progressService,
-          areAnswersRevealed: _areAnswersRevealed,
-          onToggleAnswers: () {
-            setState(() {
-              _areAnswersRevealed = !_areAnswersRevealed;
-              if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
-                _selectedOptionIndex = _currentActivity.correctIndex;
-              }
-            });
-          },
-        ),
-      ],
+      actions: const [],
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(

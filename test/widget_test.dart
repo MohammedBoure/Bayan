@@ -989,8 +989,24 @@ void main() {
     expect(find.text('التِّلْمِيذَ'), findsOneWidget);
     expect(find.text('التِّلْمِيذِ'), findsOneWidget);
 
-    // Reveal answer via teacher mode quick button
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    final optCorrect1 = find.text('التِّلْمِيذُ');
+    await tester.ensureVisible(optCorrect1);
+    await tester.tap(optCorrect1);
+    await tester.pumpAndSettle();
+
+    final optCorrect2 = find.text('المُسَافِرُ');
+    await tester.ensureVisible(optCorrect2);
+    await tester.tap(optCorrect2);
+    await tester.pumpAndSettle();
+
+    final optCorrect3 = find.text('الفَلاَّحُ');
+    await tester.ensureVisible(optCorrect3);
+    await tester.tap(optCorrect3);
+    await tester.pumpAndSettle();
+
+    final optCorrect4 = find.text('التِّلْمِيذَةُ');
+    await tester.ensureVisible(optCorrect4);
+    await tester.tap(optCorrect4);
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(checkBtn);
@@ -1031,11 +1047,15 @@ void main() {
     expect(find.textContaining('القصة في القسم'), findsOneWidget);
     expect(find.textContaining('الأشجار في الحديقة'), findsOneWidget);
 
-    // Reveal answers for Activity 4
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
+    final textFields = find.byType(TextField);
+    expect(textFields, findsNWidgets(6));
+    await tester.enterText(textFields.at(0), 'التلميذ');
+    await tester.enterText(textFields.at(1), 'التلميذة');
+    await tester.enterText(textFields.at(2), 'الفلاح');
+    await tester.enterText(textFields.at(3), 'الولد');
+    await tester.enterText(textFields.at(4), 'الأم');
+    await tester.enterText(textFields.at(5), 'العامل');
     await tester.pumpAndSettle();
-
-    await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
     await tester.pumpAndSettle();
 
@@ -1102,9 +1122,9 @@ void main() {
     expect(lesson3.activities[3].type, equals(ActivityType.writtenParsing));
     expect(lesson3.activities[4].type, equals(ActivityType.textWordExtraction));
 
-    // 4. Test Interactive Activities Screen Rendering & Flow
     final progressService = ProgressService();
     await progressService.init();
+    await progressService.setRevealAnswersDirectly(true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -1126,10 +1146,6 @@ void main() {
     expect(find.text('الصَّحْنَ.'), findsOneWidget);
     expect(find.text('الحَقِيبَةَ.'), findsOneWidget);
 
-    // Reveal answers for Activity 1
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
-
     final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
@@ -1146,10 +1162,6 @@ void main() {
     // Ensure no suggestion chips are rendered
     expect(find.text('مُقْتَرَحَاتٌ: '), findsNothing);
 
-    // Reveal answers for Activity 2
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
-
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
     await tester.pumpAndSettle();
@@ -1163,10 +1175,6 @@ void main() {
     expect(find.textContaining('أصلح العامل الباب'), findsWidgets);
     expect(find.textContaining('قرأ سامي القصة'), findsWidgets);
     expect(find.textContaining('نظفت سعاد الشقة'), findsWidgets);
-
-    // Reveal answers for Activity 3
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
 
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
@@ -1201,9 +1209,6 @@ void main() {
     expect(find.textContaining('النشاط الخامس: استخرج المفعول به من النص'), findsWidgets);
     expect(find.textContaining('قَائِمَةُ المَفَاعِيلِ بِهِ المَطْلُوبَةِ'), findsOneWidget);
 
-    // Reveal answers for Activity 5
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
 
     expect(find.textContaining('نَظَّفَ الأَبُ الحَدِيقَةَ'), findsWidgets);
 
@@ -1279,6 +1284,8 @@ void main() {
     final grade5 = repo.getGradeById('grade5')!;
     final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
     final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -1299,10 +1306,6 @@ void main() {
     expect(find.textContaining('النشاط الأول: أتعرف الفعل المضارع المنصوب'), findsWidgets);
     expect(find.text('يَحْرِصُ'), findsOneWidget);
 
-    // Reveal answers for Activity 1 via teacher quick-control
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
-
     // Check verification button
     final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
     await tester.ensureVisible(checkBtn);
@@ -1321,6 +1324,8 @@ void main() {
     final grade5 = repo.getGradeById('grade5')!;
     final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
     final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(true);
 
     // Test Activity 1: Sentence target tap with allowNoneOption
     await tester.pumpWidget(
@@ -1342,10 +1347,6 @@ void main() {
     // Verify none option chip exists
     expect(find.text('لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ'), findsWidgets);
 
-    // Reveal solutions for Activity 1
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
-
     final checkBtn1 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
     await tester.ensureVisible(checkBtn1);
     await tester.tap(checkBtn1);
@@ -1363,6 +1364,8 @@ void main() {
     final grade5 = repo.getGradeById('grade5')!;
     final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
     final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(true);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -1385,9 +1388,6 @@ void main() {
     expect(find.text('نَائِبُ الفَاعِلِ'), findsOneWidget);
     expect(find.text('عَلَامَةُ بِنَاءِ/رَفْعِ الفِعْلِ'), findsOneWidget);
     expect(find.text('عَلَامَةُ رَفْعِ نَائِبِ الفَاعِلِ'), findsOneWidget);
-
-    await tester.tap(find.text('إِظْهَارُ الحُلُولِ'));
-    await tester.pumpAndSettle();
 
     final checkBtn5 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
     await tester.ensureVisible(checkBtn5);

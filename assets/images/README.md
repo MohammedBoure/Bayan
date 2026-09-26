@@ -4,7 +4,7 @@ This directory contains high-quality, child-friendly educational imagery and app
 
 ## Files:
 - [app_logo.png](file:///C:/Users/moham/Desktop/Bayan/assets/images/app_logo.png): Official application icon and logo badge, depicting a golden open book of Arabic grammar with olive branches and Arabic vowel diacritics.
-- [hero_reading.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/hero_reading.jpg): Welcome banner image depicting a young student engaged in reading, setting an encouraging tone on the home screen.
+- [hero_reading.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/hero_reading.jpg): Welcome banner image featuring a charming, child-friendly 3D illustration of cheerful primary school children joyfully reading together in the sunny garden library ("بستان النحو") with glowing letters and Arabic diacritics.
 - [arabic_book.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/arabic_book.jpg): Open book image representing Arabic grammar lessons, literature, and textbook content.
 - [grade_three.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/grade_three.jpg): Cover illustration for Grade 3 (السنة الثالثة ابتدائي) - Past, Present, and Imperative verbs.
 - [grade_four.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/grade_four.jpg): Cover illustration for Grade 4 (السنة الرابعة ابتدائي) - Sentence constituents, subject, and object.

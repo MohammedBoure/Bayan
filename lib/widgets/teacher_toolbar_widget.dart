@@ -6,8 +6,6 @@ import '../theme/app_theme.dart';
 /// Positioned directly on the side of the AppBar to save vertical screen space for projector display.
 class TeacherHeaderActions extends StatelessWidget {
   final ProgressService progressService;
-  final VoidCallback? onToggleAnswers;
-  final bool areAnswersRevealed;
   final VoidCallback? onToggleSpotlight;
   final bool isSpotlightActive;
   final VoidCallback? onToggleTashkeel;
@@ -20,8 +18,6 @@ class TeacherHeaderActions extends StatelessWidget {
   const TeacherHeaderActions({
     super.key,
     required this.progressService,
-    this.onToggleAnswers,
-    this.areAnswersRevealed = false,
     this.onToggleSpotlight,
     this.isSpotlightActive = false,
     this.onToggleTashkeel,
@@ -72,38 +68,6 @@ class TeacherHeaderActions extends StatelessWidget {
               ),
               label: Text(
                 isAudioActive ? 'إِخْفَاءُ الصَّوْتِ' : 'المَقْطَعُ الصَّوْتِيُّ',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-
-        // Reveal / Hide Answers button
-        if (onToggleAnswers != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: TextButton.icon(
-              onPressed: onToggleAnswers,
-              style: TextButton.styleFrom(
-                backgroundColor: areAnswersRevealed
-                    ? AppTheme.accentOrange
-                    : Colors.black.withValues(alpha: 0.25),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(
-                    color: areAnswersRevealed ? AppTheme.accentAmber : Colors.white24,
-                    width: 1.2,
-                  ),
-                ),
-              ),
-              icon: Icon(
-                areAnswersRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                size: 19,
-                color: Colors.white,
-              ),
-              label: Text(
-                areAnswersRevealed ? 'إِخْفَاءُ الحُلُولِ' : 'إِظْهَارُ الحُلُولِ',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
