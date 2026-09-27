@@ -1,5 +1,11 @@
 # Project-level configuration.
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
+# Statically link MSVC CRT so the app runs without external VC++ redistributable or modern UCRT DLLs on Windows 7
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 project(nahw_app LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -8,7 +14,10 @@ set(BINARY_NAME "nahw_app")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
-cmake_policy(VERSION 3.14...3.25)
+cmake_policy(VERSION 3.15...3.25)
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -32,6 +41,9 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# Statically link MSVC CRT so the app runs without external VC++ redistributable or modern UCRT DLLs on Windows 7
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 # Compilation settings that should be applied to most targets.
 #
 # Be cautious about adding new options here, as plugins use this function by
@@ -43,6 +55,8 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_options(${TARGET} PRIVATE /EHsc)
   target_compile_definitions(${TARGET} PRIVATE "_HAS_EXCEPTIONS=0")
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
+  set_property(TARGET ${TARGET} PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endfunction()
 
 # Flutter library and tool build rules.

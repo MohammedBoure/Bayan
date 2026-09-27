@@ -1,0 +1,8 @@
+LIBRARY nt_w7
+EXPORTS
+    RtlCaptureStackBackTrace = ntdll.RtlCaptureStackBackTrace
+    RtlUnwind = ntdll.RtlUnwind
+    RtlUnwindEx = ntdll.RtlUnwindEx
+    VerSetConditionMask = ntdll.VerSetConditionMask
+    RtlAddGrowableFunctionTable
+    RtlDeleteGrowableFunctionTable
