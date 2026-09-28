@@ -31,6 +31,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     super.initState();
     _selectedTrackIndex = 0;
     _player.addListener(_onPlayerStateChanged);
+    _player.onTrackChange = (track, index) {
+      if (mounted) {
+        setState(() {
+          _selectedTrackIndex = index;
+        });
+        _loadDuration();
+        widget.onTrackChanged?.call(track.paragraphIndices);
+      }
+    };
     _loadDuration();
   }
 
@@ -47,6 +56,9 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   void dispose() {
+    if (_player.onTrackChange != null) {
+      _player.onTrackChange = null;
+    }
     _player.removeListener(_onPlayerStateChanged);
     super.dispose();
   }
@@ -65,13 +77,20 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   void _selectTrack(int index) {
-    if (_selectedTrackIndex == index && _player.isPlaying) return;
+    if (index < 0 || index >= widget.tracks.length) return;
     setState(() {
       _selectedTrackIndex = index;
     });
     _loadDuration();
     final track = widget.tracks[index];
     widget.onTrackChanged?.call(track.paragraphIndices);
+    if (_player.isPlaying) {
+      _player.playPlaylist(
+        widget.tracks,
+        startIndex: index,
+        continuous: _player.continuousPlayback,
+      );
+    }
   }
 
   void _togglePlayPause() {
@@ -81,8 +100,24 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     } else if (_player.isPaused && _player.currentTrack?.assetPath == track.assetPath) {
       _player.resume();
     } else {
-      _player.playTrack(track);
+      _player.playPlaylist(
+        widget.tracks,
+        startIndex: _selectedTrackIndex,
+        continuous: _player.continuousPlayback,
+      );
       widget.onTrackChanged?.call(track.paragraphIndices);
+    }
+  }
+
+  void _playNextTrack() {
+    if (_selectedTrackIndex + 1 < widget.tracks.length) {
+      _selectTrack(_selectedTrackIndex + 1);
+    }
+  }
+
+  void _playPreviousTrack() {
+    if (_selectedTrackIndex > 0) {
+      _selectTrack(_selectedTrackIndex - 1);
     }
   }
 
@@ -140,13 +175,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               ),
               const Spacer(),
               // Track tabs if multiple
-              if (widget.tracks.length > 1)
+              if (widget.tracks.length > 1) ...[
                 Wrap(
                   spacing: 6,
                   children: List.generate(widget.tracks.length, (i) {
                     final isSelected = _selectedTrackIndex == i;
+                    final isPlayingThis = isThisTrackPlaying && isSelected;
                     return ChoiceChip(
                       selected: isSelected,
+                      avatar: isPlayingThis
+                          ? const Icon(Icons.volume_up_rounded, size: 16, color: Colors.white)
+                          : null,
                       label: Text(
                         widget.tracks[i].title,
                         style: TextStyle(
@@ -161,6 +200,59 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     );
                   }),
                 ),
+                const SizedBox(width: 8),
+                // Continuous Auto-advance toggle badge
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _player.continuousPlayback = !_player.continuousPlayback;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _player.continuousPlayback
+                          ? AppTheme.successGreen.withValues(alpha: 0.15)
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _player.continuousPlayback
+                            ? AppTheme.successGreen
+                            : Colors.grey.shade400,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _player.continuousPlayback
+                              ? Icons.playlist_play_rounded
+                              : Icons.playlist_remove_rounded,
+                          size: 18,
+                          color: _player.continuousPlayback
+                              ? AppTheme.successGreen
+                              : AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _player.continuousPlayback
+                              ? 'تشغيل متتابع تلقائي'
+                              : 'تشغيل مقطع فقط',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _player.continuousPlayback
+                                ? const Color(0xFF166534)
+                                : AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               if (widget.onClose != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
@@ -178,7 +270,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
           const SizedBox(height: 10),
 
-          // Player bar: Play/Pause, Stop, Progress bar, Timestamps
+          // Player bar: Play/Pause, Skip Prev/Next, Stop, Progress bar, Timestamps
           Row(
             children: [
               // Play / Pause Button
@@ -197,11 +289,40 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 label: Text(
                   isThisTrackPlaying
                       ? 'إيقاف مؤقت'
-                      : (isThisTrackPaused ? 'متابعة الاستماع' : 'استمع للفقرة'),
+                      : (isThisTrackPaused
+                          ? 'متابعة الاستماع'
+                          : (widget.tracks.length > 1
+                              ? 'تشغيل النص كاملاً (متتابع)'
+                              : 'استمع للنص')),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(width: 10),
+
+              // Previous and Next Track Buttons
+              if (widget.tracks.length > 1) ...[
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  onPressed: _selectedTrackIndex > 0 ? _playPreviousTrack : null,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    foregroundColor: AppTheme.textDark,
+                  ),
+                  icon: const Icon(Icons.skip_previous_rounded, size: 24),
+                  tooltip: 'المقطع السابق',
+                ),
+                const SizedBox(width: 6),
+                IconButton.filledTonal(
+                  onPressed: _selectedTrackIndex + 1 < widget.tracks.length ? _playNextTrack : null,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    foregroundColor: AppTheme.textDark,
+                  ),
+                  icon: const Icon(Icons.skip_next_rounded, size: 24),
+                  tooltip: 'المقطع التالي',
+                ),
+              ],
+
+              const SizedBox(width: 8),
 
               // Stop Button
               if (isCurrentActive)

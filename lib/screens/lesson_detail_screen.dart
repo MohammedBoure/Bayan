@@ -46,6 +46,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   final Set<int> _revealedPairIndices = <int>{};
   final Set<int> _revealedDerivationIndices = <int>{};
   final Set<int> _revealedOddWordIndices = <int>{};
+  final Map<int, int> _selectedComprehensionChoices = <int, int>{};
   List<int> _audioHighlightedParagraphs = const [];
   bool _showAudioPlayer = false;
   int? _selectedDiscoveryChoiceIndex;
@@ -75,6 +76,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       final passage = widget.lesson.readingPassage!;
       for (int i = 0; i < passage.comprehensionQuestions.length; i++) {
         _revealedQuestionIndices.add(i);
+        final q = passage.comprehensionQuestions[i];
+        if (q.isMultipleChoice && q.correctChoiceIndex != null) {
+          _selectedComprehensionChoices[i] = q.correctChoiceIndex!;
+        }
       }
       for (int i = 0; i < passage.synonymReplacements.length; i++) {
         _revealedSynonymIndices.add(i);
@@ -3264,13 +3269,94 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        q.question,
-                        style: TextStyle(
-                          fontSize: 22 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textDark,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            q.question,
+                            style: TextStyle(
+                              fontSize: 22 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          if (q.isMultipleChoice) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 8,
+                              children: q.choices!.asMap().entries.map((choiceEntry) {
+                                final cIdx = choiceEntry.key;
+                                final choiceText = choiceEntry.value;
+                                final isSelected = _selectedComprehensionChoices[idx] == cIdx;
+                                final isCorrect = q.correctChoiceIndex != null && cIdx == q.correctChoiceIndex;
+                                final showSuccess = isRevealed && isCorrect;
+                                final showError = isRevealed && isSelected && !isCorrect;
+
+                                Color bg = const Color(0xFFF8FAFC);
+                                Color border = const Color(0xFFCBD5E1);
+                                Color textClr = AppTheme.textDark;
+                                IconData icon = Icons.radio_button_unchecked_rounded;
+                                Color iconClr = AppTheme.textMuted;
+
+                                if (showSuccess) {
+                                  bg = const Color(0xFFDCFCE7);
+                                  border = const Color(0xFF16A34A);
+                                  textClr = const Color(0xFF15803D);
+                                  icon = Icons.check_circle_rounded;
+                                  iconClr = const Color(0xFF16A34A);
+                                } else if (showError) {
+                                  bg = const Color(0xFFFEE2E2);
+                                  border = const Color(0xFFDC2626);
+                                  textClr = const Color(0xFF991B1B);
+                                  icon = Icons.cancel_rounded;
+                                  iconClr = const Color(0xFFDC2626);
+                                } else if (isSelected) {
+                                  bg = AppTheme.primaryLight;
+                                  border = AppTheme.primaryTeal;
+                                  textClr = AppTheme.primaryDark;
+                                  icon = Icons.radio_button_checked_rounded;
+                                  iconClr = AppTheme.primaryTeal;
+                                }
+
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedComprehensionChoices[idx] = cIdx;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: bg,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: border,
+                                        width: isSelected || showSuccess || showError ? 2 : 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(icon, size: 20, color: iconClr),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          choiceText,
+                                          style: TextStyle(
+                                            fontSize: 18 * scale,
+                                            fontWeight: isSelected || showSuccess ? FontWeight.bold : FontWeight.w600,
+                                            color: textClr,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),

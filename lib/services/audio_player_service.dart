@@ -26,12 +26,30 @@ class AudioPlayerService extends ChangeNotifier {
 
   AudioPlaybackState _state = AudioPlaybackState.stopped;
   ReadingAudioTrack? _currentTrack;
+  List<ReadingAudioTrack> _playlist = const [];
+  int _currentTrackIndex = 0;
+  bool _continuousPlayback = true;
+  void Function(ReadingAudioTrack track, int index)? onTrackChange;
+  VoidCallback? onPlaylistCompleted;
+
   int _durationMs = 0;
   int _positionMs = 0;
   Timer? _ticker;
 
   AudioPlaybackState get state => _state;
   ReadingAudioTrack? get currentTrack => _currentTrack;
+  List<ReadingAudioTrack> get playlist => List.unmodifiable(_playlist);
+  int get currentTrackIndex => _currentTrackIndex;
+  bool get continuousPlayback => _continuousPlayback;
+  set continuousPlayback(bool val) {
+    if (_continuousPlayback != val) {
+      _continuousPlayback = val;
+      notifyListeners();
+    }
+  }
+
+  bool get hasNextTrack => _playlist.isNotEmpty && _currentTrackIndex + 1 < _playlist.length;
+  bool get hasPreviousTrack => _playlist.isNotEmpty && _currentTrackIndex > 0;
   int get durationMs => _durationMs;
   int get positionMs => _positionMs;
   bool get isPlaying => _state == AudioPlaybackState.playing;
@@ -155,14 +173,51 @@ class AudioPlayerService extends ChangeNotifier {
     return 60000;
   }
 
-  /// Play a specific reading audio track
+  /// Play a specific reading audio track (convenience method)
   Future<void> playTrack(ReadingAudioTrack track) async {
+    _playlist = [track];
+    _currentTrackIndex = 0;
+    await _playTrackInternal(track);
+  }
+
+  /// Play a playlist of tracks starting at startIndex with continuous playback
+  Future<void> playPlaylist(List<ReadingAudioTrack> tracks, {int startIndex = 0, bool continuous = true}) async {
+    if (tracks.isEmpty) return;
+    _playlist = List<ReadingAudioTrack>.from(tracks);
+    _currentTrackIndex = startIndex.clamp(0, tracks.length - 1);
+    _continuousPlayback = continuous;
+    final track = _playlist[_currentTrackIndex];
+    onTrackChange?.call(track, _currentTrackIndex);
+    await _playTrackInternal(track);
+  }
+
+  /// Advance to the next track in the playlist if available
+  Future<void> nextTrack() async {
+    if (hasNextTrack) {
+      _currentTrackIndex++;
+      final next = _playlist[_currentTrackIndex];
+      onTrackChange?.call(next, _currentTrackIndex);
+      await _playTrackInternal(next);
+    }
+  }
+
+  /// Move to the previous track in the playlist if available
+  Future<void> previousTrack() async {
+    if (hasPreviousTrack) {
+      _currentTrackIndex--;
+      final prev = _playlist[_currentTrackIndex];
+      onTrackChange?.call(prev, _currentTrackIndex);
+      await _playTrackInternal(prev);
+    }
+  }
+
+  Future<void> _playTrackInternal(ReadingAudioTrack track) async {
     if (_currentTrack?.assetPath == track.assetPath && _state == AudioPlaybackState.paused) {
       await resume();
       return;
     }
 
-    await stop();
+    await stopInternal();
 
     _currentTrack = track;
     final resolvedPath = await _resolveAssetPath(track.assetPath);
@@ -171,6 +226,7 @@ class AudioPlayerService extends ChangeNotifier {
       // Non-windows or failed to resolve: simulate state for mock/tests
       _state = AudioPlaybackState.playing;
       _durationMs = await getTrackDuration(track);
+      _positionMs = 0;
       _startTicker();
       notifyListeners();
       return;
@@ -226,8 +282,8 @@ class AudioPlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Stop current playback and reset position
-  Future<void> stop() async {
+  /// Internal stop that preserves the active playlist
+  Future<void> stopInternal() async {
     _ticker?.cancel();
     if (Platform.isWindows && _mciSendString != null) {
       _mci('stop $_alias');
@@ -236,6 +292,11 @@ class AudioPlayerService extends ChangeNotifier {
     _state = AudioPlaybackState.stopped;
     _positionMs = 0;
     notifyListeners();
+  }
+
+  /// Stop current playback and reset position
+  Future<void> stop() async {
+    await stopInternal();
   }
 
   /// Seek to a specific timestamp in milliseconds
@@ -253,6 +314,15 @@ class AudioPlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _handleTrackFinished() async {
+    if (_continuousPlayback && hasNextTrack) {
+      await nextTrack();
+    } else {
+      await stop();
+      onPlaylistCompleted?.call();
+    }
+  }
+
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(milliseconds: 300), (timer) {
@@ -260,7 +330,7 @@ class AudioPlayerService extends ChangeNotifier {
         if (_state == AudioPlaybackState.playing) {
           _positionMs += 300;
           if (_positionMs >= _durationMs) {
-            stop();
+            _handleTrackFinished();
           } else {
             notifyListeners();
           }
@@ -274,7 +344,7 @@ class AudioPlayerService extends ChangeNotifier {
 
       if (mode.contains('stopped') || mode.isEmpty) {
         calloc.free(buffer);
-        stop();
+        _handleTrackFinished();
         return;
       }
 

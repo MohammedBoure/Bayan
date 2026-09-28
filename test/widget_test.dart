@@ -16,6 +16,7 @@ import 'package:nahw_app/services/nlp_database_service.dart';
 import 'package:nahw_app/services/progress_service.dart';
 import 'package:nahw_app/theme/app_theme.dart';
 import 'package:nahw_app/widgets/activation_dialog.dart';
+import 'package:nahw_app/widgets/audio_player_widget.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
 import 'package:nahw_app/widgets/multi_sentence_fill_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1770,6 +1771,171 @@ void main() {
     expect(find.text('شرب'), findsWidgets);
     expect(find.text('نام'), findsWidgets);
     expect(find.text('ركض'), findsWidgets);
+  });
+
+  testWidgets('Grade 3 Lesson 2 (عمر ياسف) comprehension questions render accurately with choices and model answers', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final lesson2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
+    final passage = lesson2.readingPassage!;
+    expect(passage.comprehensionQuestions.length, equals(9));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: lesson2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Switch to Stage 3: أَقْرَأُ وَأَفْهَمُ
+    final stageTab = find.text('3. أَقْرَأُ وَأَفْهَمُ');
+    expect(stageTab, findsOneWidget);
+    await tester.tap(stageTab);
+    await tester.pumpAndSettle();
+
+    // Verify Question 1 is visible
+    expect(find.textContaining('الشَّخْصِيَّةُ الرَّئِيسِيَّةُ فِي النَّصِّ'), findsOneWidget);
+
+    // Verify Question 2 with choices
+    expect(find.textContaining('بِمَاذَا يَحْلُمُ عُمَرُ'), findsOneWidget);
+    expect(find.text('اسْتِقْلَالُ الْجَزَائِرِ'), findsOneWidget);
+    expect(find.text('النَّجَاحُ فِي الْمَدْرَسَةِ'), findsOneWidget);
+    expect(find.text('الالْتِحَاقُ بِالثَّوْرَةِ'), findsOneWidget);
+
+    // Tap the choice
+    await tester.tap(find.text('اسْتِقْلَالُ الْجَزَائِرِ'));
+    await tester.pumpAndSettle();
+
+    // Reveal answers using the toggle button
+    final revealAllBtn = find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ');
+    expect(revealAllBtn, findsOneWidget);
+    await tester.tap(revealAllBtn);
+    await tester.pumpAndSettle();
+
+    // Model answer for Q1 is now revealed
+    expect(find.textContaining('عُمَرُ يَاسَفُ (أَصْغَرُ فِدَائِيٍّ فِي ثَوْرَةِ التَّحْرِيرِ)'), findsOneWidget);
+  });
+
+  test('AudioPlayerService supports playlist queue, continuous playback, and skip navigation', () async {
+    final player = AudioPlayerService.instance;
+    await player.stop();
+
+    const track1 = ReadingAudioTrack(
+      title: 'المقطع 1',
+      assetPath: 'assets/sounds/3_2/1.wav',
+      paragraphIndices: [0, 1],
+    );
+    const track2 = ReadingAudioTrack(
+      title: 'المقطع 2',
+      assetPath: 'assets/sounds/3_2/2.wav',
+      paragraphIndices: [2],
+    );
+    const track3 = ReadingAudioTrack(
+      title: 'المقطع 3',
+      assetPath: 'assets/sounds/3_2/3.wav',
+      paragraphIndices: [3, 4],
+    );
+
+    int? switchedToIndex;
+    player.onTrackChange = (track, index) {
+      switchedToIndex = index;
+    };
+
+    // 1. Start playlist
+    await player.playPlaylist([track1, track2, track3], startIndex: 0, continuous: true);
+    expect(player.isPlaying, isTrue);
+    expect(player.currentTrack?.title, equals('المقطع 1'));
+    expect(player.currentTrackIndex, equals(0));
+    expect(player.hasNextTrack, isTrue);
+    expect(player.hasPreviousTrack, isFalse);
+
+    // 2. Next track
+    await player.nextTrack();
+    expect(player.currentTrack?.title, equals('المقطع 2'));
+    expect(player.currentTrackIndex, equals(1));
+    expect(switchedToIndex, equals(1));
+    expect(player.hasPreviousTrack, isTrue);
+    expect(player.hasNextTrack, isTrue);
+
+    // 3. Next track to final track
+    await player.nextTrack();
+    expect(player.currentTrack?.title, equals('المقطع 3'));
+    expect(player.currentTrackIndex, equals(2));
+    expect(player.hasNextTrack, isFalse);
+
+    // 4. Previous track
+    await player.previousTrack();
+    expect(player.currentTrack?.title, equals('المقطع 2'));
+    expect(player.currentTrackIndex, equals(1));
+
+    await player.stop();
+    player.onTrackChange = null;
+  });
+
+  testWidgets('AudioPlayerWidget renders continuous auto-play badge and sequential navigation controls', (WidgetTester tester) async {
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final l2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
+    final tracks = l2.readingPassage!.audioTracks;
+    expect(tracks.length, equals(3));
+
+    List<int>? changedParagraphs;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: AudioPlayerWidget(
+              tracks: tracks,
+              onTrackChanged: (indices) {
+                changedParagraphs = indices;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify main play button indicates continuous full text playback
+    expect(find.text('تشغيل النص كاملاً (متتابع)'), findsOneWidget);
+
+    // Verify continuous auto-play badge is present and active
+    expect(find.text('تشغيل متتابع تلقائي'), findsOneWidget);
+
+    // Verify previous and next track buttons exist
+    expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
+
+    // Verify all 3 track tabs are visible
+    expect(find.text('المَقْطَعُ 1 (الفقرات 1 - 2)'), findsOneWidget);
+    expect(find.text('المَقْطَعُ 2 (الفقرة 3)'), findsOneWidget);
+    expect(find.text('المَقْطَعُ 3 (الفقرات 4 - 5)'), findsOneWidget);
+
+    // Test next track button advances track
+    await tester.tap(find.byIcon(Icons.skip_next_rounded));
+    await tester.pumpAndSettle();
+    expect(changedParagraphs, equals([2]));
+
+    // Clean up
+    await AudioPlayerService.instance.stop();
   });
 }
 
