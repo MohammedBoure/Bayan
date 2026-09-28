@@ -453,6 +453,22 @@ void main() {
     await tester.tap(find.text('قَامَ عَبْدُ الْقَادِرِ بِهَذِهِ الأَفْعَالِ وَانْتَهَى مِنْهَا فِي الْمَاضِي.'));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.check_circle_rounded), findsWidgets);
+
+    // Switch to stage 5 ("5. أَتَعَلَّمُ")
+    await tester.tap(find.text('5. أَتَعَلَّمُ'));
+    await tester.pumpAndSettle();
+
+    // Verify stage 5 header and rule summary
+    expect(find.text('أَتَعَلَّمُ'), findsWidgets);
+    expect(find.text('الْفِعْلُ الْمَاضِي: هُوَ مَا دَلَّ عَلَى حَدَثٍ وَقَعَ فِي الْمَاضِي. أَمْثِلَةٌ:'), findsOneWidget);
+
+    // Verify no complex parsing board (SentenceParserView) is present for Grade 3
+    expect(find.textContaining('نَمُوذَجُ إِعْرَابٍ'), findsNothing);
+
+    // Verify the 3 numbered example badges exist
+    expect(find.text('1'), findsWidgets);
+    expect(find.text('2'), findsWidgets);
+    expect(find.text('3'), findsWidgets);
   });
 
   testWidgets('Antonyms are hidden by default and teacher can reveal and hide them individually and collectively', (WidgetTester tester) async {

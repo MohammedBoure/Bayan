@@ -199,7 +199,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       if (passage != null && passage.comprehensionQuestions.isNotEmpty) '3. أَقْرَأُ وَأَفْهَمُ',
       if (discovery != null)
         isGrade4Or5 ? '4. أُلاَحِظُ وَأَكْتَشِفُ' : (discovery.title.isNotEmpty ? '4. ${discovery.title}' : '4. أُلاحِظُ وَأُمَيِّزُ'),
-      isGrade4Or5 ? '5. أُثْبِتُ' : '5. القَاعِدَةُ النَّحْوِيَّةُ',
+      isGrade4Or5 ? '5. أُثْبِتُ' : '5. أَتَعَلَّمُ',
     ];
 
     return AppScaffold(
@@ -3939,8 +3939,125 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  // 5. القاعدة النحوية والمثال التفاعلي
+  // 5. القاعدة النحوية والمثال التفاعلي (أَتَعَلَّمُ / أُثْبِتُ)
   Widget _buildStageRule(double scale) {
+    final isGrade3 = widget.lesson.gradeId == 'grade3';
+    final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
+    final stageTitle = isGrade4Or5 ? 'أُثْبِتُ' : 'أَتَعَلَّمُ';
+
+    // العرض المخصص للسنة الثالثة ابتدائي: قاعدة مبسطة وأمثلة مرقمة مع إبراز الأفعال دون إعراب
+    if (isGrade3) {
+      return Container(
+        padding: const EdgeInsets.all(26),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(26),
+          border: Border.all(color: AppTheme.primaryTeal, width: 2.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // رأس المرحلة الصفي: أَتَعَلَّمُ
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              children: [
+                const Icon(Icons.school_rounded, color: AppTheme.primaryTeal, size: 34),
+                Text(
+                  stageTitle,
+                  style: TextStyle(
+                    fontSize: 24 * scale,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 28, thickness: 1.5),
+
+            // بطاقة نص القاعدة: الْفِعْلُ الْمَاضِي: هُوَ مَا دَلَّ عَلَى حَدَثٍ وَقَعَ فِي الْمَاضِي. أَمْثِلَةٌ:
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF86EFAC), width: 1.8),
+              ),
+              child: Text(
+                widget.lesson.ruleSummary,
+                style: TextStyle(
+                  fontSize: 23 * scale,
+                  height: 1.7,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // قائمة الأمثلة المرقمة مع إبراز الفعل بلون وشكل مميز دون إعراب
+            ...widget.lesson.examples.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final example = entry.value;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // رقم المثال (1، 2، 3)
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryTeal,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${idx + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // جملة المثال مع إبراز الفعل بلون أحمر بارز وخلفية مميزة
+                    Expanded(
+                      child: _buildGrade3ExampleRichText(example, scale),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    }
+
+    // العرض الخاص بالسنتين الرابعة والخامسة: نماذج إعراب تفاعلية على السبورة وخلاصة
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -3967,9 +4084,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   const Icon(Icons.lightbulb_rounded, color: AppTheme.accentAmber, size: 34),
                   const SizedBox(width: 10),
                   Text(
-                    widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5'
-                        ? 'القَاعِدَةُ النَّحْوِيَّةُ (أُثْبِتُ):'
-                        : 'القَاعِدَةُ النَّحْوِيَّةُ الأَسَاسِيَّةُ (أَتَعَلَّمُ):',
+                    stageTitle,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
@@ -3996,15 +4111,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
         // Interactive Examples & Parsing Models
         ...widget.lesson.examples.map((example) {
-          final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
           return Padding(
             padding: const EdgeInsets.only(bottom: 22),
             child: SentenceParserView(
               tokens: example.tokens,
               showTashkeel: _showTashkeel,
-              title: isGrade4Or5
-                  ? 'نَمُوذَجُ إِعْرَابٍ (عَلَى السَّبُّورَةِ التَّفَاعُلِيَّةِ): "${example.sentence}"'
-                  : 'مِثَالٌ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${example.sentence}"',
+              title: 'نَمُوذَجُ إِعْرَابٍ (عَلَى السَّبُّورَةِ التَّفَاعُلِيَّةِ): "${example.sentence}"',
             ),
           );
         }),
@@ -4054,6 +4166,46 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           ),
       ],
+    );
+  }
+
+  /// يعرض جملة المثال للسنة الثالثة مع إبراز الكلمة المستهدفة بلون وشكل مميز دون جداول إعراب
+  Widget _buildGrade3ExampleRichText(LessonExample example, double scale) {
+    if (example.tokens.isEmpty) {
+      return Text(
+        example.sentence,
+        style: TextStyle(fontSize: 24 * scale, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+        textDirection: TextDirection.rtl,
+      );
+    }
+
+    final spans = <InlineSpan>[];
+    for (int i = 0; i < example.tokens.length; i++) {
+      final token = example.tokens[i];
+      final isTarget = token.isTarget;
+
+      spans.add(
+        TextSpan(
+          text: token.word,
+          style: TextStyle(
+            fontSize: isTarget ? 26 * scale : 24 * scale,
+            fontWeight: isTarget ? FontWeight.w900 : FontWeight.bold,
+            color: isTarget ? const Color(0xFFDC2626) : AppTheme.textDark,
+            backgroundColor: isTarget ? const Color(0xFFFFECEC) : Colors.transparent,
+            height: 1.6,
+          ),
+        ),
+      );
+
+      if (i < example.tokens.length - 1) {
+        spans.add(const TextSpan(text: ' '));
+      }
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
     );
   }
 }
