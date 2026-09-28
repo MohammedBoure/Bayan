@@ -39,6 +39,9 @@ class GrammarDiscoveryModel {
   final List<String> observations;
   final String targetedPattern;
   final List<String> targetWords;
+  final List<String> choices;
+  final int? correctChoiceIndex;
+  final String ruleExample;
 
   const GrammarDiscoveryModel({
     this.title = '',
@@ -48,9 +51,14 @@ class GrammarDiscoveryModel {
     required this.observations,
     this.targetedPattern = '',
     this.targetWords = const [],
+    this.choices = const [],
+    this.correctChoiceIndex,
+    this.ruleExample = '',
   });
 
   bool get hasObservationQuestions => observationQuestions.isNotEmpty;
+  bool get hasChoices => choices.isNotEmpty;
+  bool get hasRuleExample => ruleExample.isNotEmpty;
 
   List<String> get allTargetWords {
     if (targetWords.isNotEmpty) return targetWords;

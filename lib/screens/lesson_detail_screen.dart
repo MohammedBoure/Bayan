@@ -48,6 +48,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   final Set<int> _revealedOddWordIndices = <int>{};
   List<int> _audioHighlightedParagraphs = const [];
   bool _showAudioPlayer = false;
+  int? _selectedDiscoveryChoiceIndex;
+  bool _showDiscoveryModelAnswer = false;
 
   @override
   void dispose() {
@@ -98,6 +100,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
     if (widget.lesson.readingPassage?.hasAudio == true) {
       _audioHighlightedParagraphs = widget.lesson.readingPassage!.audioTracks.first.paragraphIndices;
+    }
+    if (_areAnswersRevealed && widget.lesson.discovery?.correctChoiceIndex != null) {
+      _selectedDiscoveryChoiceIndex = widget.lesson.discovery!.correctChoiceIndex;
+      _showDiscoveryModelAnswer = true;
     }
   }
 
@@ -3419,7 +3425,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             children: [
               const Icon(Icons.find_in_page_rounded, color: AppTheme.primaryTeal, size: 34),
               Text(
-                '$displayTitle (بِنَاءُ الظَّاهِرَةِ النَّحْوِيَّةِ اسْتِقْرَائِيّاً):',
+                displayTitle,
                 style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900, color: AppTheme.textDark),
               ),
             ],
@@ -3478,160 +3484,337 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           ],
 
-          const SizedBox(height: 10),
-          // Observation Prompt / Questions Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.accentAmber.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.accentAmber, width: 2),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (discovery.hasObservationQuestions) ...[
+          // Multiple Choice Observation Card (e.g. Grade 3 Lesson 1)
+          if (discovery.hasChoices) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentOrange.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.help_outline_rounded, color: AppTheme.accentOrange, size: 24),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        discovery.observationPrompt.isNotEmpty
-                            ? discovery.observationPrompt
-                            : 'أَسْئِلَةُ الْمُلاَحَظَةِ وَالاكْتِشَافِ:',
-                        style: TextStyle(
-                          fontSize: 18 * scale,
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.accentOrange,
+                      Expanded(
+                        child: Text(
+                          discovery.observationPrompt.isNotEmpty
+                              ? discovery.observationPrompt
+                              : '📌 عَيِّنِ الإِجَابَةَ الصَّحِيحَةَ:',
+                          style: TextStyle(
+                            fontSize: 22 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.textDark,
+                          ),
                         ),
                       ),
+                      if (discovery.correctChoiceIndex != null)
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showDiscoveryModelAnswer = !_showDiscoveryModelAnswer;
+                              if (_showDiscoveryModelAnswer) {
+                                _selectedDiscoveryChoiceIndex = discovery.correctChoiceIndex;
+                              }
+                            });
+                          },
+                          icon: Icon(
+                            _showDiscoveryModelAnswer ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                            size: 18 * scale,
+                            color: AppTheme.primaryTeal,
+                          ),
+                          label: Text(
+                            _showDiscoveryModelAnswer ? 'إِخْفَاءُ الحَلِّ' : 'عَرْضُ الحَلِّ',
+                            style: TextStyle(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.primaryTeal,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppTheme.primaryTeal.withValues(alpha: 0.1),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  ...discovery.observationQuestions.asMap().entries.map((qEntry) {
-                    final qIdx = qEntry.key;
-                    final qText = qEntry.value;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.amber.withValues(alpha: 0.05),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.accentOrange,
-                              shape: BoxShape.circle,
+                  const SizedBox(height: 16),
+                  ...discovery.choices.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final choiceText = entry.value;
+                    final isSelected = _selectedDiscoveryChoiceIndex == idx;
+                    final isCorrect = discovery.correctChoiceIndex == idx;
+                    final showAsCorrect = (_showDiscoveryModelAnswer || isSelected) && isCorrect;
+                    final showAsIncorrect = isSelected && !isCorrect && !_showDiscoveryModelAnswer;
+
+                    Color tileBg = Colors.white;
+                    Color tileBorder = const Color(0xFFE2E8F0);
+                    Color textColor = AppTheme.textDark;
+                    Color radioColor = const Color(0xFF94A3B8);
+
+                    if (showAsCorrect) {
+                      tileBg = const Color(0xFFF0FDF4);
+                      tileBorder = const Color(0xFF22C55E);
+                      textColor = const Color(0xFF15803D);
+                      radioColor = const Color(0xFF16A34A);
+                    } else if (showAsIncorrect) {
+                      tileBg = const Color(0xFFFEF2F2);
+                      tileBorder = const Color(0xFFEF4444);
+                      textColor = const Color(0xFFB91C1C);
+                      radioColor = const Color(0xFFDC2626);
+                    } else if (isSelected) {
+                      tileBg = AppTheme.primaryTeal.withValues(alpha: 0.08);
+                      tileBorder = AppTheme.primaryTeal;
+                      textColor = AppTheme.primaryTeal;
+                      radioColor = AppTheme.primaryTeal;
+                    }
+
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedDiscoveryChoiceIndex = idx;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: tileBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: tileBorder, width: isSelected || showAsCorrect ? 2 : 1.2),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              showAsCorrect
+                                  ? Icons.check_circle_rounded
+                                  : (showAsIncorrect
+                                      ? Icons.cancel_rounded
+                                      : (isSelected
+                                          ? Icons.radio_button_checked_rounded
+                                          : Icons.radio_button_unchecked_rounded)),
+                              color: radioColor,
+                              size: 24 * scale,
                             ),
-                            child: Text(
-                              '${qIdx + 1}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                choiceText,
+                                style: TextStyle(
+                                  fontSize: 20 * scale,
+                                  fontWeight: isSelected || showAsCorrect ? FontWeight.w900 : FontWeight.bold,
+                                  color: textColor,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              qText,
-                              style: TextStyle(
-                                fontSize: 20 * scale,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.textDark,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }),
-                  if (discovery.observations.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    const Divider(color: Color(0xFFFCD34D), thickness: 1.2),
-                    const SizedBox(height: 10),
-                  ],
-                ] else ...[
-                  Text(
-                    discovery.observationPrompt,
-                    style: TextStyle(
-                      fontSize: 22 * scale,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.accentOrange,
+                ],
+              ),
+            ),
+          ],
+
+          // Prominent Rule Example Card (e.g. 📌 الفعل الماضي مثل: رسم أمين خريطة الجزائر.)
+          if (discovery.hasRuleExample) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF86EFAC), width: 1.8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      discovery.ruleExample,
+                      style: TextStyle(
+                        fontSize: 21 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF166534),
+                        height: 1.5,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
                 ],
+              ),
+            ),
+          ],
 
-                // Observations / Conclusions
-                if (discovery.observations.isNotEmpty) ...[
+          // Observation Prompt / Questions Card (for existing open-ended lessons)
+          if (!discovery.hasChoices && (discovery.hasObservationQuestions || discovery.observations.isNotEmpty)) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.accentAmber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.accentAmber, width: 2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   if (discovery.hasObservationQuestions) ...[
                     Row(
                       children: [
-                        const Icon(Icons.lightbulb_rounded, color: Color(0xFFD97706), size: 22),
-                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentOrange.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.help_outline_rounded, color: AppTheme.accentOrange, size: 24),
+                        ),
+                        const SizedBox(width: 10),
                         Text(
-                          'الاسْتِنْتَاجَاتُ وَالمُلاَحَظَاتُ:',
+                          discovery.observationPrompt.isNotEmpty
+                              ? discovery.observationPrompt
+                              : 'أَسْئِلَةُ الْمُلاَحَظَةِ وَالاكْتِشَافِ:',
                           style: TextStyle(
-                            fontSize: 16 * scale,
+                            fontSize: 18 * scale,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFFB45309),
+                            color: AppTheme.accentOrange,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                  ],
-                  ...discovery.observations.map((obs) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              obs,
-                              style: TextStyle(
-                                fontSize: 18 * scale,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textDark,
-                                height: 1.5,
+                    const SizedBox(height: 12),
+                    ...discovery.observationQuestions.asMap().entries.map((qEntry) {
+                      final qIdx = qEntry.key;
+                      final qText = qEntry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.amber.withValues(alpha: 0.05),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 28,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.accentOrange,
+                                shape: BoxShape.circle,
                               ),
+                              child: Text(
+                                '${qIdx + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                qText,
+                                style: TextStyle(
+                                  fontSize: 20 * scale,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.textDark,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    if (discovery.observations.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      const Divider(color: Color(0xFFFCD34D), thickness: 1.2),
+                      const SizedBox(height: 10),
+                    ],
+                  ] else ...[
+                    Text(
+                      discovery.observationPrompt,
+                      style: TextStyle(
+                        fontSize: 22 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.accentOrange,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // Observations / Conclusions
+                  if (discovery.observations.isNotEmpty) ...[
+                    if (discovery.hasObservationQuestions) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.lightbulb_rounded, color: Color(0xFFD97706), size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            'الاسْتِنْتَاجَاتُ وَالمُلاَحَظَاتُ:',
+                            style: TextStyle(
+                              fontSize: 16 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFB45309),
                             ),
                           ),
                         ],
                       ),
-                    );
-                  }),
+                      const SizedBox(height: 10),
+                    ],
+                    ...discovery.observations.map((obs) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                obs,
+                                style: TextStyle(
+                                  fontSize: 18 * scale,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textDark,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

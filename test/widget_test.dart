@@ -151,7 +151,7 @@ void main() {
     expect(lesson1.readingPassage!.title, equals('خِدْمَةُ الْأَرْضِ'));
     expect(lesson1.readingPassage!.paragraphs.length, equals(5));
     expect(lesson1.readingPassage!.vocabulary.length, equals(8));
-    expect(lesson1.readingPassage!.comprehensionQuestions.length, equals(6));
+    expect(lesson1.readingPassage!.comprehensionQuestions.length, equals(9));
     expect(lesson1.discovery, isNotNull);
     expect(lesson1.discovery!.triggerSentences.isNotEmpty, isTrue);
     expect(lesson1.activities.length, equals(5));
@@ -442,6 +442,17 @@ void main() {
     expect(idxWasala, lessThan(idxTanawala));
     expect(idxTanawala, lessThan(idxWadaaha));
     expect(idxWadaaha, lessThan(idxRaha));
+
+    // Verify observation prompt, choices, and rule example
+    expect(find.text('📌 عَيِّنِ الإِجَابَةَ الصَّحِيحَةَ:'), findsOneWidget);
+    expect(find.text('قَامَ عَبْدُ الْقَادِرِ بِهَذِهِ الأَفْعَالِ وَانْتَهَى مِنْهَا فِي الْمَاضِي.'), findsOneWidget);
+    expect(find.text('يَقُومُ عَبْدُ الْقَادِرِ بِهَذِهِ الأَفْعَالِ الآنَ فِي الحَاضِرِ.'), findsOneWidget);
+    expect(find.text('📌 الْفِعْلُ الْمَاضِي مِثْلُ: رَسَمَ أَمِينٌ خَرِيطَةَ الْجَزَائِرِ.'), findsOneWidget);
+
+    // Verify selecting choice works
+    await tester.tap(find.text('قَامَ عَبْدُ الْقَادِرِ بِهَذِهِ الأَفْعَالِ وَانْتَهَى مِنْهَا فِي الْمَاضِي.'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.check_circle_rounded), findsWidgets);
   });
 
   testWidgets('Antonyms are hidden by default and teacher can reveal and hide them individually and collectively', (WidgetTester tester) async {
@@ -475,14 +486,14 @@ void main() {
     // Verify antonym section exists
     expect(find.textContaining('الْكَلِمَةُ وَضِدُّهَا فِي النَّصِّ'), findsOneWidget);
 
-    // Verify antonym is HIDDEN by default (shows 'انْقُرْ لِلْكَشْفِ')
-    expect(find.text('انْقُرْ لِلْكَشْفِ'), findsWidgets);
+    // Verify antonym is HIDDEN by default (shows 'اسْتَخْرِجِ الضِّدَّ')
+    expect(find.text('اسْتَخْرِجِ الضِّدَّ'), findsWidgets);
     // The opposite words 'فَرَغَ' and 'نَائِمَةً' should NOT be visible initially
     expect(find.text('فَرَغَ'), findsNothing);
     expect(find.text('نَائِمَةً'), findsNothing);
 
     // Tap on the reveal slot of the first antonym card ('بَدَأَ')
-    final revealFinder = find.text('انْقُرْ لِلْكَشْفِ').first;
+    final revealFinder = find.text('اسْتَخْرِجِ الضِّدَّ').first;
     await tester.ensureVisible(revealFinder);
     await tester.pumpAndSettle();
     await tester.tap(revealFinder);
