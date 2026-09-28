@@ -3843,15 +3843,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       const SizedBox(height: 10),
                     ],
                   ] else ...[
-                    Text(
-                      discovery.observationPrompt,
-                      style: TextStyle(
-                        fontSize: 22 * scale,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.accentOrange,
+                    if (discovery.observationPrompt.isNotEmpty) ...[
+                      Text(
+                        discovery.observationPrompt,
+                        style: TextStyle(
+                          fontSize: 22 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.accentOrange,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                    ],
                   ],
 
                   // Observations / Conclusions
@@ -3874,18 +3876,21 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       const SizedBox(height: 10),
                     ],
                     ...discovery.observations.map((obs) {
+                      final hasPin = obs.startsWith('📌');
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
+                        padding: const EdgeInsets.only(bottom: 10.0),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
-                            const SizedBox(width: 8),
+                            if (!hasPin) ...[
+                              const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+                              const SizedBox(width: 8),
+                            ],
                             Expanded(
                               child: Text(
                                 obs,
                                 style: TextStyle(
-                                  fontSize: 18 * scale,
+                                  fontSize: 20 * scale,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.textDark,
                                   height: 1.5,
@@ -3980,6 +3985,35 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   Widget _buildDiscoveryRichText(String text, List<String> targetWords, double scale) {
     final spans = <InlineSpan>[];
+
+    // When the trigger sentence contains explicit quotation marks "", highlight content inside quotes directly in red
+    if (text.contains('"')) {
+      final parts = text.split('"');
+      for (int i = 0; i < parts.length; i++) {
+        final part = parts[i];
+        if (part.isEmpty) continue;
+        final isTarget = i % 2 == 1; // odd pieces are inside quotes
+
+        spans.add(
+          TextSpan(
+            text: part,
+            style: TextStyle(
+              fontSize: (isTarget ? 25 : 24) * scale,
+              fontWeight: isTarget ? FontWeight.w900 : FontWeight.bold,
+              color: isTarget ? const Color(0xFFDC2626) : AppTheme.textDark,
+              backgroundColor: isTarget ? const Color(0xFFFFECEC) : Colors.transparent,
+              height: 1.9,
+            ),
+          ),
+        );
+      }
+      return Text.rich(
+        TextSpan(children: spans),
+        textAlign: TextAlign.right,
+        textDirection: TextDirection.rtl,
+      );
+    }
+
     final regex = RegExp(r'([\u0600-\u06FF]+|[^\u0600-\u06FF]+)');
     final matches = regex.allMatches(text.trim());
 
@@ -4068,7 +4102,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
             const Divider(height: 28, thickness: 1.5),
 
-            // بطاقة نص القاعدة: الْفِعْلُ الْمَاضِي: هُوَ مَا دَلَّ عَلَى حَدَثٍ وَقَعَ فِي الْمَاضِي. أَمْثِلَةٌ:
+            // بطاقة نص القاعدة: الْفِعْلُ الْمُضَارِعُ / الْفِعْلُ الْمَاضِي
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
@@ -4076,17 +4110,50 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFF86EFAC), width: 1.8),
               ),
-              child: Text(
-                widget.lesson.ruleSummary,
-                style: TextStyle(
-                  fontSize: 23 * scale,
-                  height: 1.7,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF166534),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.lesson.id == 'g3_l2') ...[
+                    Text(
+                      'الْفِعْلُ الْمُضَارِعُ',
+                      style: TextStyle(
+                        fontSize: 22 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF15803D),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  Text(
+                    widget.lesson.ruleSummary,
+                    style: TextStyle(
+                      fontSize: 23 * scale,
+                      height: 1.7,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF166534),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
+
+            // عنوان فرعي للأمثلة
+            Row(
+              children: [
+                const Icon(Icons.format_list_numbered_rtl_rounded, color: AppTheme.primaryTeal, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  widget.lesson.id == 'g3_l2' ? 'أَمْثِلَةٌ مِنَ النَّصِّ' : 'أَمْثِلَةٌ:',
+                  style: TextStyle(
+                    fontSize: 21 * scale,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primaryDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
 
             // قائمة الأمثلة المرقمة مع إبراز الفعل بلون وشكل مميز دون إعراب
             ...widget.lesson.examples.asMap().entries.map((entry) {
@@ -4257,6 +4324,34 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   /// يعرض جملة المثال للسنة الثالثة مع إبراز الكلمة المستهدفة بلون وشكل مميز دون جداول إعراب
   Widget _buildGrade3ExampleRichText(LessonExample example, double scale) {
+    if (example.sentence.contains('"')) {
+      final spans = <InlineSpan>[];
+      final parts = example.sentence.split('"');
+      for (int i = 0; i < parts.length; i++) {
+        final part = parts[i];
+        if (part.isEmpty) continue;
+        final isTarget = i % 2 == 1; // odd pieces are inside quotes
+
+        spans.add(
+          TextSpan(
+            text: part,
+            style: TextStyle(
+              fontSize: (isTarget ? 26 : 24) * scale,
+              fontWeight: isTarget ? FontWeight.w900 : FontWeight.bold,
+              color: isTarget ? const Color(0xFFDC2626) : AppTheme.textDark,
+              backgroundColor: isTarget ? const Color(0xFFFFECEC) : Colors.transparent,
+              height: 1.6,
+            ),
+          ),
+        );
+      }
+      return Text.rich(
+        TextSpan(children: spans),
+        textAlign: TextAlign.right,
+        textDirection: TextDirection.rtl,
+      );
+    }
+
     if (example.tokens.isEmpty) {
       return Text(
         example.sentence,

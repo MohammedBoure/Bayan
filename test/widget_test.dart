@@ -472,6 +472,110 @@ void main() {
     expect(find.text('3'), findsWidgets);
   });
 
+  testWidgets('Grade 3 Lesson 2 renders discovery stage with quotes parsed to crimson red and pinned observations', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final lesson2 = repo.getGradeById('grade3')!.lessons.firstWhere((l) => l.id == 'g3_l2');
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        builder: (context, child) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: child!,
+        ),
+        home: LessonDetailScreen(
+          lesson: lesson2,
+          progressService: ps,
+        ),
+      ),
+    );
+
+    // Switch to stage 4 ("4. أُلاحِظُ وَأُمَيِّزُ")
+    await tester.tap(find.text('4. أُلاحِظُ وَأُمَيِّزُ'));
+    await tester.pumpAndSettle();
+
+    // Verify discovery title is shown
+    expect(find.textContaining('أُلاحِظُ وَأُمَيِّزُ'), findsWidgets);
+
+    // Verify the trigger sentence has its target verbs in red
+    final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+    final triggerRichText = richTexts.firstWhere(
+      (r) => r.text.toPlainText().contains('لِلِاحْتِفَالِ بِالِاسْتِقْلَالِ') && r.text.toPlainText().contains('أَنَاشِيدَ الْحُرِّيَّةِ'),
+    );
+
+    expect(triggerRichText, isNotNull);
+    final text = triggerRichText.text;
+    expect(text, isA<TextSpan>());
+    final rootSpan = text as TextSpan;
+    // Find red target spans across all nested spans recursively
+    final redSpans = <String>[];
+    rootSpan.visitChildren((span) {
+      if (span is TextSpan && span.style?.color == const Color(0xFFDC2626) && span.text != null) {
+        redSpans.add(span.text!);
+      }
+      return true;
+    });
+
+    expect(redSpans, contains('سَأَرْتَدِي'));
+    expect(redSpans, contains('أَحْمِلُ'));
+    expect(redSpans, contains('أَطُوفُ'));
+    expect(redSpans, contains('أُرَدِّدُ'));
+    expect(redSpans, contains('تَسْتَحِقُّ'));
+
+    // Verify the two pinned observations are rendered
+    expect(find.textContaining('تَقَعُ الْأَفْعَالُ الْمُلَوَّنَةُ فِي الزَّمَنِ الْحَاضِرِ أَوْ الْمُسْتَقْبَلِ'), findsOneWidget);
+    expect(find.textContaining('الْفِعْلُ الْمُضَارِعُ يَبْدَأُ دَائِمًا بِأَحَدِ الْحُرُوفِ الآتِيَةِ'), findsOneWidget);
+
+    // Verify no redundant pattern banner
+    expect(find.textContaining('الْكَلِمَاتُ الْمُسْتَهْدَفَةُ:'), findsNothing);
+
+    // Switch to stage 5 ("5. أَتَعَلَّمُ")
+    await tester.tap(find.text('5. أَتَعَلَّمُ'));
+    await tester.pumpAndSettle();
+
+    // Verify stage 5 header, rule card, and examples subtitle
+    expect(find.text('أَتَعَلَّمُ'), findsWidgets);
+    expect(find.text('الْفِعْلُ الْمُضَارِعُ'), findsWidgets);
+    expect(find.text('الْفِعْلُ الْمُضَارِعُ: هُوَ فِعْلٌ يَدُلُّ عَلَى عَمَلٍ يَحْدُثُ الآنَ أَوْ سَيَحْدُثُ فِي الْمُسْتَقْبَلِ.'), findsOneWidget);
+    expect(find.text('أَمْثِلَةٌ مِنَ النَّصِّ'), findsOneWidget);
+
+    // Verify no parsing board or advanced takeaways exist
+    expect(find.textContaining('نَمُوذَجُ إِعْرَابٍ'), findsNothing);
+    expect(find.textContaining('خُلاصَةُ الدَّرْسِ لِلتَّلامِيذِ:'), findsNothing);
+
+    // Verify all 5 numbered example badges exist
+    expect(find.text('1'), findsWidgets);
+    expect(find.text('2'), findsWidgets);
+    expect(find.text('3'), findsWidgets);
+    expect(find.text('4'), findsWidgets);
+    expect(find.text('5'), findsWidgets);
+
+    // Verify that in the example sentences, target verbs inside quotes are rendered in crimson red
+    final exampleRichTexts = tester.widgetList<RichText>(find.byType(RichText));
+    final exampleSpans = <String>[];
+    for (final r in exampleRichTexts) {
+      if (r.text is TextSpan) {
+        (r.text as TextSpan).visitChildren((span) {
+          if (span is TextSpan && span.style?.color == const Color(0xFFDC2626) && span.text != null) {
+            exampleSpans.add(span.text!);
+          }
+          return true;
+        });
+      }
+    }
+    expect(exampleSpans, contains('سَأَرْتَدِي'));
+    expect(exampleSpans, contains('سَأَحْمِلُ'));
+    expect(exampleSpans, contains('أَطُوفُ'));
+    expect(exampleSpans, contains('أُرَدِّدُ'));
+    expect(exampleSpans, contains('تَسْتَحِقُّ'));
+  });
+
   testWidgets('Antonyms are hidden by default and teacher can reveal and hide them individually and collectively', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;
