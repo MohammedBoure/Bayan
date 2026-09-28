@@ -3146,19 +3146,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'أَقْرَأُ وَأَفْهَمُ (أَسْئِلَةُ الحِوَارِ وَالاسْتِيعَابِ الصَّفِّيِّ)',
+                        'أَقْرَأُ وَأَفْهَمُ (أَسْئِلَةُ الحِوَارِ وَالاسْتِيعَابِ)',
                         style: TextStyle(
                           fontSize: 20 * scale,
                           fontWeight: FontWeight.w900,
                           color: AppTheme.textDark,
-                        ),
-                      ),
-                      Text(
-                        'يُمْكِنُ عَرْضُ أَوْ إِخْفَاءُ الإِجَابَاتِ نَمُوذَجِيّاً لِكُلِّ سُؤَالٍ عَلَى حِدَةٍ أَوْ لِلْجَمِيعِ',
-                        style: TextStyle(
-                          fontSize: 13 * scale,
-                          color: AppTheme.textMuted,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -3336,14 +3328,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.help_outline_rounded, size: 20, color: AppTheme.textMuted),
+                          const Icon(Icons.visibility_rounded, size: 20, color: AppTheme.verbColor),
                           const SizedBox(width: 10),
                           Text(
-                            'انْقُرْ هُنَا أَوْ عَلَى الزِّرِّ أَعْلَاهُ لِإِظْهَارِ الإِجَابَةِ النَّمُوذَجِيَّةِ لِهَذَا السُّؤَالِ',
+                            'عَرْضُ الإِجَابَةِ النَّمُوذَجِيَّةِ',
                             style: TextStyle(
                               fontSize: 15 * scale,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textMuted,
+                              color: AppTheme.verbColor,
                             ),
                           ),
                         ],
