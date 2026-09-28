@@ -383,10 +383,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: const [
-                                          Icon(Icons.touch_app_rounded, color: Color(0xFF0284C7), size: 18),
+                                          Icon(Icons.visibility_rounded, color: Color(0xFF0284C7), size: 18),
                                           SizedBox(width: 6),
                                           Text(
-                                            'انْقُرْ لِعَرْضِ إِعْرَابِ هَذَا الفَاعِلِ',
+                                            'عَرْضُ الإِعْرَابِ',
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
@@ -506,10 +506,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.touch_app_rounded, color: Color(0xFF0284C7), size: 18),
+                      Icon(Icons.visibility_rounded, color: Color(0xFF0284C7), size: 18),
                       SizedBox(width: 6),
                       Text(
-                        'انْقُرْ لِعَرْضِ التَّحْلِيلِ النَّحْوِيِّ',
+                        'عَرْضُ التَّحْلِيلِ النَّحْوِيِّ',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

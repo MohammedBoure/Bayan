@@ -232,9 +232,9 @@ class _CategorizationBoardWidgetState extends State<CategorizationBoardWidget> {
                                   height: 90,
                                   alignment: Alignment.center,
                                   child: Text(
-                                    _selectedWord != null ? 'انقر لوضع "$_selectedWord"' : 'اسحب الكلمة إلى هنا',
+                                    _selectedWord != null ? '«$_selectedWord»' : '—',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 20,
                                       color: _selectedWord != null ? catColor : Colors.grey.shade400,
                                       fontWeight: FontWeight.bold,
                                     ),

@@ -15,7 +15,7 @@ class SentenceParserView extends StatefulWidget {
     super.key,
     required this.tokens,
     this.showTashkeel = true,
-    this.title = 'المثال التفاعلي (انقر على الكلمة لعرض إعرابها على شاشة الصف):',
+    this.title = 'المِثَالُ التَّفَاعُلِيُّ وَالإِعْرَابُ:',
     this.onEditToken,
   });
 
@@ -68,7 +68,7 @@ class _SentenceParserViewState extends State<SentenceParserView> {
           // Section Title
           Row(
             children: [
-              const Icon(Icons.touch_app_rounded, color: AppTheme.primaryTeal, size: 30),
+              const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryTeal, size: 30),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

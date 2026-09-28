@@ -449,26 +449,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                         style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
                       ),
                     ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.touch_app_rounded, size: 16, color: AppTheme.primaryTeal),
-                        SizedBox(width: 4),
-                        Text(
-                          'انقر على أي فقرة لتكبيرها',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ],
@@ -605,19 +585,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
             );
           }),
-
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.info_outline_rounded, color: AppTheme.primaryTeal, size: 18),
-              SizedBox(width: 6),
-              Text(
-                'انقر مباشرة على نص أي فقرة لتكبيرها فوريًا لتلاميذ المقاعد الخلفية.',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -2045,10 +2012,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(Icons.touch_app_rounded, color: Color(0xFF6D28D9), size: 16),
+                                              const Icon(Icons.visibility_rounded, color: Color(0xFF6D28D9), size: 16),
                                               const SizedBox(width: 4),
                                               Text(
-                                                'انْقُرْ لِلْكَشْفِ',
+                                                'كَشْفُ الإِجَابَةِ',
                                                 style: TextStyle(
                                                   fontSize: 13 * scale,
                                                   fontWeight: FontWeight.w900,
@@ -3106,10 +3073,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.touch_app_rounded, color: Color(0xFFDC2626), size: 18),
+                                  const Icon(Icons.visibility_rounded, color: Color(0xFFDC2626), size: 18),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'انْقُرْ لِلْكَشْفِ',
+                                    'كَشْفُ الإِجَابَةِ',
                                     style: TextStyle(
                                       fontSize: 14 * scale,
                                       fontWeight: FontWeight.w900,

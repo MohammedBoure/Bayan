@@ -89,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                       ),
                       subtitle: const Text(
-                        'إظهار شريط أدوات المعلم، الإرشادات البيداغوجية، ومفاتيح التحكم الصفي',
+                        'إظهار شريط أدوات المعلم ومفاتيح التحكم الصفي',
                         style: TextStyle(fontSize: 16),
                       ),
                       secondary: const Icon(Icons.school_rounded, color: AppTheme.primaryTeal, size: 34),
@@ -153,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                       ),
                       subtitle: const Text(
-                        'تظليل وتكبير الفقرة أو الجملة المقروءة لجذب انتباه المقاعد الخلفية',
+                        'تظليل وتكبير الفقرة أو الجملة المقروءة لتسهيل القراءة',
                         style: TextStyle(fontSize: 16),
                       ),
                       secondary: const Icon(Icons.highlight_rounded, color: AppTheme.accentAmber, size: 32),
