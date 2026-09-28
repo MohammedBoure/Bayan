@@ -1652,7 +1652,127 @@ void main() {
 
     expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
   });
+
+  testWidgets('Grade 3 Lesson 1 authentic interactive activities render and operate properly (all 5 activities)', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final l1 = grade3.lessons.firstWhere((l) => l.id == 'g3_l1');
+    expect(l1.activities.length, equals(5));
+
+    final ps = ProgressService();
+    await ps.init();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l1.activities,
+            lessonTitle: l1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Activity 1: Multiple choice
+    expect(find.textContaining('النشاط الأول: اختر الفعل الماضي'), findsWidgets);
+    expect(find.textContaining('اختر الفعل الماضي من بين الكلمات الآتية:'), findsWidgets);
+    expect(find.text('يكتب'), findsWidgets);
+    expect(find.text('كتب'), findsWidgets);
+    expect(find.text('اكتب'), findsWidgets);
+
+    // Answer correctly: tap 'كتب'
+    await tester.tap(find.text('كتب').first);
+    await tester.pumpAndSettle();
+
+    // Tap submit button to verify
+    final checkBtn1 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn1);
+    await tester.tap(checkBtn1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('أحسنت! كتب فعل ماض يدل على عمل حدث وانتهى.'), findsWidgets);
+
+    // Dismiss dialog
+    final contBtn1 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn1);
+    await tester.pumpAndSettle();
+
+    // 2. Activity 2: Categorization (Tabs navigation)
+    final tab1 = find.byKey(const Key('activity_tab_1'));
+    await tester.ensureVisible(tab1);
+    await tester.pumpAndSettle();
+    await tester.tap(tab1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثاني: ميز الفعل الماضي'), findsWidgets);
+    expect(find.textContaining('اسحب كل كلمة وضعها في المكان المناسب في الجدول:'), findsWidgets);
+    expect(find.text('الأفعال الماضية'), findsWidgets);
+    expect(find.text('كلمات أخرى'), findsWidgets);
+
+    // 3. Activity 3: Multi-Sentence Fill
+    final tab2 = find.byKey(const Key('activity_tab_2'));
+    await tester.ensureVisible(tab2);
+    await tester.pumpAndSettle();
+    await tester.tap(tab2);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثالث: اسحب الفعل المناسب إلى مكانه'), findsWidgets);
+    expect(find.textContaining('اسحب الفعل المناسب لإكمال كل جملة.'), findsWidgets);
+    expect(find.textContaining('الطفل الحليب.'), findsOneWidget);
+    expect(find.textContaining('أبي الجريدة.'), findsOneWidget);
+    expect(find.textContaining('الرضيع مبكرا.'), findsOneWidget);
+
+    // 4. Activity 4: Contextual Choice
+    final tab3 = find.byKey(const Key('activity_tab_3'));
+    await tester.ensureVisible(tab3);
+    await tester.pumpAndSettle();
+    await tester.tap(tab3);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الرابع: اختر الفعل المناسب للجملة'), findsWidgets);
+    expect(find.textContaining('أمس ______ التلميذ واجبه.'), findsWidgets);
+
+    // Answer correctly: tap 'كتب'
+    await tester.tap(find.text('كتب').first);
+    await tester.pumpAndSettle();
+
+    // Tap submit button to verify
+    final checkBtn4 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn4);
+    await tester.tap(checkBtn4);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ممتاز! كلمة أمس تدل على الماضي لذلك نختار الفعل "كتب".'), findsWidgets);
+
+    // Dismiss dialog
+    final contBtn4 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn4);
+    await tester.pumpAndSettle();
+
+    // 5. Activity 5: Image Matching
+    final tab4 = find.byKey(const Key('activity_tab_4'));
+    await tester.ensureVisible(tab4);
+    await tester.pumpAndSettle();
+    await tester.tap(tab4);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الخامس: صل الفعل بالصورة المناسبة'), findsWidgets);
+    expect(find.textContaining('صل كل فعل بالصورة التي تعبر عنه.'), findsWidgets);
+    expect(find.text('أكل'), findsWidgets);
+    expect(find.text('شرب'), findsWidgets);
+    expect(find.text('نام'), findsWidgets);
+    expect(find.text('ركض'), findsWidgets);
+  });
 }
+
 
 
 
