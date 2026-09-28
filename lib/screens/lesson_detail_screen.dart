@@ -506,32 +506,30 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   _spotlightedParagraphIndex = (_spotlightedParagraphIndex == idx) ? null : idx;
                 });
               },
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(isSpotlighted ? 16 : 8),
+              mouseCursor: SystemMouseCursors.click,
+              hoverColor: isSpotlighted ? Colors.transparent : AppTheme.primaryTeal.withValues(alpha: 0.04),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
                 margin: EdgeInsets.only(
-                  bottom: isSpotlighted ? 12 : 6,
-                  top: isSpotlighted ? 6 : 0,
+                  bottom: isSpotlighted ? 16 : 8,
+                  top: isSpotlighted ? 8 : 0,
                 ),
                 padding: EdgeInsets.symmetric(
-                  horizontal: isSpotlighted ? 18 : 10,
-                  vertical: isSpotlighted ? 14 : 6,
+                  horizontal: isSpotlighted ? 18 : 6,
+                  vertical: isSpotlighted ? 14 : 4,
                 ),
                 decoration: BoxDecoration(
                   color: isSpotlighted
                       ? AppTheme.primaryLight
                       : (isAudioRelevant
                           ? const Color(0xFFF0FDF4)
-                          : (isDimmed ? Colors.transparent : const Color(0xFFFAFAFA))),
-                  borderRadius: BorderRadius.circular(14),
+                          : Colors.transparent),
+                  borderRadius: BorderRadius.circular(isSpotlighted ? 16 : 8),
                   border: Border.all(
-                    color: isSpotlighted
-                        ? AppTheme.primaryTeal
-                        : (isAudioRelevant
-                            ? AppTheme.successGreen.withValues(alpha: 0.4)
-                            : (isDimmed ? Colors.transparent : const Color(0xFFF1F5F9))),
-                    width: isSpotlighted ? 2.5 : (isAudioRelevant ? 1.5 : 1),
+                    color: isSpotlighted ? AppTheme.primaryTeal : Colors.transparent,
+                    width: isSpotlighted ? 2.5 : 0,
                   ),
                   boxShadow: isSpotlighted
                       ? [
