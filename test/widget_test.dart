@@ -1334,8 +1334,15 @@ void main() {
 
     // Verify Activity 5: textWordExtraction
     expect(find.textContaining('النشاط الخامس: استخرج المفعول به من النص'), findsWidgets);
-    expect(find.textContaining('قَائِمَةُ المَفَاعِيلِ بِهِ المَطْلُوبَةِ'), findsOneWidget);
+    expect(find.textContaining('قَائِمَةُ المَفَاعِيلِ بِهِ المَطْلُوبَةِ (5 مَفَاعِيلَ)'), findsOneWidget);
+    expect(find.textContaining('(10 مَفَاعِيلَ)'), findsNothing);
 
+    // Verify each extracted object card appears exactly once without duplication
+    expect(find.text('«الحديقةَ»'), findsOneWidget);
+    expect(find.text('«الأزهارَ»'), findsOneWidget);
+    expect(find.text('«الغرفةَ»'), findsOneWidget);
+    expect(find.text('«الألعابَ»'), findsOneWidget);
+    expect(find.text('«قصةً»'), findsOneWidget);
 
     expect(find.textContaining('نظّفَ الأبُ الحديقةَ'), findsWidgets);
 

@@ -48,10 +48,22 @@ class _TextWordExtractionWidgetState extends State<TextWordExtractionWidget> {
     }
   }
 
+  List<String> get _deduplicatedTargets {
+    final seen = <String>{};
+    final unique = <String>[];
+    for (var w in widget.targetWords) {
+      final clean = _clean(w);
+      if (clean.isNotEmpty && seen.add(clean)) {
+        unique.add(w);
+      }
+    }
+    return unique;
+  }
+
   void _applyRevealedState() {
     if (widget.areAnswersRevealed) {
-      _foundNormalizedWords = widget.targetWords
-          .map((w) => ArabicCliticStemmer.normalize(ArabicCliticStemmer.stripDiacritics(w).replaceAll(RegExp(r'[.,!؟،]'), '').trim()))
+      _foundNormalizedWords = _deduplicatedTargets
+          .map((w) => _clean(w))
           .toSet();
     }
   }
@@ -64,7 +76,7 @@ class _TextWordExtractionWidgetState extends State<TextWordExtractionWidget> {
 
   bool _isWordTarget(String word) {
     final cleanW = _clean(word);
-    for (var target in widget.targetWords) {
+    for (var target in _deduplicatedTargets) {
       final cleanT = _clean(target);
       if (cleanW == cleanT || cleanW.contains(cleanT) || cleanT.contains(cleanW)) {
         return true;
@@ -75,7 +87,7 @@ class _TextWordExtractionWidgetState extends State<TextWordExtractionWidget> {
 
   String? _matchingTarget(String word) {
     final cleanW = _clean(word);
-    for (var target in widget.targetWords) {
+    for (var target in _deduplicatedTargets) {
       final cleanT = _clean(target);
       if (cleanW == cleanT || cleanW.contains(cleanT) || cleanT.contains(cleanW)) {
         return cleanT;
@@ -104,23 +116,24 @@ class _TextWordExtractionWidgetState extends State<TextWordExtractionWidget> {
       return;
     }
 
-    final totalTargetNorms = widget.targetWords.map(_clean).toSet();
-    final allFound = totalTargetNorms.every((t) => _foundNormalizedWords.contains(t));
+    final totalTargetNorms = _deduplicatedTargets.map(_clean).toSet();
+    final allFound = totalTargetNorms.isNotEmpty && totalTargetNorms.every((t) => _foundNormalizedWords.contains(t));
 
     widget.onValidationChanged(allFound);
   }
 
   int get _foundCount {
-    if (widget.areAnswersRevealed) return widget.targetWords.length;
-    final totalTargetNorms = widget.targetWords.map(_clean).toSet();
+    if (widget.areAnswersRevealed) return _deduplicatedTargets.length;
+    final totalTargetNorms = _deduplicatedTargets.map(_clean).toSet();
     return totalTargetNorms.where((t) => _foundNormalizedWords.contains(t)).length;
   }
 
   @override
   Widget build(BuildContext context) {
-    final total = widget.targetWords.length;
+    final targets = _deduplicatedTargets;
+    final total = targets.length;
     final found = _foundCount;
-    final allSolved = found == total || widget.areAnswersRevealed;
+    final allSolved = (found >= total && total > 0) || widget.areAnswersRevealed;
 
     // Split passage into tokens preserving spaces and punctuation
     final tokens = widget.passage.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
@@ -311,12 +324,12 @@ class _TextWordExtractionWidgetState extends State<TextWordExtractionWidget> {
                   return Wrap(
                     spacing: 12,
                     runSpacing: 12,
-                    children: widget.targetWords.asMap().entries.map((entry) {
+                    children: targets.asMap().entries.map((entry) {
                       final idx = entry.key;
                       final target = entry.value;
                       final cleanTarget = _clean(target);
                       final isFound = _foundNormalizedWords.contains(cleanTarget) || widget.areAnswersRevealed;
-                      final contextText = widget.wordContexts?[target] ?? '';
+                      final contextText = widget.wordContexts?[target] ?? widget.wordContexts?[cleanTarget] ?? '';
 
                       return SizedBox(
                         width: itemWidth,

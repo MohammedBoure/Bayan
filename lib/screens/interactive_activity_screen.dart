@@ -391,63 +391,54 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
 
                     // Scrollable Activity Selection Chips
                     Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: widget.activities.asMap().entries.map((entry) {
-                            final idx = entry.key;
-                            final act = entry.value;
-                            final isSelected = _currentIndex == idx;
+                      child: Center(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: widget.activities.asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final act = entry.value;
+                              final isSelected = _currentIndex == idx;
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: ChoiceChip(
-                                key: Key('activity_tab_$idx'),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected && _currentIndex != idx) {
-                                    _switchActivity(idx);
-                                  }
-                                },
-                                selectedColor: AppTheme.primaryTeal,
-                                backgroundColor: const Color(0xFFF8FAFC),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: BorderSide(
-                                    color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
-                                    width: isSelected ? 2.0 : 1.2,
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 5),
+                                child: Tooltip(
+                                  message: act.title.isNotEmpty ? act.title : 'النشاط ${idx + 1}',
+                                  child: ChoiceChip(
+                                    key: Key('activity_tab_$idx'),
+                                    selected: isSelected,
+                                    onSelected: (selected) {
+                                      if (selected && _currentIndex != idx) {
+                                        _switchActivity(idx);
+                                      }
+                                    },
+                                    selectedColor: AppTheme.primaryTeal,
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: BorderSide(
+                                        color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
+                                        width: isSelected ? 2.2 : 1.2,
+                                      ),
+                                    ),
+                                    labelPadding: EdgeInsets.symmetric(
+                                      horizontal: 14 * scale,
+                                      vertical: 4 * scale,
+                                    ),
+                                    label: Text(
+                                      '${idx + 1}',
+                                      style: TextStyle(
+                                        fontSize: 18 * scale,
+                                        fontWeight: FontWeight.w900,
+                                        color: isSelected ? Colors.white : AppTheme.primaryDark,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                label: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 12,
-                                      backgroundColor: isSelected ? Colors.white : AppTheme.primaryTeal.withValues(alpha: 0.15),
-                                      child: Text(
-                                        '${idx + 1}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w900,
-                                          color: isSelected ? AppTheme.primaryTeal : AppTheme.primaryDark,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      act.title.isNotEmpty ? act.title : 'النشاط ${idx + 1}',
-                                      style: TextStyle(
-                                        fontSize: 16 * scale,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected ? Colors.white : AppTheme.textDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
