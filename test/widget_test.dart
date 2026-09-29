@@ -1531,6 +1531,58 @@ void main() {
     expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
   });
 
+  testWidgets('Grade 5 Lesson 3 Activity 5 interactive student extraction & manual reveal test', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false); // Student discovery mode!
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [l3.activities[4]],
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify unrevealed state: Mystery placeholders and counter at 0/11
+    expect(find.text('المُسْتَخْرَجُ: 0 / 11'), findsWidgets);
+    expect(find.text('؟ (عُنْصُرُ 1)'), findsOneWidget);
+    expect(find.text('؟ (عُنْصُرُ 11)'), findsOneWidget);
+
+    // Verify teacher reveal button exists and works
+    final revealAllBtn = find.text('إِظْهَارُ جَمِيعِ الإِجَابَاتِ');
+    expect(revealAllBtn, findsOneWidget);
+    await tester.tap(revealAllBtn);
+    await tester.pumpAndSettle();
+
+    // Now all 11 rows are revealed, counter is 11/11, and check button validates
+    expect(find.text('المُسْتَخْرَجُ: 11 / 11'), findsWidgets);
+    expect(find.text('رُفِعَ'), findsWidgets);
+    expect(find.text('كُرِّمَ'), findsWidgets);
+
+    final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn);
+    await tester.tap(checkBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+  });
+
+
   test('Grade 5 audio tracks are properly wired and WAV durations are accurately parsed', () async {
     final repo = CurriculumRepository.instance;
     final grade5 = repo.getGradeById('grade5')!;
