@@ -1364,7 +1364,7 @@ void main() {
 
     // Lesson 1: نواصب الفعل المضارع
     final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
-    expect(l1.title, contains('نواصب الفعل المضارع'));
+    expect(l1.title, contains('نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ'));
     expect(l1.readingPassage, isNotNull);
     expect(l1.readingPassage!.title, contains('تَاكْفَارِينَاسُ يَتَحَدَّثُ'));
     for (final p in l1.readingPassage!.paragraphs) {
@@ -1379,7 +1379,7 @@ void main() {
 
     // Lesson 2: جوازم الفعل المضارع
     final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
-    expect(l2.title, contains('جوازم الفعل المضارع'));
+    expect(l2.title, contains('جَوَازِمُ الْفِعْلِ الْمُضَارِعِ'));
     expect(l2.readingPassage, isNotNull);
     expect(l2.readingPassage!.title, contains('كُلُّنَا أَبْنَاءُ وَطَنٍ وَاحِدٍ'));
     for (final p in l2.readingPassage!.paragraphs) {
@@ -1393,7 +1393,7 @@ void main() {
 
     // Lesson 3: الفعل المبني للمجهول ونائب الفاعل
     final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
-    expect(l3.title, contains('الفعل المبني للمجهول ونائب الفاعل'));
+    expect(l3.title, contains('الْفِعْلُ الْمَبْنِيُّ لِلْمَجْهُولِ وَنَائِبُ الْفَاعِلِ'));
     expect(l3.readingPassage, isNotNull);
     expect(l3.readingPassage!.title, contains('أَرْضٌ غَالِيَةٌ'));
     for (final p in l3.readingPassage!.paragraphs) {
@@ -2485,6 +2485,115 @@ void main() {
     expect(find.textContaining('الجَارَ.'), findsWidgets);
     expect(find.textContaining('مَفْعُولٌ بِهِ مَنْصُوبٌ وَعَلَامَةُ نَصْبِهِ'), findsWidgets);
     expect(find.textContaining('الْفَتْحَةُ الظَّاهِرَةُ عَلَى آخِرِهِ.'), findsWidgets);
+  });
+
+  testWidgets('Grade 5 lessons render authentic (أُثْبِتُ) and parsing models exactly matching Word reference', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    await ps.init();
+
+    final grade5 = repo.getGradeById('grade5')!;
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+
+    // Verify titles match authentic format
+    expect(l1.title, equals('تَاكْفَارِينَاسُ يَتَحَدَّثُ (نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ)'));
+    expect(l2.title, equals('كُلُّنَا أَبْنَاءُ وَطَنٍ وَاحِدٍ (جَوَازِمُ الْفِعْلِ الْمُضَارِعِ)'));
+    expect(l3.title, equals('أَرْضٌ غَالِيَةٌ (الْفِعْلُ الْمَبْنِيُّ لِلْمَجْهُولِ وَنَائِبُ الْفَاعِلِ)'));
+
+    // 1. Check Lesson 1
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Navigate to stage 5 (أُثْبِتُ)
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أُثْبِتُ'), findsWidgets);
+    expect(find.text('نَمُوذَجُ إِعْرَابٍ :'), findsOneWidget);
+    expect(find.textContaining('يُنْصَبُ'), findsWidgets);
+    expect(find.textContaining('الْفِعْلُ الْمُضَارِعُ'), findsWidgets);
+    expect(find.textContaining('أَنْ، لَنْ، كَيْ، لَامُ التَّعْلِيلِ'), findsWidgets);
+    expect(find.textContaining('الْفَتْحَةُ الظَّاهِرَةُ'), findsWidgets);
+    expect(find.textContaining('لَنْ أُهْمِلَ'), findsWidgets);
+    expect(find.textContaining('لَنْ نُفَرِّطَ فِي أَرْضِنَا أَبَدًا'), findsWidgets);
+    expect(find.textContaining('حَرْفُ نَفْيٍ وَنَصْبٍ مَبْنِيٌّ عَلَى السُّكُونِ'), findsWidgets);
+    expect(find.textContaining('فِعْلٌ مُضَارِعٌ مَنْصُوبٌ بِـ لَنْ'), findsWidgets);
+    // Ensure no generic takeaways
+    expect(find.textContaining('خُلاصَةُ الدَّرْسِ لِلتَّلامِيذِ:'), findsNothing);
+
+    // 2. Check Lesson 2
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أُثْبِتُ'), findsWidgets);
+    expect(find.text('نَمُوذَجُ إِعْرَابٍ :'), findsOneWidget);
+    expect(find.textContaining('يُجْزَمُ الْفِعْلُ'), findsWidgets);
+    expect(find.textContaining('لَمْ النَّافِيَةُ'), findsWidgets);
+    expect(find.textContaining('لَا النَّاهِيَةُ'), findsWidgets);
+    expect(find.textContaining('عَلَامَةُ جَزْمِهِ السُّكُونُ'), findsWidgets);
+    expect(find.textContaining('لَمْ أُهْمِلْ وَاجِبَاتِي'), findsWidgets);
+    expect(find.textContaining('أَدَاةُ نَفْيٍ وَجَزْمٍ'), findsWidgets);
+    expect(find.textContaining('فِعْلٌ مُضَارِعٌ مَجْزُومٌ بِـ "لَمْ"'), findsWidgets);
+
+    // 3. Check Lesson 3
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l3,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أُثْبِتُ'), findsWidgets);
+    expect(find.text('نَمُوذَجُ إِعْرَابٍ :'), findsOneWidget);
+    expect(find.textContaining('عِنْدَ بِنَاءِ الْجُمْلَةِ'), findsWidgets);
+    expect(find.textContaining('لِلْمَجْهُولِ'), findsWidgets);
+    expect(find.textContaining('نَائِبَ الْفَاعِلِ'), findsWidgets);
+    expect(find.textContaining('يُبْنَى الْمَاضِي الْمَبْنِيُّ لِلْمَجْهُولِ'), findsWidgets);
+    expect(find.textContaining('يُبْنَى الْمُضَارِعُ لِلْمَجْهُولِ'), findsWidgets);
+    expect(find.textContaining('تُشَيَّدُ الْمَصَانِعُ'), findsWidgets);
+    expect(find.textContaining('فِعْلٌ مُضَارِعٌ مَبْنِيٌّ لِلْمَجْهُولِ مَرْفُوعٌ'), findsWidgets);
+    expect(find.textContaining('نَائِبُ فَاعِلٍ مَرْفُوعٌ'), findsWidgets);
   });
 }
 

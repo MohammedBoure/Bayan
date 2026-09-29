@@ -4063,7 +4063,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget _buildStageRule(double scale) {
     final isGrade3 = widget.lesson.gradeId == 'grade3';
     final isGrade4 = widget.lesson.gradeId == 'grade4';
-    final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
+    final isGrade5 = widget.lesson.gradeId == 'grade5';
+    final isGrade4Or5 = isGrade4 || isGrade5;
     final stageTitle = isGrade4Or5 ? 'أُثْبِتُ' : 'أَتَعَلَّمُ';
 
     // العرض المخصص للسنة الثالثة ابتدائي: قاعدة مبسطة وأمثلة مرقمة مع إبراز الأفعال دون إعراب
@@ -4216,7 +4217,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       return _buildGrade4StageRule(scale);
     }
 
-    // العرض الخاص بالسنة الخامسة: نماذج إعراب تفاعلية على السبورة وخلاصة
+    // العرض المخصص للسنة الخامسة ابتدائي: مطابق لمستند Word بدقة (أثبت + نموذج للإعراب)
+    if (isGrade5) {
+      return _buildGrade5StageRule(scale);
+    }
+
+    // العرض العام الاحتياطي: نماذج إعراب تفاعلية على السبورة وخلاصة
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -4801,6 +4807,750 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   text: 'الْفَتْحَةُ الظَّاهِرَةُ عَلَى آخِرِهِ.',
                   style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 720) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: ruleCard),
+                  const SizedBox(width: 20),
+                  Expanded(child: parsingCard),
+                ],
+              );
+            } else {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ruleCard,
+                  const SizedBox(height: 18),
+                  parsingCard,
+                ],
+              );
+            }
+          },
+        ),
+        if (widget.lesson.examples.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          SentenceParserView(
+            tokens: widget.lesson.examples.first.tokens,
+            showTashkeel: _showTashkeel,
+            title: 'نَمُوذَجُ إِعْرَابٍ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${widget.lesson.examples.first.sentence}"',
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// العرض المخصص للسنة الخامسة ابتدائي لمطابقة بطاقات "أُثْبِتُ" ونماذج الإعراب في مستند Word بدقة تامة
+  Widget _buildGrade5StageRule(double scale) {
+    final lessonId = widget.lesson.id;
+
+    return Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFF00B050), width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00B050).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // رأس المرحلة الصفي: أُثْبِتُ (باللون الأخضر والخط العريض كما في المستند)
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            children: [
+              const Icon(Icons.verified_rounded, color: Color(0xFF00B050), size: 34),
+              Text(
+                'أُثْبِتُ',
+                style: TextStyle(
+                  fontSize: 26 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF00B050),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 28, thickness: 1.5),
+
+          if (lessonId == 'g5_l1') ...[
+            _buildGrade5Lesson1Rule(scale),
+          ] else if (lessonId == 'g5_l2') ...[
+            _buildGrade5Lesson2Rule(scale),
+          ] else if (lessonId == 'g5_l3') ...[
+            _buildGrade5Lesson3Rule(scale),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// بطاقة أُثْبِتُ ونموذج الإعراب للدرس الأول (نواصب الفعل المضارع): مطابق لمستند Word بدقة
+  Widget _buildGrade5Lesson1Rule(double scale) {
+    final ruleCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF86EFAC), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 يُنْصَبُ '),
+                TextSpan(
+                  text: 'الْفِعْلُ الْمُضَارِعُ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' إِذَا سُبِقَ بِأَحَدِ حُرُوفِ النَّصْبِ وَمِنْهَا : '),
+                TextSpan(
+                  text: 'أَنْ، لَنْ، كَيْ، لَامُ التَّعْلِيلِ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 عَلَامَةُ نَصْبِ الْفِعْلِ الْمُضَارِعِ هِيَ '),
+                TextSpan(
+                  text: 'الْفَتْحَةُ الظَّاهِرَةُ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' مِثْلُ : '),
+                TextSpan(
+                  text: 'لَنْ أُهْمِلَ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' دُرُوسِي أَبَدًا، '),
+                TextSpan(
+                  text: 'وَالْفَتْحَةُ الْمُقَدَّرَةُ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' مِثْلُ : '),
+                TextSpan(
+                  text: 'لَنْ يَبْقَى',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' الْمُحْتَلُّ بِأَرْضِنَا، '),
+                TextSpan(
+                  text: 'وَحَذْفُ النُّونِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' مِثْلُ : اِجْتَهِدُوا '),
+                TextSpan(
+                  text: 'كَيْ تَبْنُوا',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' وَطَنَكُمْ .'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final parsingCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF86EFAC), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'نَمُوذَجُ إِعْرَابٍ :',
+            style: TextStyle(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF00B050),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'لَنْ ',
+                  style: TextStyle(
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: 'نُفَرِّطَ فِي أَرْضِنَا أَبَدًا'),
+              ],
+            ),
+          ),
+          const Divider(height: 20, thickness: 1.2),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'لَنْ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'حَرْفُ نَفْيٍ وَنَصْبٍ مَبْنِيٌّ عَلَى السُّكُونِ .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'نُفَرِّطَ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'فِعْلٌ مُضَارِعٌ مَنْصُوبٌ بِـ لَنْ وَعَلَامَةُ نَصْبِهِ الْفَتْحَةُ الظَّاهِرَةُ عَلَى آخِرِهِ .'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 720) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: ruleCard),
+                  const SizedBox(width: 20),
+                  Expanded(child: parsingCard),
+                ],
+              );
+            } else {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ruleCard,
+                  const SizedBox(height: 18),
+                  parsingCard,
+                ],
+              );
+            }
+          },
+        ),
+        if (widget.lesson.examples.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          SentenceParserView(
+            tokens: widget.lesson.examples.first.tokens,
+            showTashkeel: _showTashkeel,
+            title: 'نَمُوذَجُ إِعْرَابٍ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${widget.lesson.examples.first.sentence}"',
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// بطاقة أُثْبِتُ ونموذج الإعراب للدرس الثاني (جوازم الفعل المضارع): مطابق لمستند Word بدقة
+  Widget _buildGrade5Lesson2Rule(double scale) {
+    final ruleCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFABF8F), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 يُجْزَمُ الْفِعْلُ '),
+                TextSpan(
+                  text: 'الْمُضَارِعُ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' إِذَا سَبَقَهُ حَرْفٌ مِنْ '),
+                TextSpan(
+                  text: 'حُرُوفِ الْجَزْمِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC00000)),
+                ),
+                TextSpan(text: ' وَمِنْهَا '),
+                TextSpan(
+                  text: 'لَمْ النَّافِيَةُ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' وَ'),
+                TextSpan(
+                  text: 'لَا النَّاهِيَةُ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 '),
+                TextSpan(
+                  text: 'عَلَامَةُ جَزْمِهِ السُّكُونُ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' مِثْلُ : تُكَذِّبْ / '),
+                TextSpan(
+                  text: 'لَا تُكَذِّبْ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' ، أَوْ '),
+                TextSpan(
+                  text: 'حَذْفُ النُّونِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' إِذَا كَانَ مِنَ الأَفْعَالِ الْخَمْسَةِ مِثْلُ : تَتَأَثَّرُونَ / '),
+                TextSpan(
+                  text: 'لَا تَتَأَثَّرُوا',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' . أَوْ '),
+                TextSpan(
+                  text: 'حَذْفُ حَرْفِ الْعِلَّةِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' إِذَا كَانَ الْفِعْلُ نَاقِصًا مِثْلُ : يَمْضِي / '),
+                TextSpan(
+                  text: 'لَمْ يَمْضِ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' .'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final parsingCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFABF8F), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'نَمُوذَجُ إِعْرَابٍ :',
+            style: TextStyle(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF00B050),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'لَمْ أُهْمِلْ وَاجِبَاتِي .',
+            style: TextStyle(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFC00000),
+            ),
+          ),
+          const Divider(height: 20, thickness: 1.2),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'لَمْ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'أَدَاةُ نَفْيٍ وَجَزْمٍ .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'أُهْمِلْ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'فِعْلٌ مُضَارِعٌ مَجْزُومٌ بِـ "لَمْ" وَعَلَامَةُ جَزْمِهِ السُّكُونُ وَالْفَاعِلُ ضَمِيرٌ مُسْتَتِرٌ تَقْدِيرُهُ "أَنَا" .'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 720) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: ruleCard),
+                  const SizedBox(width: 20),
+                  Expanded(child: parsingCard),
+                ],
+              );
+            } else {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ruleCard,
+                  const SizedBox(height: 18),
+                  parsingCard,
+                ],
+              );
+            }
+          },
+        ),
+        if (widget.lesson.examples.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          SentenceParserView(
+            tokens: widget.lesson.examples.first.tokens,
+            showTashkeel: _showTashkeel,
+            title: 'نَمُوذَجُ إِعْرَابٍ تَفَاعُلِيٌّ عَلَى السَّبُّورَةِ: "${widget.lesson.examples.first.sentence}"',
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// بطاقة أُثْبِتُ ونموذج الإعراب للدرس الثالث (الفعل المبني للمجهول ونائب الفاعل): مطابق لمستند Word بدقة
+  Widget _buildGrade5Lesson3Rule(double scale) {
+    final ruleCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFD99594), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 عِنْدَ بِنَاءِ الْجُمْلَةِ '),
+                TextSpan(
+                  text: 'لِلْمَجْهُولِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: ' نَحْذِفُ الْفَاعِلَ وَنُعَوِّضُهُ بِالْمَفْعُولِ بِهِ الَّذِي يَنُوبُ عَنْهُ فَيُصْبِحُ مَرْفُوعًا وَيُسَمَّى '),
+                TextSpan(
+                  text: 'نَائِبَ الْفَاعِلِ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(text: ' .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 '),
+                TextSpan(
+                  text: 'يُبْنَى الْمَاضِي الْمَبْنِيُّ لِلْمَجْهُولِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                ),
+                TextSpan(text: ' بِـ'),
+                TextSpan(
+                  text: 'ضَمِّ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC00000)),
+                ),
+                TextSpan(text: ' أَوَّلِهِ وَ'),
+                TextSpan(
+                  text: 'كَسْرِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC00000)),
+                ),
+                TextSpan(text: ' مَا قَبْلَ آخِرِهِ . مِثْلُ : '),
+                TextSpan(
+                  text: 'رُفِعَ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF00B050),
+                    backgroundColor: Color(0xFFE8F8F0),
+                  ),
+                ),
+                TextSpan(text: ' الْعَلَمُ .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                height: 1.85,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(text: '🟩 '),
+                TextSpan(
+                  text: 'يُبْنَى الْمُضَارِعُ لِلْمَجْهُولِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                ),
+                TextSpan(text: ' بِـ'),
+                TextSpan(
+                  text: 'ضَمِّ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC00000)),
+                ),
+                TextSpan(text: ' أَوَّلِهِ وَ'),
+                TextSpan(
+                  text: 'فَتْحِ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC00000)),
+                ),
+                TextSpan(text: ' مَا قَبْلَ آخِرِهِ مِثْلُ : '),
+                TextSpan(
+                  text: 'يُرْفَعُ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF00B050),
+                    backgroundColor: Color(0xFFE8F8F0),
+                  ),
+                ),
+                TextSpan(text: ' الْعَلَمُ .'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final parsingCard = Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFD99594), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'نَمُوذَجُ إِعْرَابٍ :',
+            style: TextStyle(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF00B050),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 22 * scale,
+                fontWeight: FontWeight.w900,
+              ),
+              children: const [
+                TextSpan(
+                  text: 'تُشَيَّدُ الْمَصَانِعُ',
+                  style: TextStyle(
+                    color: Color(0xFFC00000),
+                    backgroundColor: Color(0xFFFFECEC),
+                  ),
+                ),
+                TextSpan(
+                  text: ' فِي بِلَادِنَا .',
+                  style: TextStyle(color: Color(0xFF1E293B)),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 20, thickness: 1.2),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'تُشَيَّدُ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'فِعْلٌ مُضَارِعٌ مَبْنِيٌّ لِلْمَجْهُولِ مَرْفُوعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ الظَّاهِرَةُ عَلَى آخِرِهِ .'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            textDirection: TextDirection.rtl,
+            TextSpan(
+              style: TextStyle(
+                fontSize: 21 * scale,
+                height: 1.8,
+                color: const Color(0xFF1E293B),
+              ),
+              children: const [
+                TextSpan(
+                  text: 'الْمَصَانِعُ : ',
+                  style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF00B050)),
+                ),
+                TextSpan(text: 'نَائِبُ فَاعِلٍ مَرْفُوعٌ وَعَلَامَةُ رَفْعِهِ الضَّمَّةُ الظَّاهِرَةُ عَلَى آخِرِهِ .'),
               ],
             ),
           ),
