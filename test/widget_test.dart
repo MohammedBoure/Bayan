@@ -2387,6 +2387,98 @@ void main() {
     // Clean up
     await AudioPlayerService.instance.stop();
   });
+
+  testWidgets('Grade 4 lessons render authentic (أُثْبِتُ) and parsing models exactly matching Word reference', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    await ps.init();
+
+    final grade4 = repo.getGradeById('grade4')!;
+    final l1 = grade4.lessons.firstWhere((l) => l.id == 'g4_l1');
+    final l2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
+    final l3 = grade4.lessons.firstWhere((l) => l.id == 'g4_l3');
+
+    // 1. Check Lesson 1
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Navigate to stage 5 (أُثْبِتُ)
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أُثْبِتُ'), findsWidgets);
+    expect(find.textContaining('إِذَا أَرَدْنَا أَنْ نَعْرِفَ نَوْعَ الْجُمْلَةِ'), findsWidgets);
+    expect(find.textContaining('الْجُمْلَةُ الْفِعْلِيَّةُ'), findsWidgets);
+    expect(find.textContaining('هِيَ كُلُّ جُمْلَةٍ بَدَأَتْ بِفِعْلٍ'), findsOneWidget);
+    expect(find.textContaining('يَتَضَامَنُ'), findsOneWidget);
+    expect(find.textContaining('خَجِلَ'), findsOneWidget);
+    // Ensure no extra takeaways for Lesson 1
+    expect(find.textContaining('خُلاصَةُ الدَّرْسِ لِلتَّلامِيذِ:'), findsNothing);
+
+    // 2. Check Lesson 2
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('الفاعل هو اسم يدلّ عَلَى مَنْ قَامَ بِالفِعْلَ'), findsWidgets);
+    expect(find.text('نَمُوذَجٌ لِلْإِعْرَابِ :'), findsOneWidget);
+    expect(find.text('حَضَرَ المُعَلِّمُ.'), findsWidgets);
+    expect(find.textContaining('فِعْلٌ مَاضٍ مَبْنِيٌّ عَلَى الفَتْحِ'), findsWidgets);
+    expect(find.textContaining('فَاعِلٌ مَرْفُوعٌ وَعَلاَمَةُ رَفْعِهِ الضَّمَّةُ الظَّاهِرَةُ'), findsWidgets);
+
+    // 3. Check Lesson 3
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: l3,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('5. أُثْبِتُ'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('الْمَفْعُولُ بِهِ اسْمٌ يَقَعُ عَلَيْهِ فِعْلُ الْفَاعِلِ'), findsWidgets);
+    expect(find.text('نَمُوذَجٌ لِلْإِعْرَابِ :'), findsOneWidget);
+    expect(find.textContaining('أَزْعَجَ الضَّجِيجُ'), findsWidgets);
+    expect(find.textContaining('الجَارَ.'), findsWidgets);
+    expect(find.textContaining('مَفْعُولٌ بِهِ مَنْصُوبٌ وَعَلَامَةُ نَصْبِهِ'), findsWidgets);
+    expect(find.textContaining('الْفَتْحَةُ الظَّاهِرَةُ عَلَى آخِرِهِ.'), findsWidgets);
+  });
 }
 
 
