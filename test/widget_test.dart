@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nahw_app/data/curriculum_repository.dart';
+import 'package:nahw_app/data/packs/grade3_curriculum_pack.dart';
 import 'package:nahw_app/main.dart';
 import 'package:nahw_app/models/activity_model.dart';
 import 'package:nahw_app/models/lesson_model.dart';
@@ -140,11 +141,11 @@ void main() {
   });
 
   test('Grade 3 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
-    final repo = CurriculumRepository.instance;
-    final grade3 = repo.getGradeById('grade3')!;
+    final grade3 = Grade3CurriculumPack.buildGrade();
 
-    // Verify all 4 lessons exist
-    expect(grade3.lessons.length, greaterThanOrEqualTo(4));
+    // Verify all 3 authentic lessons exist in Unit 1
+    expect(grade3.units.length, equals(1));
+    expect(grade3.lessons.length, equals(3));
 
     // Check Lesson 1: الفعل الماضي - خدمة الأرض
     final lesson1 = grade3.lessons.firstWhere((l) => l.id == 'g3_l1');
@@ -170,18 +171,12 @@ void main() {
     expect(lesson3.readingPassage!.title, equals('مِنْ أَجْلِكِ يَا جَزَائِرُ'));
     expect(lesson3.readingPassage!.vocabulary.length, equals(9));
     expect(lesson3.readingPassage!.comprehensionQuestions.length, equals(8));
-    expect(lesson3.activities.isNotEmpty, isTrue);
+    expect(lesson3.activities.length, equals(5));
     expect(lesson3.discovery!.allTargetWords, contains('اِلْبِسْ'));
 
-    // Check Lesson 4: الجملة الفعلية
-    final lesson4 = grade3.lessons.firstWhere((l) => l.id == 'g3_l4');
-    expect(lesson4.readingPassage!.title, equals('يَوْمٌ فِي الحَقْلِ'));
-    expect(lesson4.activities.isNotEmpty, isTrue);
-    expect(lesson4.discovery!.allTargetWords, contains('يَحْرُثُ'));
-
-    // Check total activities across Grade 3 equals at least 16 (currently 17 applied activities)
+    // Check total activities across Grade 3 equals exactly 16
     final totalActivities = grade3.lessons.fold<int>(0, (sum, l) => sum + l.activities.length);
-    expect(totalActivities, greaterThanOrEqualTo(16));
+    expect(totalActivities, equals(16));
   });
 
   test('Grade 4 Curriculum Pack contains all authentic lessons with 5-stage models and activities', () {
@@ -2158,6 +2153,123 @@ void main() {
     expect(find.textContaining('مَا هِيَ الْأَلْوَانُ الْحَبِيبَةُ'), findsOneWidget);
     expect(find.textContaining('مَا الَّذِي زَادَ مِنْ حَمَاسَةِ حَمْدِي'), findsOneWidget);
     expect(find.textContaining('فِي أَيِّ زَمَنٍ حَدَثَتْ هَذِهِ الْقِصَّةُ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 3 Lesson 3 (من أجلك يا جزائر - فعل الأمر) interactive activities render and operate properly (all 5 activities)', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final l3 = grade3.lessons.firstWhere((l) => l.id == 'g3_l3');
+    expect(l3.activities.length, equals(5));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l3.activities,
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Activity 1: Multiple choice (اختر فعل الأمر)
+    expect(find.textContaining('النشاط الأول: اختر فعل الأمر'), findsWidgets);
+    expect(find.textContaining('اختر فعل الأمر من بين الكلمات الآتية:'), findsWidgets);
+    expect(find.text('يقرأُ'), findsWidgets);
+    expect(find.text('قرأَ'), findsWidgets);
+    expect(find.text('اِقرأْ'), findsWidgets);
+
+    // Answer correctly: tap 'اِقرأْ'
+    await tester.tap(find.text('اِقرأْ').first);
+    await tester.pumpAndSettle();
+
+    final checkBtn1 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn1);
+    await tester.tap(checkBtn1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('أحسنت! اِقرأْ فعل أمر يُستعمل لطلب القراءة.'), findsWidgets);
+
+    // Dismiss dialog
+    final contBtn1 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn1);
+    await tester.pumpAndSettle();
+
+    // 2. Activity 2: Multi-Sentence Fill (اسحب فعل الأمر المناسب إلى مكانه)
+    final tab1 = find.byKey(const Key('activity_tab_1'));
+    await tester.ensureVisible(tab1);
+    await tester.pumpAndSettle();
+    await tester.tap(tab1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثاني: اسحب فعل الأمر المناسب إلى مكانه'), findsWidgets);
+    expect(find.textContaining('اسحب فعل الأمر المناسب لإكمال كل جملة.'), findsWidgets);
+    expect(find.textContaining('يا تلميذُ في مكانك.'), findsOneWidget);
+    expect(find.textContaining('الحليبَ.'), findsOneWidget);
+    expect(find.textContaining('الكتابَ.'), findsOneWidget);
+
+    // 3. Activity 3: Categorization (صنّف الكلمات بالسحب والإفلات)
+    final tab2 = find.byKey(const Key('activity_tab_2'));
+    await tester.ensureVisible(tab2);
+    await tester.pumpAndSettle();
+    await tester.tap(tab2);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثالث: صنّف الكلمات بالسحب والإفلات'), findsWidgets);
+    expect(find.text('أفعال الأمر'), findsWidgets);
+    expect(find.text('كلمات أخرى'), findsWidgets);
+
+    // 4. Activity 4: Multiple choice (أكمل الجملة بفعل أمر مناسب)
+    final tab3 = find.byKey(const Key('activity_tab_3'));
+    await tester.ensureVisible(tab3);
+    await tester.pumpAndSettle();
+    await tester.tap(tab3);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الرابع: أكمل الجملة بفعل أمر مناسب'), findsWidgets);
+    expect(find.textContaining('يا تلميذُ، ______ْ واجبَكَ.'), findsWidgets);
+    expect(find.text('يكتبُ'), findsWidgets);
+    expect(find.text('اُكْتُبْ'), findsWidgets);
+    expect(find.text('كتبَ'), findsWidgets);
+
+    // Answer correctly: tap 'اُكْتُبْ'
+    await tester.tap(find.text('اُكْتُبْ').first);
+    await tester.pumpAndSettle();
+
+    final checkBtn4 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn4);
+    await tester.tap(checkBtn4);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ممتاز! أكملتَ الجملة بفعل الأمر المناسب.'), findsWidgets);
+
+    final contBtn4 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn4);
+    await tester.pumpAndSettle();
+
+    // 5. Activity 5: 3-Column Categorization (صنّف الأفعال الثلاثة)
+    final tab4 = find.byKey(const Key('activity_tab_4'));
+    await tester.ensureVisible(tab4);
+    await tester.pumpAndSettle();
+    await tester.tap(tab4);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الخامس: صنّف الأفعال الثلاثة'), findsWidgets);
+    expect(find.text('فعل الأمر'), findsWidgets);
+    expect(find.text('الفعل الماضي'), findsWidgets);
+    expect(find.text('الفعل المضارع'), findsWidgets);
   });
 
   test('AudioPlayerService supports playlist queue, continuous playback, and skip navigation', () async {
