@@ -884,8 +884,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Activity 1: اخْتَرْ الجُمَلَ الفِعْلِيَّةَ
-    expect(find.textContaining('اخْتَرْ الجُمَلَ الفِعْلِيَّةَ'), findsWidgets);
+    // Activity 1: اختر الجمل الفعلية
+    expect(find.textContaining('اختر الجمل الفعلية'), findsWidgets);
     expect(find.textContaining('تَدَخَّلَ الضَّامِنُ لِتَهْدِئَةِ الْوَضْعِ'), findsOneWidget);
     expect(find.textContaining('الطَّالِبُ مُجْتَهِدٌ'), findsOneWidget);
     expect(find.textContaining('سَاعَدَ الجِيرَانُ أَهْلَ الحَيِّ'), findsOneWidget);
@@ -904,14 +904,14 @@ void main() {
 
     // Success dialog shown
     expect(find.text('أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
-    expect(find.textContaining('أَحْسَنْتَ! لَقَدِ اخْتَرْتَ الأَفْعَالَ المُنَاسِبَةَ'), findsOneWidget);
+    expect(find.textContaining('أحسنت! لقد اخترتَ الأفعال المناسبة'), findsOneWidget);
 
     // Continue to next activity
     await tester.tap(find.text('مُتَابَعَةُ التَّعَلُّمِ'));
     await tester.pumpAndSettle();
 
-    // Activity 2: أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ
-    expect(find.textContaining('أَكْمِلْ الجُمْلَةَ بِالفِعْلِ المُنَاسِبِ'), findsWidgets);
+    // Activity 2: أكمل الجملة بالفعل المناسب
+    expect(find.textContaining('أكمل الجملة بالفعل المناسب'), findsWidgets);
     expect(find.text('زَرَعَ'), findsWidgets);
     expect(find.text('كَتَبَ'), findsWidgets);
     expect(find.text('سَاعَدَ'), findsWidgets);
@@ -1064,17 +1064,17 @@ void main() {
 
     // Verify Activity 1: sentenceMultiChoice
     expect(find.textContaining('النشاط الأول: اختر الفاعل المناسب'), findsWidgets);
-    expect(find.textContaining('الأشجار في الحديقة'), findsOneWidget);
-    expect(find.textContaining('القصة للأطفال'), findsOneWidget);
-    expect(find.textContaining('الصندوق الثقيل'), findsOneWidget);
-    expect(find.textContaining('الكتب في المكتبة'), findsOneWidget);
-    expect(find.text('الفَلاَّحُ'), findsOneWidget);
+    expect(find.textContaining('الأشجارَ في الحديقة'), findsOneWidget);
+    expect(find.textContaining('القصةَ للأطفالِ'), findsOneWidget);
+    expect(find.textContaining('الصندوقَ الثقيلَ'), findsOneWidget);
+    expect(find.textContaining('الكتبَ في المكتبةِ'), findsOneWidget);
+    expect(find.text('الفلاحُ'), findsOneWidget);
     expect(find.text('الأُمُّ'), findsOneWidget);
-    expect(find.text('العَامِلُ'), findsOneWidget);
-    expect(find.text('البِنْتُ'), findsOneWidget);
+    expect(find.text('العاملُ'), findsOneWidget);
+    expect(find.text('أمينةُ'), findsOneWidget);
 
     // Select options for Activity 1
-    final opt1 = find.text('الفَلاَّحُ');
+    final opt1 = find.text('الفلاحُ');
     await tester.ensureVisible(opt1);
     await tester.pumpAndSettle();
     await tester.tap(opt1);
@@ -1086,13 +1086,13 @@ void main() {
     await tester.tap(opt2);
     await tester.pumpAndSettle();
 
-    final opt3 = find.text('العَامِلُ');
+    final opt3 = find.text('العاملُ');
     await tester.ensureVisible(opt3);
     await tester.pumpAndSettle();
     await tester.tap(opt3);
     await tester.pumpAndSettle();
 
-    final opt4 = find.text('البِنْتُ');
+    final opt4 = find.text('أمينةُ');
     await tester.ensureVisible(opt4);
     await tester.pumpAndSettle();
     await tester.tap(opt4);
@@ -1114,26 +1114,24 @@ void main() {
     // Verify Activity 2: sentenceMultiChoice (الحركة الإعرابية)
     expect(find.textContaining('النشاط الثاني: اختر الفاعل الصحيح'), findsWidgets);
     expect(find.textContaining('الرسالة'), findsOneWidget);
-    expect(find.text('التِّلْمِيذُ'), findsOneWidget);
-    expect(find.text('التِّلْمِيذَ'), findsOneWidget);
-    expect(find.text('التِّلْمِيذِ'), findsOneWidget);
+    expect(find.text('التلمِيذُ'), findsOneWidget);
 
-    final optCorrect1 = find.text('التِّلْمِيذُ');
+    final optCorrect1 = find.text('التلمِيذُ');
     await tester.ensureVisible(optCorrect1);
     await tester.tap(optCorrect1);
     await tester.pumpAndSettle();
 
-    final optCorrect2 = find.text('المُسَافِرُ');
+    final optCorrect2 = find.text('الأبُ');
     await tester.ensureVisible(optCorrect2);
     await tester.tap(optCorrect2);
     await tester.pumpAndSettle();
 
-    final optCorrect3 = find.text('الفَلاَّحُ');
+    final optCorrect3 = find.text('الفلاحُ');
     await tester.ensureVisible(optCorrect3);
     await tester.tap(optCorrect3);
     await tester.pumpAndSettle();
 
-    final optCorrect4 = find.text('التِّلْمِيذَةُ');
+    final optCorrect4 = find.text('التلميذةُ');
     await tester.ensureVisible(optCorrect4);
     await tester.tap(optCorrect4);
     await tester.pumpAndSettle();
@@ -1147,10 +1145,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Activity 3: writtenParsing
-    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
-    expect(find.textContaining('حَضَرَ المُعَلِّمُ'), findsOneWidget);
-    expect(find.textContaining('سَاعَدَ الطَّبِيبُ المَرِيضَ'), findsOneWidget);
-    expect(find.textContaining('عَادَ المُسَافِرُ مَسَاءً'), findsOneWidget);
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات'), findsWidgets);
+    expect(find.textContaining('حضرَ المعلمُ'), findsOneWidget);
+    expect(find.textContaining('ساعدَ الطبيبُ المريضَ'), findsOneWidget);
+    expect(find.textContaining('عادَ المسافرُ مساءً'), findsOneWidget);
     expect(find.text('إِعْرَابٌ نَمُوذَجِيٌّ'), findsNWidgets(3));
 
     // Fill model answers
@@ -1172,9 +1170,9 @@ void main() {
 
     // Verify Activity 4: openSentenceFill
     expect(find.textContaining('النشاط الرابع: أكمل الجملة بالفاعل المناسب'), findsWidgets);
-    expect(find.textContaining('إلى المدرسة مبكرا'), findsOneWidget);
-    expect(find.textContaining('القصة في القسم'), findsOneWidget);
-    expect(find.textContaining('الأشجار في الحديقة'), findsOneWidget);
+    expect(find.textContaining('إلى المدرسةِ مبكرًا'), findsOneWidget);
+    expect(find.textContaining('القصةَ في القسمِ'), findsOneWidget);
+    expect(find.textContaining('الأشجارَ في الحديقةِ'), findsOneWidget);
 
     final textFields = find.byType(TextField);
     expect(textFields, findsNWidgets(6));
@@ -1193,8 +1191,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Activity 5: textExtractionTable
-    expect(find.textContaining('النشاط الخامس: نص جديد - استخرج الفاعل'), findsWidgets);
-    expect(find.textContaining('فِي صَبَاحِ يَوْمٍ جَمِيلٍ خَرَجَ التَّلَامِيذُ إِلَى سَاحَةِ الْمَدْرَسَةِ'), findsOneWidget);
+    expect(find.textContaining('النشاط الخامس: نص جديد'), findsWidgets);
+    expect(find.textContaining('خرجَ التلاميذُ إلى ساحة المدرسة'), findsOneWidget);
     expect(find.textContaining('جَدْوَلُ الفَاعِلِ وَإِعْرَابِهِ'), findsOneWidget);
     expect(find.text('التَّلَامِيذُ'), findsWidgets);
     expect(find.text('سَامِي'), findsWidgets);
@@ -1271,9 +1269,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Activity 1: sentenceTargetTap
-    expect(find.textContaining('النشاط الأول: حدد المفعول به'), findsWidgets);
-    expect(find.text('الصَّحْنَ.'), findsOneWidget);
-    expect(find.text('الحَقِيبَةَ.'), findsOneWidget);
+    expect(find.textContaining('النشاط الأول: حدّد المفعول به'), findsWidgets);
+    expect(find.text('الصّحْنَ.'), findsOneWidget);
+    expect(find.text('الحقيبةَ.'), findsOneWidget);
 
     final checkBtn = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
     await tester.ensureVisible(checkBtn);
@@ -1286,8 +1284,8 @@ void main() {
 
     // Verify Activity 2: openSentenceFill (without suggestion chips)
     expect(find.textContaining('النشاط الثاني: أكمل الجملة بالمفعول به المناسب'), findsWidgets);
-    expect(find.textContaining('نظف العامل'), findsOneWidget);
-    expect(find.textContaining('قرأ التلميذ'), findsOneWidget);
+    expect(find.textContaining('نظّفَ العاملُ'), findsOneWidget);
+    expect(find.textContaining('قرأَ التلميذُ'), findsOneWidget);
     // Ensure no suggestion chips are rendered
     expect(find.text('مُقْتَرَحَاتٌ: '), findsNothing);
 
@@ -1301,9 +1299,9 @@ void main() {
 
     // Verify Activity 3: sentencePartsAnalysis
     expect(find.textContaining('النشاط الثالث: استخرج الفعل والفاعل والمفعول به'), findsWidgets);
-    expect(find.textContaining('أصلح العامل الباب'), findsWidgets);
-    expect(find.textContaining('قرأ سامي القصة'), findsWidgets);
-    expect(find.textContaining('نظفت سعاد الشقة'), findsWidgets);
+    expect(find.textContaining('أصلحَ العاملُ البابَ'), findsWidgets);
+    expect(find.textContaining('قرأَ سامي القصةَ'), findsWidgets);
+    expect(find.textContaining('نظّفتْ سعادُ الشقةَ'), findsWidgets);
 
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
@@ -1314,7 +1312,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Activity 4: writtenParsing
-    expect(find.textContaining('النشاط الرابع: أعرب الكلمة الملونة'), findsWidgets);
+    expect(find.textContaining('النشاط الرابع: أعرب الكلمة'), findsWidgets);
     expect(find.text('إِعْرَابٌ نَمُوذَجِيٌّ'), findsNWidgets(3));
 
     // Fill model answers
@@ -1339,7 +1337,7 @@ void main() {
     expect(find.textContaining('قَائِمَةُ المَفَاعِيلِ بِهِ المَطْلُوبَةِ'), findsOneWidget);
 
 
-    expect(find.textContaining('نَظَّفَ الأَبُ الحَدِيقَةَ'), findsWidgets);
+    expect(find.textContaining('نظّفَ الأبُ الحديقةَ'), findsWidgets);
 
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
@@ -1722,7 +1720,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('النشاط الرابع: أكمل الجملة بالفاعل المناسب'), findsWidgets);
-    expect(find.textContaining('إلى المدرسة مبكرا'), findsOneWidget);
+    expect(find.textContaining('إلى المدرسةِ مبكرًا'), findsOneWidget);
 
     // 3. Jump directly to Activity 3 (Written Parsing)
     final tab2 = find.byKey(const Key('activity_tab_2'));
@@ -1731,8 +1729,8 @@ void main() {
     await tester.tap(tab2);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
-    expect(find.textContaining('حَضَرَ المُعَلِّمُ'), findsOneWidget);
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات'), findsWidgets);
+    expect(find.textContaining('حضرَ المعلمُ'), findsOneWidget);
 
     // 4. Test Next button (moves to Activity 4)
     final nextBtn = find.text('التَّالِي');
@@ -1752,7 +1750,7 @@ void main() {
     await tester.tap(prevBtn);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('النشاط الثالث: أعرب الكلمات الملونة'), findsWidgets);
+    expect(find.textContaining('النشاط الثالث: أعرب الكلمات'), findsWidgets);
   });
 
   testWidgets('Grade 3 Lesson 1 authentic interactive activities render and operate properly (all 5 activities)', (WidgetTester tester) async {
