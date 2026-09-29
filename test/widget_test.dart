@@ -1872,6 +1872,17 @@ void main() {
     expect(find.text('شرب'), findsWidgets);
     expect(find.text('نام'), findsWidgets);
     expect(find.text('ركض'), findsWidgets);
+    expect(find.text('طفل يأكل'), findsWidgets);
+    expect(find.text('طفل يشرب'), findsWidgets);
+    expect(find.text('طفل نائم'), findsWidgets);
+    expect(find.text('طفل يركض'), findsWidgets);
+
+    final act5 = l1.activities[4];
+    expect(act5.imagePaths, isNotNull);
+    expect(act5.imagePaths!['طفل يأكل'], equals('assets/images/3_1/طفل يأكل.jpg'));
+    expect(act5.imagePaths!['طفل يشرب'], equals('assets/images/3_1/طفل يشرب.jpg'));
+    expect(act5.imagePaths!['طفل نائم'], equals('assets/images/3_1/طفل نائم.jpg'));
+    expect(act5.imagePaths!['طفل يركض'], equals('assets/images/3_1/طفل يركض.jpg'));
   });
 
   testWidgets('Grade 3 Lesson 2 (عمر ياسف - الفعل المضارع) interactive activities render and operate properly (all 6 activities)', (WidgetTester tester) async {

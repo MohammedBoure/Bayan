@@ -698,6 +698,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
         return ImageMatchingWidget(
           key: ValueKey('${_currentIndex}_$_attemptKey'),
           pairs: _currentActivity.imagePairs ?? {},
+          imagePaths: _currentActivity.imagePaths,
           onValidationChanged: (isValid) {
             _imageMatchValid = isValid;
           },

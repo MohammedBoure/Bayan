@@ -145,21 +145,28 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
   }
 
   String? _getImagePath(String desc) {
-    if (widget.imagePaths != null && widget.imagePaths!.containsKey(desc)) {
-      return widget.imagePaths![desc];
+    if (widget.imagePaths != null) {
+      if (widget.imagePaths!.containsKey(desc)) {
+        return widget.imagePaths![desc];
+      }
+      for (final entry in widget.imagePaths!.entries) {
+        if (desc.contains(entry.key) || entry.key.contains(desc)) {
+          return entry.value;
+        }
+      }
     }
-    // Fallback dictionary for common Grade 3 verbs
-    if (desc.contains('طعام') || desc.contains('يأكل') || desc.contains('أكل')) {
-      return 'assets/images/action_eat.jpg';
+    // High-resolution authentic classroom illustrations for Grade 3 Lesson 1 (3_1)
+    if (desc.contains('يأكل') || desc.contains('أكل') || desc.contains('طعام')) {
+      return 'assets/images/3_1/طفل يأكل.jpg';
     }
-    if (desc.contains('ماء') || desc.contains('يشرب') || desc.contains('شرب')) {
-      return 'assets/images/action_drink.jpg';
+    if (desc.contains('يشرب') || desc.contains('شرب') || desc.contains('ماء') || desc.contains('حليب')) {
+      return 'assets/images/3_1/طفل يشرب.jpg';
     }
-    if (desc.contains('سرير') || desc.contains('نائم') || desc.contains('نام')) {
-      return 'assets/images/action_sleep.jpg';
+    if (desc.contains('نائم') || desc.contains('نام') || desc.contains('سرير')) {
+      return 'assets/images/3_1/طفل نائم.jpg';
     }
-    if (desc.contains('يركض') || desc.contains('ملعب') || desc.contains('ركض')) {
-      return 'assets/images/action_run.jpg';
+    if (desc.contains('يركض') || desc.contains('ركض') || desc.contains('ملعب')) {
+      return 'assets/images/3_1/طفل يركض.jpg';
     }
     return null;
   }

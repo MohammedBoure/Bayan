@@ -14,3 +14,6 @@ This directory contains high-quality, child-friendly educational imagery and app
 - [action_drink.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/action_drink.jpg): Educational visual for past verb action «شَرِبَ» (طفل يشرب كوب الماء النقي).
 - [action_sleep.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/action_sleep.jpg): Educational visual for past verb action «نَامَ» (طفل نائم في سريره الهادئ).
 - [action_run.jpg](file:///C:/Users/moham/Desktop/Bayan/assets/images/action_run.jpg): Educational visual for past verb action «رَكَضَ» (طفل يركض في الملعب بنشاط وحيوية).
+
+## Subdirectories:
+- [3_1/](file:///C:/Users/moham/Desktop/Bayan/assets/images/3_1/README.md): Authentic high-resolution illustrations for Grade 3 Lesson 1 Activity 5 (`طفل يأكل.jpg`, `طفل يشرب.jpg`, `طفل نائم.jpg`, `طفل يركض.jpg`).

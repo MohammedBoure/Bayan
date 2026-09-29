@@ -67,6 +67,7 @@ flutter:
   # Assets declaration
   assets:
     - assets/images/
+    - assets/images/3_1/
     - assets/fonts/
     - assets/sounds/
     - assets/sounds/3_1/

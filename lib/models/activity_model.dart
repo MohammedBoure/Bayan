@@ -42,6 +42,7 @@ class ActivityModel {
   final List<String>? availableWords;
   final List<String>? orderedWords;
   final Map<String, String>? imagePairs;
+  final Map<String, String>? imagePaths;
 
   // Multi-item & classroom board interaction support
   final List<int>? correctIndices;
@@ -84,6 +85,7 @@ class ActivityModel {
     this.availableWords,
     this.orderedWords,
     this.imagePairs,
+    this.imagePaths,
     this.correctIndices,
     this.sentenceItems,
     this.sentenceSolutions,
