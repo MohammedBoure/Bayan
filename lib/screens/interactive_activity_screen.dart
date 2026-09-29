@@ -311,12 +311,17 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                               color: AppTheme.primaryTeal,
                             ),
                           ),
-                          Text(
-                            _currentActivity.title,
-                            style: TextStyle(
-                              fontSize: 18 * scale,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textMuted,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _currentActivity.title,
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 18 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textMuted,
+                              ),
                             ),
                           ),
                         ],

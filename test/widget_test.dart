@@ -160,7 +160,7 @@ void main() {
     // Check Lesson 2: الفعل المضارع - عمر ياسف
     final lesson2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
     expect(lesson2.readingPassage!.title, equals('عُمَرُ يَاسَفُ'));
-    expect(lesson2.activities.isNotEmpty, isTrue);
+    expect(lesson2.activities.length, equals(6));
     expect(lesson2.examples.length, equals(5));
     expect(lesson2.discovery!.allTargetWords, contains('سَأَحْمِلُ'));
     expect(lesson2.discovery!.allTargetWords, contains('تَسْتَحِقُّ'));
@@ -168,6 +168,8 @@ void main() {
     // Check Lesson 3: فعل الأمر - من أجلك يا جزائر
     final lesson3 = grade3.lessons.firstWhere((l) => l.id == 'g3_l3');
     expect(lesson3.readingPassage!.title, equals('مِنْ أَجْلِكِ يَا جَزَائِرُ'));
+    expect(lesson3.readingPassage!.vocabulary.length, equals(9));
+    expect(lesson3.readingPassage!.comprehensionQuestions.length, equals(8));
     expect(lesson3.activities.isNotEmpty, isTrue);
     expect(lesson3.discovery!.allTargetWords, contains('اِلْبِسْ'));
 
@@ -1877,6 +1879,152 @@ void main() {
     expect(find.text('ركض'), findsWidgets);
   });
 
+  testWidgets('Grade 3 Lesson 2 (عمر ياسف - الفعل المضارع) interactive activities render and operate properly (all 6 activities)', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final l2 = grade3.lessons.firstWhere((l) => l.id == 'g3_l2');
+    expect(l2.activities.length, equals(6));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: l2.activities,
+            lessonTitle: l2.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Activity 1: Multiple choice (اختر الفعل المضارع)
+    expect(find.textContaining('النشاط الأول: اختر الفعل المضارع'), findsWidgets);
+    expect(find.textContaining('اختر الفعل المضارع من بين الكلمات الآتية:'), findsWidgets);
+    expect(find.text('كتب'), findsWidgets);
+    expect(find.text('يكتب'), findsWidgets);
+    expect(find.text('كتاب'), findsWidgets);
+
+    // Answer correctly: tap 'يكتب'
+    await tester.tap(find.text('يكتب').first);
+    await tester.pumpAndSettle();
+
+    final checkBtn1 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn1);
+    await tester.tap(checkBtn1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('أحسنت! يكتب فعل مضارع يدل على عمل يحدث الآن أو سيحدث لاحقا.'), findsWidgets);
+
+    // Dismiss dialog
+    final contBtn1 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn1);
+    await tester.pumpAndSettle();
+
+    // 2. Activity 2: Multi-Sentence Fill (اسحب الفعل المناسب إلى مكانه)
+    final tab1 = find.byKey(const Key('activity_tab_1'));
+    await tester.ensureVisible(tab1);
+    await tester.pumpAndSettle();
+    await tester.tap(tab1);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثاني: اسحب الفعل المناسب إلى مكانه'), findsWidgets);
+    expect(find.textContaining('اسحب الفعل المناسب لإكمال كل جملة.'), findsWidgets);
+    expect(find.textContaining('الطفل الحليب.'), findsOneWidget);
+    expect(find.textContaining('البنت قصة.'), findsOneWidget);
+    expect(find.textContaining('سامي بالكرة.'), findsOneWidget);
+
+    // 3. Activity 3: Multiple choice (تعرف على الفعل المضارع من خلال بدايته)
+    final tab2 = find.byKey(const Key('activity_tab_2'));
+    await tester.ensureVisible(tab2);
+    await tester.pumpAndSettle();
+    await tester.tap(tab2);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الثالث: تعرف على الفعل المضارع من خلال بدايته'), findsWidgets);
+    expect(find.textContaining('اختر الكلمة التي تبدأ بحرف من حروف المضارعة:'), findsWidgets);
+    expect(find.text('جلس'), findsWidgets);
+    expect(find.text('يركض'), findsWidgets);
+    expect(find.text('قلم'), findsWidgets);
+
+    // Answer correctly: tap 'يركض'
+    await tester.tap(find.text('يركض').first);
+    await tester.pumpAndSettle();
+
+    final checkBtn3 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn3);
+    await tester.tap(checkBtn3);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('أحسنت! يبدأ الفعل يركض بحرف الياء وهو أحد حروف المضارعة.'), findsWidgets);
+
+    final contBtn3 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn3);
+    await tester.pumpAndSettle();
+
+    // 4. Activity 4: Categorization Two Columns (صنف الكلمات بالسحب والإفلات)
+    final tab3 = find.byKey(const Key('activity_tab_3'));
+    await tester.ensureVisible(tab3);
+    await tester.pumpAndSettle();
+    await tester.tap(tab3);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الرابع: صنف الكلمات بالسحب والإفلات'), findsWidgets);
+    expect(find.textContaining('الفعل المضارع'), findsWidgets);
+    expect(find.textContaining('كلمات أخرى'), findsWidgets);
+
+    // 5. Activity 5: Multiple choice (أكمل الجملة بالفعل المضارع المناسب)
+    final tab4 = find.byKey(const Key('activity_tab_4'));
+    await tester.ensureVisible(tab4);
+    await tester.pumpAndSettle();
+    await tester.tap(tab4);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط الخامس: أكمل الجملة بالفعل المضارع المناسب'), findsWidgets);
+    expect(find.textContaining('كل صباح ______ التلميذ إلى المدرسة.'), findsWidgets);
+    expect(find.text('ذهب'), findsWidgets);
+    expect(find.text('يذهب'), findsWidgets);
+    expect(find.text('اذهب'), findsWidgets);
+
+    // Answer correctly: tap 'يذهب'
+    await tester.tap(find.text('يذهب').first);
+    await tester.pumpAndSettle();
+
+    final checkBtn5 = find.text('تَحَقَّقْ مِنَ الإِجَابَةِ فِي السَّبُّورَةِ');
+    await tester.ensureVisible(checkBtn5);
+    await tester.tap(checkBtn5);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ممتاز! أكملت الجملة بالفعل المضارع المناسب.'), findsWidgets);
+
+    final contBtn5 = find.text('مُتَابَعَةُ التَّعَلُّمِ');
+    await tester.tap(contBtn5);
+    await tester.pumpAndSettle();
+
+    // 6. Activity 6: Sentence Ordering (رتب الكلمات لتكوين جملة)
+    final tab5 = find.byKey(const Key('activity_tab_5'));
+    await tester.ensureVisible(tab5);
+    await tester.pumpAndSettle();
+    await tester.tap(tab5);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('النشاط السادس: رتب الكلمات لتكوين جملة'), findsWidgets);
+    expect(find.textContaining('رتب الكلمات الآتية لتكوين جملة مفيدة:'), findsWidgets);
+    expect(find.text('الدرس'), findsWidgets);
+    expect(find.text('يشرح'), findsWidgets);
+    expect(find.text('المعلم'), findsWidgets);
+  });
+
   testWidgets('Grade 3 Lesson 2 (عمر ياسف) comprehension questions render accurately with choices and model answers', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;
@@ -1933,6 +2081,83 @@ void main() {
 
     // Model answer for Q1 is now revealed
     expect(find.textContaining('عُمَرُ يَاسَفُ (أَصْغَرُ فِدَائِيٍّ فِي ثَوْرَةِ التَّحْرِيرِ)'), findsOneWidget);
+  });
+
+  testWidgets('Grade 3 Lesson 3 (من أجلك يا جزائر) vocabulary, antonyms, and comprehension questions render accurately', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade3 = repo.getGradeById('grade3')!;
+    final lesson3 = grade3.lessons.firstWhere((l) => l.id == 'g3_l3');
+    final passage = lesson3.readingPassage!;
+    expect(passage.vocabulary.length, equals(9));
+    expect(passage.comprehensionQuestions.length, equals(8));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: lesson3,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Stage 2: كَلِمَاتِي الجَدِيدَةُ
+    final vocabTab = find.text('2. كَلِمَاتِي الجَدِيدَةُ');
+    await tester.tap(vocabTab);
+    await tester.pumpAndSettle();
+
+    // Verify vocabulary words and meanings
+    expect(find.text('بِعِنَايَةٍ فَائِقَةٍ'), findsWidgets);
+    expect(find.text('بِاهْتِمَامٍ كَبِيرٍ'), findsWidgets);
+    expect(find.text('تَدُسُّهَا'), findsWidgets);
+    expect(find.text('تُخَبِّئُهَا'), findsWidgets);
+    expect(find.text('اخْتِرَاقُ الصُّفُوفِ'), findsWidgets);
+    expect(find.text('نَفَاذٌ مِنْهَا وَمَرَّ مِنْ خِلالِهَا'), findsWidgets);
+    expect(find.text('المُزْدَحِمُ'), findsWidgets);
+    expect(find.text('المَمْلُوءُ وَالمُكْتَظُّ'), findsWidgets);
+    expect(find.text('الفَخْرُ'), findsWidgets);
+    expect(find.text('الاعْتِزَازُ'), findsWidgets);
+
+    // Verify antonyms
+    expect(find.text('سَعِيدَةٌ'), findsWidgets);
+    expect(find.text('يَجْهَلُهُ'), findsWidgets);
+    expect(find.text('خُشُونَةٌ'), findsWidgets);
+    expect(find.text('ابْتَعَدَ'), findsWidgets);
+
+    // 2. Stage 3: أَقْرَأُ وَأَفْهَمُ
+    final stageTab = find.text('3. أَقْرَأُ وَأَفْهَمُ');
+    await tester.tap(stageTab);
+    await tester.pumpAndSettle();
+
+    // Verify Question 1 with choices (حقيقية / خيالية)
+    expect(find.textContaining('الشَّخْصِيَّاتُ الْمَذْكُورَةُ فِي النَّصِّ'), findsOneWidget);
+    expect(find.text('حَقِيقِيَّةٌ'), findsWidgets);
+    expect(find.text('خَيَالِيَّةٌ'), findsOneWidget);
+
+    // Verify Question 2 with choices (قبل الاستقلال / بعد الاستقلال)
+    expect(find.textContaining('وَقَعَتْ أَحْدَاثُ الْقِصَّةِ'), findsOneWidget);
+    expect(find.text('قَبْلَ الِاسْتِقْلَالِ'), findsWidgets);
+    expect(find.text('بَعْدَ الِاسْتِقْلَالِ'), findsOneWidget);
+
+    // Verify other comprehension questions
+    expect(find.textContaining('أَيْنَ جَلَسَ حَمْدِي'), findsOneWidget);
+    expect(find.textContaining('مَا هُوَ شُعُورُ الْأُمِّ'), findsOneWidget);
+    expect(find.textContaining('بِمَ حَذَّرَتِ الْأُمُّ ابْنَهَا'), findsOneWidget);
+    expect(find.textContaining('مَا هِيَ الْأَلْوَانُ الْحَبِيبَةُ'), findsOneWidget);
+    expect(find.textContaining('مَا الَّذِي زَادَ مِنْ حَمَاسَةِ حَمْدِي'), findsOneWidget);
+    expect(find.textContaining('فِي أَيِّ زَمَنٍ حَدَثَتْ هَذِهِ الْقِصَّةُ'), findsOneWidget);
   });
 
   test('AudioPlayerService supports playlist queue, continuous playback, and skip navigation', () async {
