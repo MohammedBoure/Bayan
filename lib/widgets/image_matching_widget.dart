@@ -4,7 +4,7 @@ import '../theme/app_theme.dart';
 /// Interactive Visual Matching Engine (آلية الربط البصري التفاعلي الحقيقي للأنشطة)
 /// Displays two columns:
 /// - Right Column: Verb Cards with interactive connecting plugs (نقاط الوصل)
-/// - Left Column: Rich Illustrated Action Image Cards with connecting plugs
+/// - Left Column: Prominent, high-resolution illustrated Action Image Cards with quick-zoom and connection indicators
 /// Supports authentic classroom matching with visual line feedback and clear connection indicators.
 class ImageMatchingWidget extends StatefulWidget {
   final Map<String, String> pairs;
@@ -171,6 +171,85 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
     return null;
   }
 
+  /// Displays high-definition enlarged image dialog for classroom presentation
+  void _showEnlargedImage(BuildContext context, String title, String? imageAsset) {
+    if (imageAsset == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 960),
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentOrange.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.zoom_in_rounded, color: AppTheme.accentOrange, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'مُعَايَنَةٌ بَصَرِيَّةٌ مُكَبَّرَةٌ: $title',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 28),
+                    tooltip: 'إِغْلَاق',
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  icon: const Icon(Icons.check_rounded, color: Colors.white),
+                  label: const Text(
+                    'حَسَنًا، فَهِمْتُ المَعْنَى',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryTeal,
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final verbs = widget.pairs.keys.toList();
@@ -245,7 +324,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
         // Two-Column Interactive Matching Canvas
         LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
+            final isWide = constraints.maxWidth > 780;
 
             if (isWide) {
               return Row(
@@ -253,7 +332,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                 children: [
                   // Right Column: Verbs (الأفعال)
                   Expanded(
-                    flex: 5,
+                    flex: 4,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -270,12 +349,12 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
 
                   // Center Linking Graphic
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 36),
                     child: Column(
                       children: List.generate(
                         verbs.length,
                         (index) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          padding: const EdgeInsets.symmetric(vertical: 20),
                           child: Icon(
                             Icons.compare_arrows_rounded,
                             size: 32,
@@ -286,15 +365,15 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                     ),
                   ),
 
-                  // Left Column: Pictures & Action Descriptions (الصور والدلالات)
+                  // Left Column: Pictures & Action Descriptions (الصور والدلالات) in 2x2 Grid
                   Expanded(
-                    flex: 7,
+                    flex: 8,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildColumnHeader('2. الصُّوَرُ التَّعْبِيرِيَّةُ المُنَاسِبَةُ', Icons.image_rounded, AppTheme.accentOrange),
+                        _buildColumnHeader('2. الصُّوَرُ التَّعْبِيرِيَّةُ المُنَاسِبَةُ (انْقُرْ لِلرَّبْطِ أَوِ التَّكْبِيرِ)', Icons.image_rounded, AppTheme.accentOrange),
                         const SizedBox(height: 12),
-                        ..._shuffledDescriptions.map((desc) => _buildTargetCard(desc)),
+                        _buildImagesGrid(),
                       ],
                     ),
                   ),
@@ -321,6 +400,36 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
     );
   }
 
+  /// Builds a responsive, large 2x2 grid for images
+  Widget _buildImagesGrid() {
+    final rows = <Widget>[];
+    for (int i = 0; i < _shuffledDescriptions.length; i += 2) {
+      final desc1 = _shuffledDescriptions[i];
+      final desc2 = (i + 1 < _shuffledDescriptions.length) ? _shuffledDescriptions[i + 1] : null;
+
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildTargetCard(desc1)),
+            const SizedBox(width: 14),
+            if (desc2 != null)
+              Expanded(child: _buildTargetCard(desc2))
+            else
+              const Spacer(),
+          ],
+        ),
+      );
+      if (i + 2 < _shuffledDescriptions.length) {
+        rows.add(const SizedBox(height: 14));
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+
   Widget _buildColumnHeader(String title, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -334,9 +443,12 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -381,19 +493,19 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
             children: [
               // Verb badge
               Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: isSelected ? AppTheme.accentOrange : (matchedDesc != null ? color : const Color(0xFFF1F5F9)),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: matchedDesc != null
-                      ? const Icon(Icons.check_rounded, color: Colors.white, size: 26)
+                      ? const Icon(Icons.check_rounded, color: Colors.white, size: 28)
                       : Text(
                           '${index + 1}',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
                             color: isSelected ? Colors.white : AppTheme.textDark,
                           ),
@@ -410,7 +522,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                     Text(
                       verb,
                       style: TextStyle(
-                        fontSize: 26,
+                        fontSize: 28,
                         fontWeight: FontWeight.w900,
                         color: isSelected ? AppTheme.accentOrange : (matchedDesc != null ? color : AppTheme.textDark),
                       ),
@@ -429,7 +541,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
               // Linking Plug / Indicator
               if (matchedDesc != null)
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 22, color: Colors.grey),
+                  icon: const Icon(Icons.close_rounded, size: 24, color: Colors.grey),
                   tooltip: 'فَكُّ الرَّبْطِ',
                   onPressed: () => _unlinkVerb(verb),
                 )
@@ -467,6 +579,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
     );
   }
 
+  /// Builds a large, prominent, high-resolution Action Image Card
   Widget _buildTargetCard(String desc) {
     String? assignedVerb;
     for (var entry in _selectedPairs.entries) {
@@ -482,122 +595,224 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: InkWell(
-        onTap: () => _onTargetTapped(desc),
-        borderRadius: BorderRadius.circular(22),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isAssigned ? color.withValues(alpha: 0.08) : Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: isAssigned ? color : const Color(0xFFCBD5E1),
-              width: isAssigned ? 3.0 : 1.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isAssigned ? color.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _onTargetTapped(desc),
+          borderRadius: BorderRadius.circular(22),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isAssigned ? color.withValues(alpha: 0.08) : Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isAssigned
+                    ? color
+                    : (_selectedVerb != null ? AppTheme.accentOrange.withValues(alpha: 0.6) : const Color(0xFFCBD5E1)),
+                width: isAssigned ? 3.0 : (_selectedVerb != null ? 2.5 : 1.8),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Picture / Illustration thumbnail
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 100,
-                  height: 75,
-                  child: imageAsset != null
-                      ? Image.asset(
-                          imageAsset,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.amber.shade100,
-                            child: const Icon(Icons.image_rounded, size: 40, color: AppTheme.accentOrange),
-                          ),
-                        )
-                      : Container(
-                          color: Colors.blue.shade50,
-                          child: const Icon(Icons.image_rounded, size: 40, color: AppTheme.verbColor),
-                        ),
+              boxShadow: [
+                BoxShadow(
+                  color: isAssigned ? color.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const SizedBox(width: 14),
-
-              // Description Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Large, Crisp Illustration Container with 16:9 ratio and Quick Zoom Overlay
+                Stack(
                   children: [
-                    Text(
-                      desc,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: imageAsset != null
+                            ? Image.asset(
+                                imageAsset,
+                                fit: BoxFit.cover,
+                                filterQuality: FilterQuality.high,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: Colors.amber.shade100,
+                                  child: const Center(
+                                    child: Icon(Icons.image_rounded, size: 50, color: AppTheme.accentOrange),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                color: Colors.blue.shade50,
+                                child: const Center(
+                                  child: Icon(Icons.image_rounded, size: 50, color: AppTheme.verbColor),
+                                ),
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    if (isAssigned)
-                      Row(
-                        children: [
-                          Icon(Icons.link_rounded, size: 18, color: color),
-                          const SizedBox(width: 6),
-                          Text(
-                            'مَرْبُوطٌ بِالفِعْلِ: «$assignedVerb»',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: color,
+
+                    // Quick Zoom Button Overlay
+                    if (imageAsset != null)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Tooltip(
+                          message: 'تَكْبِيرُ الصُّورَةِ مِلْءَ الشَّاشَةِ',
+                          child: InkWell(
+                            onTap: () => _showEnlargedImage(context, desc, imageAsset),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.zoom_in_rounded, size: 18, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'تَكْبِيرٌ',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      )
-                    else
-                      Text(
-                        _selectedVerb != null ? 'انْقُرْ هُنَا لِرَبْطِ «$_selectedVerb»' : 'انْقُرْ لِتَحْدِيدِ الرَّبْطِ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade400,
+                        ),
+                      ),
+
+                    // Assignment Ribbon
+                    if (isAssigned)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                assignedVerb,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
 
-              // Plug Connection Status
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isAssigned ? color : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                // 2. Action Description Label & Connection Indicator
+                Row(
                   children: [
-                    Icon(
-                      isAssigned ? Icons.check_circle_rounded : Icons.cable_rounded,
-                      size: 20,
-                      color: isAssigned ? Colors.white : Colors.grey.shade600,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isAssigned ? assignedVerb : 'غَيْرُ مَرْبُوطٍ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: isAssigned ? Colors.white : Colors.grey.shade600,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            desc,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (isAssigned)
+                            Text(
+                              'مَرْبُوطٌ بِالفِعْلِ: «$assignedVerb»',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            )
+                          else
+                            Text(
+                              _selectedVerb != null
+                                  ? 'انْقُرْ هُنَا لِرَبْطِ «$_selectedVerb»'
+                                  : 'انْقُرْ لِتَحْدِيدِ الرَّبْطِ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade500,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
+                    const SizedBox(width: 8),
+
+                    // Connection Plug / Button
+                    if (isAssigned)
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 22, color: Colors.grey),
+                        tooltip: 'فَكُّ الرَّبْطِ',
+                        onPressed: () {
+                          setState(() {
+                            _selectedPairs[assignedVerb!] = null;
+                          });
+                          _validate();
+                        },
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.link_rounded,
+                              size: 18,
+                              color: _selectedVerb != null ? Colors.white : Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedVerb != null ? 'ارْبِطْ' : 'وَصْل',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: _selectedVerb != null ? Colors.white : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
