@@ -4,6 +4,7 @@ import '../models/lesson_model.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
+import 'interactive_activity_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'quiz_evaluation_screen.dart';
 
@@ -123,19 +124,33 @@ class LessonsListScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         _buildSpecialCard(
                           context: context,
-                          title: 'التَّقْوِيمُ الشَّامِلُ (الاِخْتِبَارُ)',
-                          subtitle: 'قياس تحصيل تلاميذ الصف مع حساب النتيجة الفورية',
-                          icon: Icons.quiz_rounded,
+                          title: 'التَّقْوِيمُ الشَّامِلُ',
+                          subtitle: grade.comprehensiveActivities.isNotEmpty
+                              ? 'أنشطة تقويمية تفاعلية شاملة لقياس استيعاب التلاميذ للمفاهيم'
+                              : 'قياس تحصيل تلاميذ الصف مع حساب النتيجة الفورية',
+                          icon: Icons.assignment_turned_in_rounded,
                           color: AppTheme.accentPurple,
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => QuizEvaluationScreen(
-                                  quiz: grade.comprehensiveQuiz,
-                                  progressService: progressService,
+                            if (grade.comprehensiveActivities.isNotEmpty) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => InteractiveActivityScreen(
+                                    activities: grade.comprehensiveActivities,
+                                    lessonTitle: 'التَّقْوِيمُ الشَّامِلُ - ${grade.title}',
+                                    progressService: progressService,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => QuizEvaluationScreen(
+                                    quiz: grade.comprehensiveQuiz,
+                                    progressService: progressService,
+                                  ),
+                                ),
+                              );
+                            }
                           },
                         ),
                       ],

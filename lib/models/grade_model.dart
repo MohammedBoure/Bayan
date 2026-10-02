@@ -1,3 +1,4 @@
+import 'activity_model.dart';
 import 'curriculum_unit_model.dart';
 import 'lesson_model.dart';
 import 'quiz_model.dart';
@@ -15,6 +16,7 @@ class GradeModel {
   final List<LessonModel> lessons;
   final List<CurriculumUnitModel> units;
   final QuizModel comprehensiveQuiz;
+  final List<ActivityModel> comprehensiveActivities;
 
   const GradeModel({
     required this.id,
@@ -27,6 +29,7 @@ class GradeModel {
     required this.lessons,
     this.units = const [],
     required this.comprehensiveQuiz,
+    this.comprehensiveActivities = const [],
   });
 
   /// Total number of lessons available in this grade

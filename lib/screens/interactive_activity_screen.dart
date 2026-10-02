@@ -15,6 +15,7 @@ import '../widgets/open_sentence_fill_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
 import '../widgets/sentence_parts_analysis_widget.dart';
 import '../widgets/sentence_target_tap_widget.dart';
+import '../widgets/table_fill_widget.dart';
 import '../widgets/text_extraction_table_widget.dart';
 import '../widgets/text_word_extraction_widget.dart';
 import '../widgets/written_parsing_widget.dart';
@@ -71,6 +72,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   bool _targetTapValid = false;
   bool _partsAnalysisValid = false;
   bool _textWordExtractionValid = false;
+  bool _tableFillValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
@@ -127,6 +129,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       case ActivityType.textWordExtraction:
         isCorrect = _textWordExtractionValid;
         break;
+      case ActivityType.tableFill:
+        isCorrect = _tableFillValid;
+        break;
       case ActivityType.multipleChoice:
       case ActivityType.dragDropFillBlank:
       case ActivityType.selectVerb:
@@ -181,6 +186,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _targetTapValid = false;
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
+      _tableFillValid = false;
       _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
       if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
         _selectedOptionIndex = _currentActivity.correctIndex;
@@ -211,6 +217,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _targetTapValid = false;
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
+      _tableFillValid = false;
     });
   }
 
@@ -509,7 +516,8 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                       _currentActivity.type != ActivityType.textExtractionTable &&
                       _currentActivity.type != ActivityType.sentenceTargetTap &&
                       _currentActivity.type != ActivityType.sentencePartsAnalysis &&
-                      _currentActivity.type != ActivityType.textWordExtraction) ...[
+                      _currentActivity.type != ActivityType.textWordExtraction &&
+                      _currentActivity.type != ActivityType.tableFill) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -782,6 +790,19 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _textWordExtractionValid = isValid;
+          },
+        );
+
+      case ActivityType.tableFill:
+        return TableFillWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          headers: _currentActivity.tableHeaders ?? [],
+          rows: _currentActivity.tableRows ?? [],
+          availableWords: _currentActivity.availableWords ?? _currentActivity.options,
+          solutions: _currentActivity.sentenceSolutions ?? {},
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _tableFillValid = isValid;
           },
         );
 

@@ -52,6 +52,7 @@ class CurriculumRepository {
         units: grade.units,
         lessons: updatedLessons,
         comprehensiveQuiz: grade.comprehensiveQuiz,
+        comprehensiveActivities: grade.comprehensiveActivities,
       );
     }
   }
@@ -89,6 +90,7 @@ class CurriculumRepository {
           units: grade.units,
           lessons: updatedLessons,
           comprehensiveQuiz: grade.comprehensiveQuiz,
+          comprehensiveActivities: grade.comprehensiveActivities,
         );
         break;
       }

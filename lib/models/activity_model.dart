@@ -21,6 +21,7 @@ enum ActivityType {
   sentenceTargetTap,
   sentencePartsAnalysis,
   textWordExtraction,
+  tableFill,
 }
 
 /// Represents an interactive grammar activity designed for primary students.
@@ -58,6 +59,8 @@ class ActivityModel {
   final Map<String, List<String>>? acceptableAnswersMap;
   final List<Map<String, String>>? tableRows;
   final List<String>? tableHeaders;
+  final List<String>? tableExampleRow;
+  final List<List<String?>>? incompleteTableRows;
   final String? tableTitle;
   final String? passageTitle;
   final bool showSuggestions;
@@ -97,6 +100,8 @@ class ActivityModel {
     this.acceptableAnswersMap,
     this.tableRows,
     this.tableHeaders,
+    this.tableExampleRow,
+    this.incompleteTableRows,
     this.tableTitle,
     this.passageTitle,
     this.showSuggestions = true,
