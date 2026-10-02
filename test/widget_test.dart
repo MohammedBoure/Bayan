@@ -2780,6 +2780,76 @@ void main() {
     expect(find.text('الفَاعِلُ'), findsWidgets);
     expect(find.text('المَفْعُولُ بِهِ'), findsWidgets);
   });
+
+  testWidgets('Grade 5 Comprehensive Evaluation contains 7 authentic activities from docx', (tester) async {
+    final grade5 = CurriculumRepository.instance.getGradeById('grade5')!;
+    expect(grade5.comprehensiveActivities.length, equals(7));
+
+    // Verify metadata for the 7 activities
+    final act1 = grade5.comprehensiveActivities[0];
+    expect(act1.type, equals(ActivityType.categorizationTwoCols));
+    expect(act1.categories?.length, equals(2));
+    expect(act1.availableWords?.length, equals(6));
+
+    final act2 = grade5.comprehensiveActivities[1];
+    expect(act2.type, equals(ActivityType.sentenceMultiChoice));
+    expect(act2.sentenceItems?.length, equals(4));
+
+    final act3 = grade5.comprehensiveActivities[2];
+    expect(act3.type, equals(ActivityType.categorizationThreeCols));
+    expect(act3.categories?.length, equals(3));
+    expect(act3.availableWords?.length, equals(6));
+
+    final act4 = grade5.comprehensiveActivities[3];
+    expect(act4.type, equals(ActivityType.sentenceMultiChoice));
+    expect(act4.sentenceItems?.length, equals(4));
+
+    final act5 = grade5.comprehensiveActivities[4];
+    expect(act5.type, equals(ActivityType.categorizationTwoCols));
+    expect(act5.categories?.length, equals(2));
+    expect(act5.availableWords?.length, equals(6));
+
+    final act6 = grade5.comprehensiveActivities[5];
+    expect(act6.type, equals(ActivityType.sentenceMultiChoice));
+    expect(act6.sentenceItems?.length, equals(4));
+
+    final act7 = grade5.comprehensiveActivities[6];
+    expect(act7.type, equals(ActivityType.writtenParsing));
+    expect(act7.sentenceItems?.length, equals(8));
+    expect(act7.coloredWordsMap?.length, equals(8));
+    expect(act7.sentenceSolutions?.length, equals(8));
+
+    // Test rendering InteractiveActivityScreen with Grade 5 comprehensive activities
+    final ps = ProgressService();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: grade5.comprehensiveActivities,
+            lessonTitle: 'التَّقْوِيمُ الشَّامِلُ - ${grade5.title}',
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Activity 1 is displayed
+    expect(find.text('النشاط الأول: صَنِّفْ أَدَوَاتِ النَّصْبِ وَالجَزْمِ'), findsWidgets);
+    expect(find.text('اسْحَبْ كُلَّ أَدَاةٍ إِلَى المَكَانِ المُنَاسِبِ:'), findsOneWidget);
+    expect(find.text('أَدَوَاتُ النَّصْبِ'), findsWidgets);
+    expect(find.text('أَدَوَاتُ الجَزْمِ'), findsWidgets);
+
+    // Switch to Activity 7 (Written Parsing)
+    await tester.tap(find.byKey(const Key('activity_tab_6')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('النشاط السابع: أَتَعَرَّفُ وَأُعْرِبُ'), findsWidgets);
+    expect(find.text('اقْرَأْ كُلَّ جُمْلَةٍ، ثُمَّ أَعْرِبِ الكَلِمَةَ المُلَوَّنَةَ إِعْرَابًا كَامِلًا:'), findsOneWidget);
+    expect(find.text('لَنْ يُهْمِلَ التِّلْمِيذُ وَاجِبَاتِهِ.'), findsWidgets);
+  });
 }
 
 
