@@ -2850,6 +2850,51 @@ void main() {
     expect(find.text('اقْرَأْ كُلَّ جُمْلَةٍ، ثُمَّ أَعْرِبِ الكَلِمَةَ المُلَوَّنَةَ إِعْرَابًا كَامِلًا:'), findsOneWidget);
     expect(find.text('لَنْ يُهْمِلَ التِّلْمِيذُ وَاجِبَاتِهِ.'), findsWidgets);
   });
+
+  testWidgets('LessonDetailScreen renders activities launch button in the top title row and navigates directly', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final grade3 = CurriculumRepository.instance.getGradeById('grade3')!;
+    final lesson1 = grade3.lessons.first;
+
+    final ps = ProgressService();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: lesson1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify stage chips at the top
+    expect(find.text('1. النَّصُّ القِرَائِيُّ'), findsOneWidget);
+    expect(find.text('2. كَلِمَاتِي الجَدِيدَةُ'), findsOneWidget);
+    expect(find.text('3. أَقْرَأُ وَأَفْهَمُ'), findsOneWidget);
+    expect(find.text('4. أُلاحِظُ وَأُمَيِّزُ'), findsOneWidget);
+    expect(find.text('5. أَتَعَلَّمُ'), findsOneWidget);
+
+    // Verify the activities button is located in the top row alongside stage chips
+    final activitiesBtnFinder = find.byKey(const Key('lesson_activities_top_button'));
+    expect(activitiesBtnFinder, findsOneWidget);
+    expect(find.text('الاِنْتِقَالُ إِلَى التَّمَارِينِ التَّفَاعُلِيَّةِ (${lesson1.activities.length} أَنْشِطَة)'), findsOneWidget);
+
+    // Ensure visible, tap the activities button and verify navigation to InteractiveActivityScreen
+    await tester.ensureVisible(activitiesBtnFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(activitiesBtnFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InteractiveActivityScreen), findsOneWidget);
+    expect(find.text(lesson1.activities.first.title), findsWidgets);
+  });
 }
 
 

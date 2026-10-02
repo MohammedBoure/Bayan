@@ -299,50 +299,90 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
             const SizedBox(height: 12),
 
-            // Stage Navigation Tabs
-            if (stageTitles.length > 1)
+            // Stage Navigation & Activities Tabs
+            if (stageTitles.isNotEmpty || widget.lesson.activities.isNotEmpty)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: stageTitles.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final title = entry.value;
-                    final isSelected = _activeStageIndex == idx;
+                  children: [
+                    ...stageTitles.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final title = entry.value;
+                      final isSelected = _activeStageIndex == idx;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: ChoiceChip(
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            if (_activeStageIndex == 0 && idx != 0) {
-                              AudioPlayerService.instance.stop();
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: ChoiceChip(
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              if (_activeStageIndex == 0 && idx != 0) {
+                                AudioPlayerService.instance.stop();
+                              }
+                              setState(() {
+                                _activeStageIndex = idx;
+                              });
                             }
-                            setState(() {
-                              _activeStageIndex = idx;
-                            });
-                          }
-                        },
-                        label: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 18 * scale,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : AppTheme.textDark,
+                          },
+                          label: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : AppTheme.textDark,
+                            ),
+                          ),
+                          selectedColor: AppTheme.primaryTeal,
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
+                              width: 2,
+                            ),
                           ),
                         ),
-                        selectedColor: AppTheme.primaryTeal,
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
-                            width: 2,
+                      );
+                    }),
+                    if (widget.lesson.activities.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: ElevatedButton.icon(
+                          key: const Key('lesson_activities_top_button'),
+                          onPressed: () {
+                            AudioPlayerService.instance.stop();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => InteractiveActivityScreen(
+                                  activities: widget.lesson.activities,
+                                  lessonTitle: widget.lesson.title,
+                                  lessonIdToComplete: widget.lesson.id,
+                                  progressService: widget.progressService,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.sports_esports_rounded, size: 22),
+                          label: Text(
+                            'الاِنْتِقَالُ إِلَى التَّمَارِينِ التَّفَاعُلِيَّةِ (${widget.lesson.activities.length} أَنْشِطَة)',
+                            style: TextStyle(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accentAmber,
+                            foregroundColor: Colors.white,
+                            elevation: 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(color: Color(0xFFD97706), width: 1.5),
+                            ),
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
+                  ],
                 ),
               ),
 
@@ -350,41 +390,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
             // Display Active Stage Content
             _buildActiveStageContent(scale, passage, discovery),
-
-            const SizedBox(height: 32),
-
-            // Classroom Activities Launch Button
-            SizedBox(
-              height: 72,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => InteractiveActivityScreen(
-                        activities: widget.lesson.activities,
-                        lessonTitle: widget.lesson.title,
-                        lessonIdToComplete: widget.lesson.id,
-                        progressService: widget.progressService,
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentAmber,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                ),
-                icon: const Icon(Icons.sports_esports_rounded, size: 36),
-                label: Text(
-                  'الاِنْتِقَالُ إِلَى التَّمَارِينِ التَّفَاعُلِيَّةِ (${widget.lesson.activities.length} أَنْشِطَة)',
-                  style: TextStyle(
-                    fontSize: 22 * scale,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
