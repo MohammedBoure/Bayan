@@ -203,7 +203,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       if (passage != null && passage.vocabulary.isNotEmpty) '2. كَلِمَاتِي الجَدِيدَةُ',
       if (passage != null && passage.comprehensionQuestions.isNotEmpty) '3. أَقْرَأُ وَأَفْهَمُ',
       if (discovery != null)
-        isGrade4Or5 ? '4. أُلاَحِظُ وَأَكْتَشِفُ' : (discovery.title.isNotEmpty ? '4. ${discovery.title}' : '4. أُلاحِظُ وَأُمَيِّزُ'),
+        isGrade4Or5 ? '4. أُلاَحِظُ وَأَكْتَشِفُ' : '4. أُلاحِظُ وَأُمَيِّزُ',
       isGrade4Or5 ? '5. أُثْبِتُ' : '5. أَتَعَلَّمُ',
     ];
 
@@ -3492,13 +3492,40 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
+  String _getDiscoveryLessonTitle() {
+    switch (widget.lesson.id) {
+      case 'g3_l1':
+        return 'الْفِعْلُ الْمَاضِي';
+      case 'g3_l2':
+        return 'الْفِعْلُ الْمُضَارِعُ';
+      case 'g3_l3':
+        return 'فِعْلُ الْأَمْرِ';
+      case 'g4_l1':
+        return 'الْجُمْلَةُ الْفِعْلِيَّةُ';
+      case 'g4_l2':
+        return 'الْفَاعِلُ';
+      case 'g4_l3':
+        return 'الْمَفْعُولُ بِهِ';
+      case 'g5_l1':
+        return 'نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ';
+      case 'g5_l2':
+        return 'جَوَازِمُ الْفِعْلِ الْمُضَارِعِ';
+      case 'g5_l3':
+        return 'الْفِعْلُ الْمَبْنِيُّ لِلْمَجْهُولِ وَنَائِبُ الْفَاعِلِ';
+      default:
+        final match = RegExp(r'\(([^)]+)\)').firstMatch(widget.lesson.title);
+        if (match != null && match.group(1) != null) {
+          return match.group(1)!.trim();
+        }
+        return widget.lesson.title;
+    }
+  }
+
   // 4. ألاحظ وأميز / ألاحظ وأكتشف
   Widget _buildStageDiscovery(double scale, GrammarDiscoveryModel discovery) {
     final isGrade4Or5 = widget.lesson.gradeId == 'grade4' || widget.lesson.gradeId == 'grade5';
     final stagePrefix = isGrade4Or5 ? 'أُلاَحِظُ وَأَكْتَشِفُ' : 'أُلاَحِظُ وَأُمَيِّزُ';
-    final displayTitle = discovery.title.isNotEmpty && discovery.title != stagePrefix
-        ? '$stagePrefix: ${discovery.title}'
-        : stagePrefix;
+    final lessonTitle = _getDiscoveryLessonTitle();
 
     return Container(
       padding: const EdgeInsets.all(26),
@@ -3510,13 +3537,72 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // عنوان الدرس بخط غليظ مشكول دائماً فوق "ألاحظ وأميز"
+          Container(
+            key: const Key('discovery_lesson_title_banner'),
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryTeal.withValues(alpha: 0.12),
+                  const Color(0xFFF0FDF4),
+                ],
+                begin: Alignment.centerRight,
+                end: Alignment.centerLeft,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.35), width: 1.8),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryTeal,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.bookmark_rounded, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'عُنْوَانُ الدَّرْسِ:',
+                        style: TextStyle(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryTeal,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        lessonTitle,
+                        style: TextStyle(
+                          fontSize: 24 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryDark,
+                          height: 1.3,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 12,
             children: [
               const Icon(Icons.find_in_page_rounded, color: AppTheme.primaryTeal, size: 34),
               Text(
-                displayTitle,
+                stagePrefix,
                 style: TextStyle(fontSize: 22 * scale, fontWeight: FontWeight.w900, color: AppTheme.textDark),
               ),
             ],

@@ -2895,6 +2895,97 @@ void main() {
     expect(find.byType(InteractiveActivityScreen), findsOneWidget);
     expect(find.text(lesson1.activities.first.title), findsWidgets);
   });
+
+  testWidgets('LessonDetailScreen renders bold diacritized lesson title above discovery stage for Grades 3, 4, and 5', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+
+    // 1. Grade 3 Lesson 1
+    final g3l1 = repo.getGradeById('grade3')!.lessons.firstWhere((l) => l.id == 'g3_l1');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g3l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاحِظُ وَأُمَيِّزُ")
+    await tester.tap(find.text('4. أُلاحِظُ وَأُمَيِّزُ'));
+    await tester.pumpAndSettle();
+
+    // Verify banner exists directly above observation header
+    final bannerFinderG3 = find.byKey(const Key('discovery_lesson_title_banner'));
+    expect(bannerFinderG3, findsOneWidget);
+    expect(find.descendant(of: bannerFinderG3, matching: find.text('عُنْوَانُ الدَّرْسِ:')), findsOneWidget);
+    expect(find.descendant(of: bannerFinderG3, matching: find.text('الْفِعْلُ الْمَاضِي')), findsOneWidget);
+
+    // Verify title text has bold weight
+    final titleWidgetG3 = tester.widget<Text>(find.descendant(of: bannerFinderG3, matching: find.text('الْفِعْلُ الْمَاضِي')));
+    expect(titleWidgetG3.style?.fontWeight, equals(FontWeight.w900));
+
+    // 2. Grade 4 Lesson 2 (الفاعل)
+    final g4l2 = repo.getGradeById('grade4')!.lessons.firstWhere((l) => l.id == 'g4_l2');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g4l2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاَحِظُ وَأَكْتَشِفُ")
+    await tester.tap(find.text('4. أُلاَحِظُ وَأَكْتَشِفُ'));
+    await tester.pumpAndSettle();
+
+    final bannerFinderG4 = find.byKey(const Key('discovery_lesson_title_banner'));
+    expect(bannerFinderG4, findsOneWidget);
+    expect(find.descendant(of: bannerFinderG4, matching: find.text('الْفَاعِلُ')), findsOneWidget);
+    final titleWidgetG4 = tester.widget<Text>(find.descendant(of: bannerFinderG4, matching: find.text('الْفَاعِلُ')));
+    expect(titleWidgetG4.style?.fontWeight, equals(FontWeight.w900));
+
+    // 3. Grade 5 Lesson 1 (نواصب الفعل المضارع)
+    final g5l1 = repo.getGradeById('grade5')!.lessons.firstWhere((l) => l.id == 'g5_l1');
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g5l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاَحِظُ وَأَكْتَشِفُ")
+    await tester.tap(find.text('4. أُلاَحِظُ وَأَكْتَشِفُ'));
+    await tester.pumpAndSettle();
+
+    final bannerFinderG5 = find.byKey(const Key('discovery_lesson_title_banner'));
+    expect(bannerFinderG5, findsOneWidget);
+    expect(find.descendant(of: bannerFinderG5, matching: find.text('نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ')), findsOneWidget);
+    final titleWidgetG5 = tester.widget<Text>(find.descendant(of: bannerFinderG5, matching: find.text('نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ')));
+    expect(titleWidgetG5.style?.fontWeight, equals(FontWeight.w900));
+  });
 }
 
 
