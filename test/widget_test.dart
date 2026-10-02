@@ -260,7 +260,7 @@ void main() {
 
     // Check comprehensive quiz
     expect(grade4.comprehensiveQuiz, isNotNull);
-    expect(grade4.comprehensiveQuiz.questions.length, equals(5));
+    expect(grade4.comprehensiveQuiz.questions.length, equals(6));
   });
 
   test('ProgressService supports full teacher presentation configuration and persistence', () async {
@@ -2714,6 +2714,71 @@ void main() {
     expect(find.text('ذَهَبَ'), findsWidgets);
     expect(find.text('يَذْهَبُ'), findsWidgets);
     expect(find.text('اِذْهَبْ'), findsWidgets);
+  });
+
+  testWidgets('Grade 4 Comprehensive Evaluation contains 6 authentic activities from docx', (tester) async {
+    final grade4 = CurriculumRepository.instance.getGradeById('grade4')!;
+    expect(grade4.comprehensiveActivities.length, equals(6));
+
+    // Verify metadata for the 6 activities
+    final act1 = grade4.comprehensiveActivities[0];
+    expect(act1.type, equals(ActivityType.multiSelect));
+    expect(act1.sentenceItems?.length, equals(6));
+    expect(act1.correctIndices, equals([0, 2, 4]));
+
+    final act2 = grade4.comprehensiveActivities[1];
+    expect(act2.type, equals(ActivityType.sentencePartsAnalysis));
+    expect(act2.sentenceItems?.length, equals(3));
+    expect(act2.sentencePartsMap?.length, equals(3));
+
+    final act3 = grade4.comprehensiveActivities[2];
+    expect(act3.type, equals(ActivityType.sentenceMultiChoice));
+    expect(act3.sentenceItems?.length, equals(4));
+
+    final act4 = grade4.comprehensiveActivities[3];
+    expect(act4.type, equals(ActivityType.sentenceTargetTap));
+    expect(act4.sentenceItems?.length, equals(5));
+
+    final act5 = grade4.comprehensiveActivities[4];
+    expect(act5.type, equals(ActivityType.sentenceMultiChoice));
+    expect(act5.sentenceItems?.length, equals(5));
+
+    final act6 = grade4.comprehensiveActivities[5];
+    expect(act6.type, equals(ActivityType.textExtractionTable));
+    expect(act6.tableHeaders?.length, equals(4));
+    expect(act6.tableRows?.length, equals(7));
+
+    // Test rendering InteractiveActivityScreen with Grade 4 comprehensive activities
+    final ps = ProgressService();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: grade4.comprehensiveActivities,
+            lessonTitle: 'التَّقْوِيمُ الشَّامِلُ - ${grade4.title}',
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Activity 1 is displayed
+    expect(find.text('النشاط الأول: أَكْتَشِفُ الجُمْلَةَ الفِعْلِيَّةَ'), findsWidgets);
+    expect(find.text('اقْرَأِ الجُمَلَ الآتِيَةَ، ثُمَّ اخْتَرِ الجُمَلَ الَّتِي تَبْدَأُ بِفِعْلٍ:'), findsOneWidget);
+
+    // Switch to Activity 6 (Text Extraction Table)
+    await tester.tap(find.byKey(const Key('activity_tab_5')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('النشاط السادس: اسْتِخْرَاجٌ وَتَصْنِيفٌ مِنَ النَّصِّ'), findsWidgets);
+    expect(find.text('يَوْمٌ تَطَوُّعِيٌّ فِي الحَيِّ'), findsOneWidget);
+    expect(find.text('الجُمْلَةُ الفِعْلِيَّةُ'), findsWidgets);
+    expect(find.text('الفِعْلُ'), findsWidgets);
+    expect(find.text('الفَاعِلُ'), findsWidgets);
+    expect(find.text('المَفْعُولُ بِهِ'), findsWidgets);
   });
 }
 
