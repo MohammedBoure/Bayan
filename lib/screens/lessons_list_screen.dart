@@ -4,7 +4,6 @@ import '../models/lesson_model.dart';
 import '../services/progress_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_scaffold.dart';
-import 'interactive_activity_screen.dart';
 import 'lesson_detail_screen.dart';
 import 'quiz_evaluation_screen.dart';
 
@@ -114,7 +113,7 @@ class LessonsListScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const Text(
-                          'التَّطْبِيقَاتُ وَالتَّقْوِيمُ:',
+                          'التَّقْوِيمُ الشَّامِلُ:',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
@@ -122,27 +121,6 @@ class LessonsListScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildSpecialCard(
-                          context: context,
-                          title: 'أَنْشِطَةٌ وَتَدْرِيبَاتٌ تَفَاعُلِيَّةٌ',
-                          subtitle: 'تدريبات لغوية لتحديد الفعل والفاعل والمفعول به على السبورة',
-                          icon: Icons.extension_rounded,
-                          color: AppTheme.accentOrange,
-                          onTap: () {
-                            if (grade.lessons.isNotEmpty && grade.lessons.first.activities.isNotEmpty) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => InteractiveActivityScreen(
-                                    activities: grade.lessons.expand((l) => l.activities).toList(),
-                                    lessonTitle: 'تدريبات ${grade.title}',
-                                    progressService: progressService,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 18),
                         _buildSpecialCard(
                           context: context,
                           title: 'التَّقْوِيمُ الشَّامِلُ (الاِخْتِبَارُ)',
