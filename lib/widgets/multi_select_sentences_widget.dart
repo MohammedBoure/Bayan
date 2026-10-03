@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+class _ParagraphSentenceSegment {
+  final String text;
+  final int sentenceIndex;
+
+  const _ParagraphSentenceSegment(this.text, this.sentenceIndex);
+}
+
 /// Interactive sentence multi-selection widget for classroom whiteboards and Data Show.
-/// Supports paragraph context display, single-click toggle selection, counter pill,
-/// and instant teacher answer reveal.
+/// Supports paragraph context display with direct sentence tapping, vibrant emerald green
+/// selection highlighting, counter pill, intelligent error feedback ("حاول مرة أخرى"),
+/// and delayed solution reveal ("الجمل الفعلية الموجودة في الفقرة") shown only upon correct completion.
 class MultiSelectSentencesWidget extends StatefulWidget {
   final List<String> sentences;
   final List<int> correctIndices;
@@ -26,12 +34,33 @@ class MultiSelectSentencesWidget extends StatefulWidget {
 
 class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget> {
   final Set<int> _selectedIndices = {};
+  bool _hasChecked = false;
+  String? _statusMessage;
+  bool _statusIsSuccess = true;
+
+  // Pre-configured sentence segments for Samir's reading paragraph in Grade 4 Lesson 1
+  static const List<_ParagraphSentenceSegment> _samirParagraphSegments = [
+    _ParagraphSentenceSegment('استيقظَ سامرُ باكرًا،', 0),
+    _ParagraphSentenceSegment('ورتّبَ سريرَه،', 1),
+    _ParagraphSentenceSegment('ثم غسلَ وجهَه وتناولَ فطورَه،', 2),
+    _ParagraphSentenceSegment('كانتِ السماءُ صافيةً،', 3),
+    _ParagraphSentenceSegment('والهواءُ منعشًا،', 4),
+    _ParagraphSentenceSegment('خرجَ سامرُ إلى الحديقة،', 5),
+    _ParagraphSentenceSegment('فـسقى الأزهارَ', 6),
+    _ParagraphSentenceSegment('وجمعَ الأوراقَ المتساقطةَ،', 7),
+    _ParagraphSentenceSegment('بعد ذلك، جلسَ تحتَ شجرةٍ', 8),
+    _ParagraphSentenceSegment('وقرأَ قصةً قصيرةً،', 9),
+    _ParagraphSentenceSegment('ثمّ عادَ سامرُ إلى البيتِ وهو يشعرُ بالسعادةِ.', 12),
+  ];
 
   @override
   void initState() {
     super.initState();
     if (widget.areAnswersRevealed) {
       _selectedIndices.addAll(widget.correctIndices);
+      _hasChecked = true;
+      _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ الإِجَابَاتِ وَالجُمَلِ الفِعْلِيَّةِ!';
+      _statusIsSuccess = true;
     }
     _checkValidation();
   }
@@ -43,11 +72,16 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
       setState(() {
         _selectedIndices.clear();
         _selectedIndices.addAll(widget.correctIndices);
+        _hasChecked = true;
+        _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ الإِجَابَاتِ وَالجُمَلِ الفِعْلِيَّةِ!';
+        _statusIsSuccess = true;
       });
       _checkValidation();
     } else if (!widget.areAnswersRevealed && oldWidget.areAnswersRevealed) {
       setState(() {
         _selectedIndices.clear();
+        _hasChecked = false;
+        _statusMessage = null;
       });
       _checkValidation();
     }
@@ -60,7 +94,28 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
       } else {
         _selectedIndices.add(index);
       }
+      _hasChecked = false;
+      _statusMessage = null;
     });
+    _checkValidation();
+  }
+
+  void _verifyAnswers() {
+    final expectedSet = widget.correctIndices.toSet();
+    final isCorrect = _selectedIndices.length == expectedSet.length &&
+        _selectedIndices.containsAll(expectedSet);
+
+    setState(() {
+      _hasChecked = true;
+      if (isCorrect) {
+        _statusMessage = '✅ أَحْسَنْتَ! لَقَدْ تَعَرَّفْتَ عَلَى الجُمَلِ الفِعْلِيَّةِ فِي الفِقْرَةِ بِنَجَاحٍ!';
+        _statusIsSuccess = true;
+      } else {
+        _statusMessage = '❌ حَاوِلْ مَرَّةً أُخْرَى! رَاجِعْ بِدَايَةَ كُلِّ جُمْلَةٍ: إِذَا بَدَأَتْ بِفِعْلٍ فَهِيَ جُمْلَةٌ فِعْلِيَّةٌ، وَإِذَا بَدَأَتْ بِاسْمٍ فَلَيْسَتْ جُمْلَةً فِعْلِيَّةً.';
+        _statusIsSuccess = false;
+      }
+    });
+
     _checkValidation();
   }
 
@@ -73,27 +128,32 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
 
   @override
   Widget build(BuildContext context) {
+    final expectedSet = widget.correctIndices.toSet();
+    final isSelectionValid = _selectedIndices.length == expectedSet.length &&
+        _selectedIndices.containsAll(expectedSet);
+    final showSolution = widget.areAnswersRevealed || (_hasChecked && isSelectionValid);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Optional Narrative Context Paragraph Box
+        // 1. Narrative Context Paragraph Box (Interactive sentence tapping)
         if (widget.contextParagraph != null && widget.contextParagraph!.trim().isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.4), width: 2),
+              border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.35), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
@@ -103,86 +163,228 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                         color: AppTheme.primaryTeal.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryTeal, size: 26),
+                      child: const Icon(Icons.auto_stories_rounded, color: AppTheme.primaryTeal, size: 26),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'نَصُّ الفِقْرَةِ المَقْرُوءَةِ:',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryDark,
+                    const Expanded(
+                      child: Text(
+                        'نَصُّ الفِقْرَةِ المَقْرُوءَةِ (انْقُرْ عَلَى الجُمَلِ لِتَحْدِيدِهَا بِالأَخْضَرِ):',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryDark,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _selectedIndices.isNotEmpty
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF0284C7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'المُحَدَّدُ: ${_selectedIndices.length} / ${widget.correctIndices.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  widget.contextParagraph!,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
-                    height: 1.85,
-                  ),
-                ),
+                const SizedBox(height: 16),
+
+                // Interactive Paragraph Sentence Pills
+                _buildInteractiveParagraph(),
               ],
             ),
           ),
           const SizedBox(height: 20),
         ],
 
-        // Instructions and Selection Counter Bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.touch_app_rounded, color: AppTheme.verbColor, size: 24),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'انْقُرْ عَلَى الجُمْلَةِ الفِعْلِيَّةِ لِتَحْدِيدِهَا، وَانْقُرْ ثَانِيَةً لإِلْغَائِهَا:',
+        // 2. Action Controls & Status Feedback Banner
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.checklist_rounded, color: Color(0xFF16A34A), size: 26),
+                const SizedBox(width: 8),
+                Text(
+                  'قَائِمَةُ الجُمَلِ لِلتَّمْيِيزِ (${_selectedIndices.length} مُحَدَّدَةٌ):',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+              ],
+            ),
+            ElevatedButton.icon(
+              onPressed: _verifyAnswers,
+              icon: const Icon(Icons.check_circle_rounded, size: 20),
+              label: const Text(
+                'تَحَقَّقْ مِنَ الإِجَابَةِ',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Live Status / Feedback Banner
+        if (_statusMessage != null) ...[
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: _statusIsSuccess ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _statusIsSuccess ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _statusIsSuccess ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                  color: _statusIsSuccess ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                  size: 22,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _statusMessage!,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textMuted,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: _statusIsSuccess ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                      height: 1.4,
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _selectedIndices.isNotEmpty
-                      ? AppTheme.primaryTeal.withValues(alpha: 0.15)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _selectedIndices.isNotEmpty ? AppTheme.primaryTeal : Colors.grey.shade300,
-                  ),
                 ),
-                child: Text(
-                  'المُحَدَّدُ: ${_selectedIndices.length} مِنْ ${widget.sentences.length}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: _selectedIndices.isNotEmpty ? AppTheme.primaryDark : AppTheme.textMuted,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
+          const SizedBox(height: 16),
+        ],
 
-        // List of Selectable Sentence Cards
+        // 3. Solution Card: الجمل الفعلية الموجودة في الفقرة (Revealed ONLY when answer is correct or revealed)
+        if (showSolution) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFF86EFAC), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ (${widget.correctIndices.length} جُمَلٍ فِعْلِيَّةٍ):',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...widget.correctIndices.asMap().entries.map((e) {
+                  final num = e.key + 1;
+                  final sIdx = e.value;
+                  final sentence = widget.sentences[sIdx];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: const Color(0xFF16A34A),
+                          child: Text(
+                            '$num',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            sentence,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                          ),
+                          child: const Text(
+                            'جُمْلَةٌ فِعْلِيَّةٌ ✓',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+
+        // 4. List of Selectable Sentence Cards (Bright Green when selected)
         ...widget.sentences.asMap().entries.map((entry) {
           final idx = entry.key;
           final sentence = entry.value;
@@ -195,31 +397,32 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
 
           if (widget.areAnswersRevealed) {
             if (isTargetCorrect) {
-              cardBg = const Color(0xFFECFDF5);
-              borderColor = AppTheme.successGreen;
-              textColor = const Color(0xFF065F46);
+              cardBg = const Color(0xFFDCFCE7);
+              borderColor = const Color(0xFF16A34A);
+              textColor = const Color(0xFF15803D);
             } else {
               cardBg = const Color(0xFFF8FAFC);
               borderColor = const Color(0xFFE2E8F0);
               textColor = AppTheme.textMuted;
             }
           } else if (isSelected) {
-            cardBg = AppTheme.primaryLight;
-            borderColor = AppTheme.primaryTeal;
-            textColor = AppTheme.primaryDark;
+            // Bright Green highlight on student selection
+            cardBg = const Color(0xFFDCFCE7);
+            borderColor = const Color(0xFF16A34A);
+            textColor = const Color(0xFF15803D);
           }
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 14),
+            margin: const EdgeInsets.only(bottom: 12),
             child: InkWell(
               onTap: () => _toggleIndex(idx),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   color: cardBg,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: borderColor,
                     width: isSelected || (widget.areAnswersRevealed && isTargetCorrect) ? 2.5 : 1.5,
@@ -227,8 +430,8 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                   boxShadow: [
                     BoxShadow(
                       color: isSelected
-                          ? AppTheme.primaryTeal.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.03),
+                          ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.02),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -236,20 +439,18 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                 ),
                 child: Row(
                   children: [
-                    // Checkbox / Number Avatar
+                    // Checkbox Avatar
                     Container(
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.primaryTeal
-                            : (widget.areAnswersRevealed && isTargetCorrect
-                                ? AppTheme.successGreen
-                                : const Color(0xFFF1F5F9)),
+                        color: isSelected || (widget.areAnswersRevealed && isTargetCorrect)
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected || (widget.areAnswersRevealed && isTargetCorrect)
-                              ? Colors.transparent
+                              ? const Color(0xFF16A34A)
                               : Colors.grey.shade400,
                         ),
                       ),
@@ -271,7 +472,7 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                         sentence,
                         style: TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                           color: textColor,
                           height: 1.5,
                         ),
@@ -284,18 +485,18 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isTargetCorrect ? const Color(0xFFD1FAE5) : const Color(0xFFF1F5F9),
+                          color: isTargetCorrect ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isTargetCorrect ? const Color(0xFF10B981) : Colors.grey.shade300,
+                            color: isTargetCorrect ? const Color(0xFF86EFAC) : Colors.grey.shade300,
                           ),
                         ),
                         child: Text(
-                          isTargetCorrect ? 'جُمْلَةٌ فِعْلِيَّةٌ ✓' : 'جُمْلَةٌ أُخْرَى',
+                          isTargetCorrect ? 'جُمْلَةٌ فِعْلِيَّةٌ ✓' : 'جُمْلَةٌ اسْمِيَّةٌ / أُخْرَى',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: isTargetCorrect ? const Color(0xFF047857) : AppTheme.textMuted,
+                            color: isTargetCorrect ? const Color(0xFF15803D) : AppTheme.textMuted,
                           ),
                         ),
                       ),
@@ -304,16 +505,16 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryTeal.withValues(alpha: 0.15),
+                          color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.primaryTeal),
+                          border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
                         ),
                         child: const Text(
-                          'مُحَدَّدَةٌ كَفِعْلِيَّةٍ',
+                          'جُمْلَةٌ فِعْلِيَّةٌ مُحَدَّدَةٌ ✓',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryDark,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF15803D),
                           ),
                         ),
                       ),
@@ -325,6 +526,68 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
           );
         }),
       ],
+    );
+  }
+
+  /// Builds interactive reading paragraph where tapping sentences highlights them in green.
+  Widget _buildInteractiveParagraph() {
+    final paragraph = widget.contextParagraph!;
+    final isSamirParagraph = paragraph.contains('سامر') || paragraph.contains('سريرَه');
+
+    if (isSamirParagraph) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 8,
+        children: _samirParagraphSegments.map((segment) {
+          final isSelected = _selectedIndices.contains(segment.sentenceIndex);
+
+          return InkWell(
+            onTap: () => _toggleIndex(segment.sentenceIndex),
+            borderRadius: BorderRadius.circular(10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                  width: isSelected ? 2 : 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isSelected) ...[
+                    const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    segment.text,
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+                      color: isSelected ? const Color(0xFF15803D) : AppTheme.textDark,
+                      height: 1.7,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    // Default narrative text rendering for any other paragraphs
+    return Text(
+      paragraph,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: AppTheme.textDark,
+        height: 1.85,
+      ),
     );
   }
 }

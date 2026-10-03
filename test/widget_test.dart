@@ -22,6 +22,7 @@ import 'package:nahw_app/widgets/audio_player_widget.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
 import 'package:nahw_app/widgets/image_matching_widget.dart';
 import 'package:nahw_app/widgets/multi_sentence_fill_widget.dart';
+import 'package:nahw_app/widgets/multi_select_sentences_widget.dart';
 import 'package:nahw_app/widgets/text_extraction_table_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -3155,6 +3156,104 @@ void main() {
     // Verify success feedback
     expect(find.textContaining('أَحْسَنْتَ! إِعْرَابُ «التَّلَامِيذُ» صَحِيحٌ وَتَامٌّ!'), findsOneWidget);
     expect(find.text('مُعْرَبٌ صَحِيحًا ✓'), findsWidgets);
+  });
+
+  testWidgets('Grade 4 Lesson 1 Activity 5 interactive verbal sentences green selection and delayed solution reveal', (WidgetTester tester) async {
+    final grade4 = Grade4CurriculumPack.buildGrade();
+    final lesson1 = grade4.lessons.firstWhere((l) => l.id == 'g4_l1');
+    final act5 = lesson1.activities.firstWhere((a) => a.id == 'g4_l1_act5');
+
+    expect(act5.type, ActivityType.multiSelect);
+    expect(act5.contextParagraph, isNotNull);
+    expect(act5.correctIndices, [0, 1, 2, 5, 6, 7, 8, 9, 12]);
+
+    bool validationReported = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: MultiSelectSentencesWidget(
+                sentences: act5.sentenceItems!,
+                correctIndices: act5.correctIndices!,
+                contextParagraph: act5.contextParagraph,
+                areAnswersRevealed: false,
+                onValidationChanged: (val) {
+                  validationReported = val;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Verify reading paragraph and interactive sentence pills are rendered
+    expect(find.textContaining('نَصُّ الفِقْرَةِ المَقْرُوءَةِ'), findsOneWidget);
+    expect(find.textContaining('استيقظَ سامرُ باكرًا،'), findsOneWidget);
+
+    // 2. Verify solution card "الجمل الفعلية الموجودة في الفقرة" is initially HIDDEN
+    expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsNothing);
+
+    // 3. Tap on sentence in paragraph: "استيقظَ سامرُ باكرًا،"
+    await tester.tap(find.textContaining('استيقظَ سامرُ باكرًا،'));
+    await tester.pumpAndSettle();
+
+    // Verify it is highlighted and counter reflects selection
+    expect(find.text('المُحَدَّدُ: 1 / 9'), findsOneWidget);
+    expect(find.text('جُمْلَةٌ فِعْلِيَّةٌ مُحَدَّدَةٌ ✓'), findsWidgets);
+
+    // 4. Select an incorrect non-verbal sentence from cards: "الهواءُ منعشٌ."
+    await tester.tap(find.text('الهواءُ منعشٌ.'));
+    await tester.pumpAndSettle();
+
+    // Click verify
+    await tester.tap(find.text('تَحَقَّقْ مِنَ الإِجَابَةِ'));
+    await tester.pumpAndSettle();
+
+    // Verify error feedback is displayed: "حاول مرة أخرى"
+    expect(find.textContaining('حَاوِلْ مَرَّةً أُخْرَى!'), findsOneWidget);
+    expect(validationReported, false);
+    // Solution card remains HIDDEN
+    expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsNothing);
+
+    // 5. Unselect the incorrect sentence
+    await tester.tap(find.text('الهواءُ منعشٌ.'));
+    await tester.pumpAndSettle();
+
+    // Select all remaining correct verbal sentences:
+    final verbalSentencesToSelect = [
+      'رتّبَ سريرَه.',
+      'غسلَ وجهَه وتناولَ فطورَه.',
+      'خرجَ سامرُ إلى الحديقة.',
+      'سقى الأزهارَ.',
+      'جمعَ الأوراقَ المتساقطةَ.',
+      'جلسَ تحتَ شجرةٍ.',
+      'قرأَ قصةً قصيرةً.',
+      'عادَ سامرُ إلى البيتِ وهو يشعرُ بالسعادةِ.',
+    ];
+    for (final s in verbalSentencesToSelect) {
+      await tester.tap(find.text(s));
+      await tester.pumpAndSettle();
+    }
+
+    // Verify 9 sentences selected
+    expect(find.text('المُحَدَّدُ: 9 / 9'), findsOneWidget);
+
+    // Click verify
+    await tester.tap(find.text('تَحَقَّقْ مِنَ الإِجَابَةِ'));
+    await tester.pumpAndSettle();
+
+    // Verify success feedback
+    expect(find.textContaining('أَحْسَنْتَ! لَقَدْ تَعَرَّفْتَ عَلَى الجُمَلِ الفِعْلِيَّةِ'), findsOneWidget);
+    expect(validationReported, true);
+
+    // Verify the solution card "الجمل الفعلية الموجودة في الفقرة" is NOW REVEALED
+    expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsOneWidget);
   });
 }
 

@@ -160,7 +160,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
     FeedbackDialog.show(
       context: context,
       isCorrect: isCorrect,
-      title: isCorrect ? 'أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ' : 'إِجَابَةٌ غَيْرُ صَحِيحَةٍ - حَاوِلْ ثَانِيَةً',
+      title: isCorrect ? 'أَحْسَنْتَ! إِجَابَةٌ صَحِيحَةٌ' : 'حَاوِلْ مَرَّةً أُخْرَى',
       message: isCorrect ? _currentActivity.correctFeedback : _currentActivity.incorrectFeedback,
       ruleSummary: _currentActivity.ruleSummary,
       onRetry: () => _retryCurrentActivity(),
