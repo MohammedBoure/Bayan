@@ -2299,6 +2299,15 @@ void main() {
     expect(find.textContaining('النشاط الثالث: صنّف الكلمات بالسحب والإفلات'), findsWidgets);
     expect(find.text('أفعال الأمر'), findsWidgets);
     expect(find.text('كلمات أخرى'), findsWidgets);
+    expect(find.text('كَتَبَ'), findsWidgets);
+    expect(find.text('يَرْسُمُ'), findsWidgets);
+    expect(find.text('قِفْ'), findsWidgets);
+    expect(find.text('اِرْجِعْ'), findsWidgets);
+    expect(find.text('سَمِعَ'), findsWidgets);
+    expect(find.text('يَضْحَكُ'), findsWidgets);
+    expect(find.text('نَامَ'), findsWidgets);
+    expect(find.text('يَعْمَلُ'), findsWidgets);
+    expect(find.text('اِلْعَبْ'), findsWidgets);
 
     // 4. Activity 4: Multiple choice (أكمل الجملة بفعل أمر مناسب)
     final tab3 = find.byKey(const Key('activity_tab_3'));
