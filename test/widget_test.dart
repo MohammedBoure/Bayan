@@ -3369,6 +3369,116 @@ void main() {
     expect(find.text('رُفِعَ'), findsWidgets);
     expect(find.byType(TextFormField), findsWidgets);
   });
+
+  testWidgets('Grade 5 Lesson 2 Activity 5 (تصنيف الأفعال المضارعة التسعة مع التشكيل)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
+    final act5 = l2.activities[4]; // Activity 5
+
+    expect(act5.type, ActivityType.categorizationThreeCols);
+    expect(act5.availableWords, containsAll([
+      'كَيْ يَنْجَحَ',
+      'يَعْمَلَانِ',
+      'لَمْ يَسْمَعُوا',
+      'يَكْتُبُ',
+      'لَمْ يَسْعَ',
+      'لَنْ يَرْمِيَ',
+      'لَا تَلْعَبْ',
+      'لَنْ يُهْمِلُوا',
+      'يُشَارِكُونَ',
+    ]));
+    expect(act5.categorizedItems?['الفِعْلُ المُضَارِعُ المَرْفُوعُ'], containsAll(['يَعْمَلَانِ', 'يَكْتُبُ', 'يُشَارِكُونَ']));
+    expect(act5.categorizedItems?['الفِعْلُ المُضَارِعُ المَنْصُوبُ'], containsAll(['كَيْ يَنْجَحَ', 'لَنْ يَرْمِيَ', 'لَنْ يُهْمِلُوا']));
+    expect(act5.categorizedItems?['الفِعْلُ المُضَارِعُ المَجْزُومُ'], containsAll(['لَمْ يَسْمَعُوا', 'لَمْ يَسْعَ', 'لَا تَلْعَبْ']));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act5],
+            lessonTitle: l2.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('كَيْ يَنْجَحَ'), findsOneWidget);
+    expect(find.text('يَعْمَلَانِ'), findsOneWidget);
+    expect(find.text('لَمْ يَسْمَعُوا'), findsOneWidget);
+    expect(find.text('لَمْ يَسْعَ'), findsOneWidget);
+    expect(find.text('لَنْ يَرْمِيَ'), findsOneWidget);
+    expect(find.text('لَا تَلْعَبْ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 5 Lesson 1 Activity 5 (جدول فارغ وكتابة أداة النصب وعلامة الإعراب)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l1 = grade5.lessons.firstWhere((l) => l.id == 'g5_l1');
+    final act5 = l1.activities[4]; // Activity 5
+
+    expect(act5.type, ActivityType.textExtractionTable);
+    expect(act5.requiresStudentInput, isTrue);
+    expect(act5.helperChips, containsAll([
+      'أَنْ',
+      'لَنْ',
+      'كَيْ',
+      'لَامُ التَّعْلِيلِ',
+      'الْفَتْحَةُ الظَّاهِرَةُ',
+      'حَذْفُ النُّونِ',
+    ]));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act5],
+            lessonTitle: l1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify empty table headers and helper chips
+    expect(find.text('الفِعْلُ المُضَارِعُ المَنْصُوبُ'), findsOneWidget);
+    expect(find.text('أَدَاةُ النَّصْبِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ النَّصْبِ'), findsOneWidget);
+    expect(find.textContaining('لَوْحَةُ الكَلِمَاتِ وَالعَلَامَاتِ المُسَاعِدَةِ'), findsOneWidget);
+
+    // Scroll to placeholder and tap to extract first row
+    final placeholder = find.text('؟ (عُنْصُرُ 1)');
+    await tester.ensureVisible(placeholder);
+    await tester.tap(placeholder);
+    await tester.pumpAndSettle();
+
+    expect(find.text('المُسْتَخْرَجُ: 1 / 10'), findsWidgets);
+    expect(find.text('يَنْجَحَ'), findsWidgets);
+    expect(find.byType(TextFormField), findsWidgets);
+  });
 }
 
 

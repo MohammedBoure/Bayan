@@ -131,6 +131,31 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
 
     if (stripPunct(normIn) == stripPunct(normMod)) return true;
 
+    // Tools: أدوات النصب وأدوات الجزم
+    if (normMod.contains('تعليل') && (normIn.contains('تعليل') || normIn == 'لام' || normIn == 'ل')) {
+      return true;
+    }
+    if (normMod.contains('ناهية') && (normIn.contains('ناهية') || normIn == 'لا')) {
+      return true;
+    }
+    if (normMod.contains('نافية') && (normIn.contains('نافية') || normIn == 'لم' || normIn == 'لن')) {
+      return true;
+    }
+
+    // Case marks: علامات النصب والجزم والإعراب
+    if (normMod.contains('فتحة') && (normIn.contains('فتحة') || normIn.contains('فتح'))) {
+      return true;
+    }
+    if (normMod.contains('نون') && (normIn.contains('نون') || normIn.contains('حذف'))) {
+      return true;
+    }
+    if (normMod.contains('سكون') && normIn.contains('سكون')) {
+      return true;
+    }
+    if (normMod.contains('علة') && (normIn.contains('علة') || normIn.contains('حذف'))) {
+      return true;
+    }
+
     // Col 2: زمن الفعل
     if (colIdx == 1) {
       if (normMod.contains('ماض') && (normIn.contains('ماض') || normIn.contains('ماضي'))) return true;
