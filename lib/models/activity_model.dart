@@ -22,6 +22,7 @@ enum ActivityType {
   sentencePartsAnalysis,
   textWordExtraction,
   tableFill,
+  sentenceTransformation,
 }
 
 /// Represents an interactive grammar activity designed for primary students.
@@ -72,6 +73,7 @@ class ActivityModel {
   final String noneOptionText;
   final List<String>? helperChips;
   final bool? requiresStudentParsing;
+  final bool? requiresStudentInput;
 
   const ActivityModel({
     required this.id,
@@ -114,6 +116,7 @@ class ActivityModel {
     this.noneOptionText = 'لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ',
     this.helperChips,
     this.requiresStudentParsing,
+    this.requiresStudentInput,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length

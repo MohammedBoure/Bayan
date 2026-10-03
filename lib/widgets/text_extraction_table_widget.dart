@@ -27,6 +27,7 @@ class TextExtractionTableWidget extends StatefulWidget {
   final String? tableTitle;
   final String? passageTitle;
   final bool? requiresStudentParsing;
+  final bool? requiresStudentInput;
   final List<String>? helperChips;
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
@@ -39,6 +40,7 @@ class TextExtractionTableWidget extends StatefulWidget {
     this.tableTitle,
     this.passageTitle,
     this.requiresStudentParsing,
+    this.requiresStudentInput,
     this.helperChips,
     required this.areAnswersRevealed,
     required this.onValidationChanged,
@@ -54,6 +56,9 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   final Map<int, TextEditingController> _controllers = {};
   final Map<int, bool?> _rowValidationStatus = {};
   final Map<int, String?> _rowFeedbackMessage = {};
+
+  final Map<String, TextEditingController> _cellControllers = {};
+  String? _focusedCellKey;
 
   String? _statusMessage;
   bool _statusIsSuccess = true;
@@ -88,12 +93,71 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           widget.tableHeaders == null &&
           widget.tableRows.any((r) => r.containsKey('parsing')));
 
+  bool get _isStudentTableInputMode =>
+      widget.requiresStudentInput == true ||
+      (widget.requiresStudentParsing == true && widget.tableHeaders != null);
+
   TextEditingController _getController(int idx) {
     if (!_controllers.containsKey(idx)) {
       final ctrl = TextEditingController();
       _controllers[idx] = ctrl;
     }
     return _controllers[idx]!;
+  }
+
+  TextEditingController _getCellController(int rowIdx, int colIdx) {
+    final key = '${rowIdx}_$colIdx';
+    if (!_cellControllers.containsKey(key)) {
+      _cellControllers[key] = TextEditingController();
+    }
+    return _cellControllers[key]!;
+  }
+
+  bool _isCellValid(int rowIdx, int colIdx, String input) {
+    if (input.trim().isEmpty) return false;
+    final row = widget.tableRows[rowIdx];
+    final colKey = 'col${colIdx + 1}';
+    final model = row[colKey] ?? '';
+
+    final cleanIn = ArabicCliticStemmer.stripDiacritics(input).trim();
+    final normIn = ArabicCliticStemmer.normalize(cleanIn);
+    final cleanMod = ArabicCliticStemmer.stripDiacritics(model).trim();
+    final normMod = ArabicCliticStemmer.normalize(cleanMod);
+
+    if (normIn == normMod) return true;
+
+    String stripPunct(String s) =>
+        s.replaceAll(RegExp(r'[.,؛،:؟!«»\(\)]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    if (stripPunct(normIn) == stripPunct(normMod)) return true;
+
+    // Col 2: زمن الفعل
+    if (colIdx == 1) {
+      if (normMod.contains('ماض') && (normIn.contains('ماض') || normIn.contains('ماضي'))) return true;
+      if (normMod.contains('مضارع') && normIn.contains('مضارع')) return true;
+    }
+
+    // Col 3: نائب الفاعل
+    if (colIdx == 2) {
+      final sIn = normIn.startsWith('ال') ? normIn.substring(2) : normIn;
+      final sMod = normMod.startsWith('ال') ? normMod.substring(2) : normMod;
+      if (sIn == sMod) return true;
+    }
+
+    // Col 4: علامة بناء أو رفع الفعل
+    if (colIdx == 3) {
+      if (normMod.contains('فتح') && (normIn.contains('فتح') || normIn.contains('فتحة'))) return true;
+      if (normMod.contains('ضم') && (normIn.contains('ضم') || normIn.contains('ضمة'))) return true;
+    }
+
+    // Col 5: علامة رفع نائب الفاعل
+    if (colIdx == 4) {
+      if (normMod.contains('ضم') && (normIn.contains('ضم') || normIn.contains('ضمة'))) return true;
+      if (normMod.contains('الف') && (normIn.contains('الف') || normIn.contains('ألف'))) return true;
+      if (normMod.contains('واو') && normIn.contains('واو')) return true;
+    }
+
+    return false;
   }
 
   @override
@@ -112,6 +176,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
       c.dispose();
     }
     _controllers.clear();
+    for (final c in _cellControllers.values) {
+      c.dispose();
+    }
+    _cellControllers.clear();
     super.dispose();
   }
 
@@ -129,6 +197,17 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
             _rowFeedbackMessage[i] = null;
           }
           _activeParsingRowIndex = 0;
+        }
+        if (_isStudentTableInputMode && widget.tableHeaders != null) {
+          final headers = widget.tableHeaders!;
+          for (int r = 0; r < widget.tableRows.length; r++) {
+            final row = widget.tableRows[r];
+            for (int c = 1; c < headers.length; c++) {
+              final key = 'col${c + 1}';
+              final val = row[key] ?? (row[headers[c]] ?? '');
+              _getCellController(r, c).text = val;
+            }
+          }
         }
         _statusMessage = 'تَمَّ عَرْضُ جَمِيعِ الإِجَابَاتِ وَحُلُولِ الجَدْوَلِ!';
         _statusIsSuccess = true;
@@ -154,12 +233,26 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         }
         _activeParsingRowIndex = 0;
       }
+      if (_isStudentTableInputMode && widget.tableHeaders != null) {
+        final headers = widget.tableHeaders!;
+        for (int r = 0; r < widget.tableRows.length; r++) {
+          final row = widget.tableRows[r];
+          for (int c = 1; c < headers.length; c++) {
+            final key = 'col${c + 1}';
+            final val = row[key] ?? (row[headers[c]] ?? '');
+            _getCellController(r, c).text = val;
+          }
+        }
+      }
     } else {
       _revealedRowIndices = {};
       _activeParsingRowIndex = null;
       _rowValidationStatus.clear();
       _rowFeedbackMessage.clear();
       for (final ctrl in _controllers.values) {
+        ctrl.clear();
+      }
+      for (final ctrl in _cellControllers.values) {
         ctrl.clear();
       }
     }
@@ -204,6 +297,9 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         for (final c in _controllers.values) {
           c.clear();
         }
+        for (final c in _cellControllers.values) {
+          c.clear();
+        }
         _statusMessage = 'تَمَّ إِخْفَاءُ جَمِيعِ الإِجَابَاتِ.';
         _statusIsSuccess = true;
       } else {
@@ -217,6 +313,17 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           }
           _activeParsingRowIndex = 0;
           _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَإِعْرَابَاتِ الجَدْوَلِ.';
+        } else if (_isStudentTableInputMode && widget.tableHeaders != null) {
+          final headers = widget.tableHeaders!;
+          for (int r = 0; r < widget.tableRows.length; r++) {
+            final row = widget.tableRows[r];
+            for (int c = 1; c < headers.length; c++) {
+              final key = 'col${c + 1}';
+              final val = row[key] ?? (row[headers[c]] ?? '');
+              _getCellController(r, c).text = val;
+            }
+          }
+          _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَحُلُولِ الجَدْوَلِ.';
         } else {
           _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَتَحْلِيلَاتِ الجَدْوَلِ.';
         }
@@ -232,7 +339,27 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
       return;
     }
 
-    if (_isStudentParsingMode) {
+    if (_isStudentTableInputMode) {
+      final allExtracted = _revealedRowIndices.length == widget.tableRows.length;
+      bool allCellsValid = true;
+      final colCount = widget.tableHeaders?.length ?? 1;
+
+      for (int r = 0; r < widget.tableRows.length; r++) {
+        if (!_revealedRowIndices.contains(r)) {
+          allCellsValid = false;
+          break;
+        }
+        for (int c = 1; c < colCount; c++) {
+          final text = _getCellController(r, c).text;
+          if (!_isCellValid(r, c, text)) {
+            allCellsValid = false;
+            break;
+          }
+        }
+        if (!allCellsValid) break;
+      }
+      widget.onValidationChanged(allExtracted && allCellsValid);
+    } else if (_isStudentParsingMode) {
       final allExtracted = _revealedRowIndices.length == widget.tableRows.length;
       final allParsed = widget.tableRows.asMap().keys.every(
             (idx) => _rowValidationStatus[idx] == true,
@@ -820,6 +947,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         if (_isStudentParsingMode) ...[
           const SizedBox(height: 24),
           _buildStudentParsingBuilder(),
+        ],
+        if (_isStudentTableInputMode) ...[
+          const SizedBox(height: 20),
+          _buildStudentTableHelperChips(),
         ],
       ],
     );
@@ -1464,6 +1595,172 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
       cellValues.add(val);
     }
 
+    if (_isStudentTableInputMode) {
+      final isExtracted = isRevealed || _revealedRowIndices.contains(idx) || widget.areAnswersRevealed;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: idx.isEven ? Colors.white : const Color(0xFFF8FAFC),
+          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Column 1: The extracted word / target
+            Expanded(
+              flex: 2,
+              child: isExtracted
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
+                      ),
+                      child: Text(
+                        word,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    )
+                  : InkWell(
+                      onTap: () => _toggleRow(idx),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.touch_app_rounded, size: 14, color: Color(0xFF64748B)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '؟ (عُنْصُرُ ${idx + 1})',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 8),
+
+            // Columns 2 to N: Student input fields!
+            for (int i = 1; i < headers.length; i++) ...[
+              Expanded(
+                flex: headers.length > 3 ? 2 : 3,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Builder(
+                    builder: (context) {
+                      if (widget.areAnswersRevealed) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Text(
+                            cellValues[i],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final cellCtrl = _getCellController(idx, i);
+                      final cellText = cellCtrl.text.trim();
+                      final isValid = isExtracted && _isCellValid(idx, i, cellText);
+                      final cellKey = '${idx}_$i';
+                      final isFocused = _focusedCellKey == cellKey;
+
+                      return TextFormField(
+                        controller: cellCtrl,
+                        enabled: isExtracted,
+                        textDirection: TextDirection.rtl,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isValid ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: isValid
+                              ? const Color(0xFFDCFCE7)
+                              : isExtracted
+                                  ? (isFocused ? const Color(0xFFF0F9FF) : Colors.white)
+                                  : const Color(0xFFF8FAFC),
+                          hintText: isExtracted ? '«اكْتُبْ هُنَا...»' : '—',
+                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: isValid
+                                  ? const Color(0xFF16A34A)
+                                  : isFocused
+                                      ? const Color(0xFF0284C7)
+                                      : const Color(0xFFCBD5E1),
+                              width: isValid || isFocused ? 1.8 : 1.0,
+                            ),
+                          ),
+                          suffixIcon: isValid
+                              ? const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF16A34A))
+                              : null,
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _focusedCellKey = cellKey;
+                            _activeParsingRowIndex = idx;
+                          });
+                        },
+                        onChanged: (_) {
+                          setState(() {});
+                          _checkValidation();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+            IconButton(
+              icon: Icon(
+                isExtracted ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                size: 18,
+                color: Colors.grey,
+              ),
+              onPressed: () => _toggleRow(idx),
+              tooltip: isExtracted ? 'إِخْفَاءٌ' : 'إِظْهَارٌ',
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -1591,6 +1888,98 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
             ),
             const SizedBox(width: 44),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentTableHelperChips() {
+    final chips = widget.helperChips ??
+        const [
+          'مَاضٍ',
+          'مُضَارِعٌ',
+          'مَبْنِيٌّ عَلَى الفَتْحِ',
+          'مَرْفُوعٌ بِالضَّمَّةِ',
+          'الضَّمَّةُ الظَّاهِرَةُ',
+          'الأَلِفُ (مُثَنًّى)',
+          'الوَاوُ (جَمْعُ مُذَكَّرٍ سَالِمٌ)',
+        ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.touch_app_rounded, color: Color(0xFF0284C7), size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'لَوْحَةُ الكَلِمَاتِ وَالعَلَامَاتِ المُسَاعِدَةِ: انْقُرْ عَلَى الخَانَةِ فِي الجَدْوَلِ، ثُمَّ انْقُرْ عَلَى الكَلِمَةِ هُنَا لِوَضْعِهَا مُبَاشَرَةً:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0369A1),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: chips.map((chip) {
+              return ActionChip(
+                label: Text(
+                  chip,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFF93C5FD)),
+                elevation: 1,
+                onPressed: () {
+                  if (_focusedCellKey != null) {
+                    _cellControllers[_focusedCellKey!]?.text = chip;
+                    setState(() {});
+                    _checkValidation();
+                  } else {
+                    bool inserted = false;
+                    final colCount = widget.tableHeaders?.length ?? 1;
+                    for (final r in _revealedRowIndices) {
+                      for (int c = 1; c < colCount; c++) {
+                        final ctrl = _getCellController(r, c);
+                        if (ctrl.text.trim().isEmpty) {
+                          ctrl.text = chip;
+                          _focusedCellKey = '${r}_$c';
+                          inserted = true;
+                          break;
+                        }
+                      }
+                      if (inserted) break;
+                    }
+                    if (!inserted && _revealedRowIndices.isNotEmpty) {
+                      final r = _revealedRowIndices.first;
+                      _getCellController(r, 1).text = chip;
+                    }
+                    setState(() {});
+                    _checkValidation();
+                  }
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );

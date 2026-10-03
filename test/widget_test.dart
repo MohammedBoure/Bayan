@@ -3255,6 +3255,120 @@ void main() {
     // Verify the solution card "الجمل الفعلية الموجودة في الفقرة" is NOW REVEALED
     expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsOneWidget);
   });
+
+  testWidgets('Grade 5 Lesson 3 Activity 3 (تحويل الجملة إلى المبني للمجهول كتابيا مع تشخيص الأخطاء)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    final act3 = l3.activities[2]; // Activity 3
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act3],
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Verify question prompt: exactly "حوّل الجملة من المبني للمعلوم إلى المبني للمجهول" without additions
+    expect(find.text('حَوِّلِ الجُمْلَةَ مِنَ المَبْنِيِّ لِلْمَعْلُومِ إِلَى المَبْنِيِّ لِلْمَجْهُولِ'), findsWidgets);
+    expect(find.textContaining('مع حذف الفاعل ورفع نائب الفاعل'), findsNothing);
+
+    // 2. Verify empty text inputs exist and NO chips to reorder
+    expect(find.byType(TextFormField), findsWidgets);
+    expect(find.text('«اكْتُبِ الجُمْلَةَ هُنَا بَعْدَ تَحْوِيلِهَا لِلْمَبْنِيِّ لِلْمَجْهُولِ مَعَ الشَّكْلِ...»'), findsWidgets);
+
+    // 3. Test linguistic error: student did not delete the subject
+    final firstInput = find.byType(TextFormField).first;
+    await tester.enterText(firstInput, 'كتب التلميذ الدرس');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('[خَطَأٌ لُغَوِيّ]'), findsOneWidget);
+    expect(find.textContaining('يَجِبُ حَذْفُ الفَاعِلِ (التلميذ)'), findsOneWidget);
+
+    // 4. Test diacritic error: active verb used instead of passive (fatha on first letter)
+    await tester.enterText(firstInput, 'كَتَبَ الدَّرْسُ');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('[خَطَأٌ شَكْلِيّ]'), findsOneWidget);
+    expect(find.textContaining('الفِعْلُ المَاضِي المَبْنِيُّ لِلْمَجْهُولِ يُضَمُّ أَوَّلُهُ'), findsOneWidget);
+
+    // 5. Test spelling error on sentence 3: taa marbuta as haa
+    final thirdInput = find.byType(TextFormField).at(2);
+    await tester.enterText(thirdInput, 'حُفِظَتِ القصيده');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('[خَطَأٌ إِمْلَائِيّ]'), findsOneWidget);
+    expect(find.textContaining('انْتَبِهْ لِلتَّاءِ المَرْبُوطَةِ'), findsOneWidget);
+
+    // 6. Test correct answer entry
+    await tester.enterText(firstInput, 'كُتِبَ الدَّرْسُ.');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('✅ مُمْتَازٌ! إِجَابَةٌ صَحِيحَةٌ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 5 Lesson 3 Activity 5 (استخراج وتحليل في جدول فارغ وكتابة الإجابة)', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l3 = grade5.lessons.firstWhere((l) => l.id == 'g5_l3');
+    final act5 = l3.activities[4]; // Activity 5
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act5],
+            lessonTitle: l3.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify empty table headers and helper chips panel
+    expect(find.text('الفِعْلُ المَبْنِيُّ لِلْمَجْهُولِ'), findsOneWidget);
+    expect(find.text('زَمَنُ الفِعْلِ'), findsOneWidget);
+    expect(find.text('نَائِبُ الفَاعِلِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ بِنَاءِ/رَفْعِ الفِعْلِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ رَفْعِ نَائِبِ الفَاعِلِ'), findsOneWidget);
+    expect(find.textContaining('لَوْحَةُ الكَلِمَاتِ وَالعَلَامَاتِ المُسَاعِدَةِ'), findsOneWidget);
+
+    // Scroll to placeholder and tap first unextracted placeholder to extract verb "رُفِعَ"
+    final placeholder = find.text('؟ (عُنْصُرُ 1)');
+    await tester.ensureVisible(placeholder);
+    await tester.tap(placeholder);
+    await tester.pumpAndSettle();
+
+    // The verb is extracted in Col 1, and Cols 2-5 are text fields waiting for student input
+    expect(find.text('المُسْتَخْرَجُ: 1 / 11'), findsWidgets);
+    expect(find.text('رُفِعَ'), findsWidgets);
+    expect(find.byType(TextFormField), findsWidgets);
+  });
 }
 
 

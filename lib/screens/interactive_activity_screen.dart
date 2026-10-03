@@ -15,6 +15,7 @@ import '../widgets/open_sentence_fill_widget.dart';
 import '../widgets/sentence_ordering_widget.dart';
 import '../widgets/sentence_parts_analysis_widget.dart';
 import '../widgets/sentence_target_tap_widget.dart';
+import '../widgets/sentence_transformation_widget.dart';
 import '../widgets/table_fill_widget.dart';
 import '../widgets/text_extraction_table_widget.dart';
 import '../widgets/text_word_extraction_widget.dart';
@@ -73,6 +74,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
   bool _partsAnalysisValid = false;
   bool _textWordExtractionValid = false;
   bool _tableFillValid = false;
+  bool _transformationValid = false;
 
   ActivityModel get _currentActivity => widget.activities[_currentIndex];
 
@@ -132,6 +134,9 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       case ActivityType.tableFill:
         isCorrect = _tableFillValid;
         break;
+      case ActivityType.sentenceTransformation:
+        isCorrect = _transformationValid;
+        break;
       case ActivityType.multipleChoice:
       case ActivityType.dragDropFillBlank:
       case ActivityType.selectVerb:
@@ -187,6 +192,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
       _tableFillValid = false;
+      _transformationValid = false;
       _areAnswersRevealed = widget.progressService.revealAnswersDirectly;
       if (_areAnswersRevealed && _currentActivity.correctIndex >= 0) {
         _selectedOptionIndex = _currentActivity.correctIndex;
@@ -218,6 +224,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
       _partsAnalysisValid = false;
       _textWordExtractionValid = false;
       _tableFillValid = false;
+      _transformationValid = false;
     });
   }
 
@@ -517,7 +524,8 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
                       _currentActivity.type != ActivityType.sentenceTargetTap &&
                       _currentActivity.type != ActivityType.sentencePartsAnalysis &&
                       _currentActivity.type != ActivityType.textWordExtraction &&
-                      _currentActivity.type != ActivityType.tableFill) ...[
+                      _currentActivity.type != ActivityType.tableFill &&
+                      _currentActivity.type != ActivityType.sentenceTransformation) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -750,6 +758,7 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           tableTitle: _currentActivity.tableTitle,
           passageTitle: _currentActivity.passageTitle,
           requiresStudentParsing: _currentActivity.requiresStudentParsing,
+          requiresStudentInput: _currentActivity.requiresStudentInput,
           helperChips: _currentActivity.helperChips,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
@@ -805,6 +814,18 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _tableFillValid = isValid;
+          },
+        );
+
+      case ActivityType.sentenceTransformation:
+        return SentenceTransformationWidget(
+          key: ValueKey('${_currentIndex}_$_attemptKey'),
+          sentenceItems: _currentActivity.sentenceItems ?? [_currentActivity.sentence],
+          targetSolutions: _currentActivity.sentenceSolutions ?? {},
+          prompt: _currentActivity.prompt,
+          areAnswersRevealed: _areAnswersRevealed,
+          onValidationChanged: (isValid) {
+            _transformationValid = isValid;
           },
         );
 
