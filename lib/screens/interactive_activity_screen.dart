@@ -749,6 +749,8 @@ class _InteractiveActivityScreenState extends State<InteractiveActivityScreen> {
           tableHeaders: _currentActivity.tableHeaders,
           tableTitle: _currentActivity.tableTitle,
           passageTitle: _currentActivity.passageTitle,
+          requiresStudentParsing: _currentActivity.requiresStudentParsing,
+          helperChips: _currentActivity.helperChips,
           areAnswersRevealed: _areAnswersRevealed,
           onValidationChanged: (isValid) {
             _extractionTableValid = isValid;

@@ -71,6 +71,7 @@ class ActivityModel {
   final bool allowNoneOption;
   final String noneOptionText;
   final List<String>? helperChips;
+  final bool? requiresStudentParsing;
 
   const ActivityModel({
     required this.id,
@@ -112,6 +113,7 @@ class ActivityModel {
     this.allowNoneOption = false,
     this.noneOptionText = 'لا يُوجَدُ فِعْلٌ مَبْنِيٌّ لِلْمَجْهُولِ',
     this.helperChips,
+    this.requiresStudentParsing,
   });
 
   String get correctAnswer => options.isNotEmpty && correctIndex >= 0 && correctIndex < options.length

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nahw_app/data/curriculum_repository.dart';
 import 'package:nahw_app/data/packs/grade3_curriculum_pack.dart';
+import 'package:nahw_app/data/packs/grade4_curriculum_pack.dart';
 import 'package:nahw_app/main.dart';
 import 'package:nahw_app/models/activity_model.dart';
 import 'package:nahw_app/models/lesson_model.dart';
@@ -21,6 +22,7 @@ import 'package:nahw_app/widgets/audio_player_widget.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
 import 'package:nahw_app/widgets/image_matching_widget.dart';
 import 'package:nahw_app/widgets/multi_sentence_fill_widget.dart';
+import 'package:nahw_app/widgets/text_extraction_table_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -1195,6 +1197,11 @@ void main() {
     expect(find.textContaining('النشاط الخامس: نص جديد'), findsWidgets);
     expect(find.textContaining('خرجَ التلاميذُ إلى ساحة المدرسة'), findsOneWidget);
     expect(find.textContaining('جَدْوَلُ الفَاعِلِ وَإِعْرَابِهِ'), findsOneWidget);
+
+    // Reveal all table rows
+    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِعْرَابَاتِ'));
+    await tester.pumpAndSettle();
+
     expect(find.text('التَّلَامِيذُ'), findsWidgets);
     expect(find.text('سَامِي'), findsWidgets);
     expect(find.text('مَرْيَمُ'), findsWidgets);
@@ -1202,10 +1209,6 @@ void main() {
     expect(find.text('الْهَوَاءُ'), findsWidgets);
     expect(find.text('الْأَطْفَالُ'), findsWidgets);
     expect(find.text('الْحَارِسُ'), findsWidgets);
-
-    // Reveal all table rows
-    await tester.tap(find.text('إِظْهَارُ جَمِيعِ الإِعْرَابَاتِ'));
-    await tester.pumpAndSettle();
 
     await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
@@ -3055,6 +3058,103 @@ void main() {
     // Verify linking confirmation does NOT show the image description
     expect(find.textContaining('طفل'), findsNothing);
     expect(find.text('تَمَّ الرَّبْطُ بِالصُّورَةِ'), findsOneWidget);
+  });
+
+  testWidgets('Grade 4 Lesson 2 Activity 5 interactive extraction and student parsing with distractors', (WidgetTester tester) async {
+    final grade4 = Grade4CurriculumPack.buildGrade();
+    final lesson2 = grade4.lessons.firstWhere((l) => l.id == 'g4_l2');
+    final act5 = lesson2.activities.firstWhere((a) => a.id == 'g4_l2_act5');
+
+    expect(act5.type, ActivityType.textExtractionTable);
+    expect(act5.requiresStudentParsing, true);
+    expect(act5.helperChips, isNotNull);
+    expect(act5.helperChips, contains('فَاعِلٌ'));
+    expect(act5.helperChips, contains('مَفْعُولٌ بِهِ')); // distractor
+    expect(act5.helperChips, contains('مَنْصُوبٌ')); // distractor
+    expect(act5.helperChips, contains('الْفَتْحَةُ الظَّاهِرَةُ')); // distractor
+
+    bool validationReported = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: TextExtractionTableWidget(
+                passage: act5.contextParagraph!,
+                tableRows: act5.tableRows!,
+                passageTitle: act5.passageTitle,
+                tableTitle: act5.tableTitle,
+                helperChips: act5.helperChips,
+                requiresStudentParsing: act5.requiresStudentParsing,
+                areAnswersRevealed: false,
+                onValidationChanged: (val) {
+                  validationReported = val;
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify initial table state: 0 extracted, placeholder items shown
+    expect(find.textContaining('المُسْتَخْرَجُ: 0 / 7'), findsOneWidget);
+    expect(find.textContaining('؟ (فَاعِلُ 1)'), findsOneWidget);
+    expect(find.text('فاعل مرفوع وعلامة رفعه الضمة الظاهرة على آخره.'), findsNothing);
+
+    // Tap on row 1 to extract "التَّلَامِيذُ"
+    await tester.tap(find.textContaining('انْقُرْ عَلَى الفَاعِلِ فِي النَّصِّ لِاسْتِخْرَاجِهِ').first);
+    await tester.pumpAndSettle();
+
+    // Verify "التَّلَامِيذُ" is now extracted in table, but model parsing is NOT automatically revealed
+    expect(find.text('التَّلَامِيذُ'), findsWidgets);
+    expect(find.text('فاعل مرفوع وعلامة رفعه الضمة الظاهرة على آخره.'), findsNothing);
+
+    // Verify builder panel is active for "التَّلَامِيذُ"
+    expect(find.textContaining('لَوْحَةُ بِنَاءِ إِعْرَابِ: «التَّلَامِيذُ»'), findsOneWidget);
+
+    // Test distractor detection: student clicks "مَفْعُولٌ بِهِ"
+    await tester.tap(find.widgetWithText(ActionChip, 'مَفْعُولٌ بِهِ'));
+    await tester.pumpAndSettle();
+
+    // Verify text field contains "مَفْعُولٌ بِهِ"
+    expect(find.textContaining('مَفْعُولٌ بِهِ'), findsWidgets);
+
+    // Student clicks verify
+    await tester.tap(find.text('تَحَقَّقْ مِنَ الإِعْرَابِ'));
+    await tester.pumpAndSettle();
+
+    // Verify error feedback explaining the distractor mistake
+    expect(find.textContaining('وَلَيْسَتْ مَفْعُولاً بِهِ'), findsWidgets);
+    expect(validationReported, false);
+
+    // Click clear button
+    await tester.tap(find.text('مَسْحُ الكُلِّ'));
+    await tester.pumpAndSettle();
+
+    // Now assemble correct parsing with authentic chips
+    await tester.tap(find.widgetWithText(ActionChip, 'فَاعِلٌ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'مَرْفُوعٌ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'وَعَلَامَةُ رَفْعِهِ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'الضَّمَّةُ الظَّاهِرَةُ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'عَلَى آخِرِهِ.'));
+    await tester.pumpAndSettle();
+
+    // Student clicks verify
+    await tester.tap(find.text('تَحَقَّقْ مِنَ الإِعْرَابِ'));
+    await tester.pumpAndSettle();
+
+    // Verify success feedback
+    expect(find.textContaining('أَحْسَنْتَ! إِعْرَابُ «التَّلَامِيذُ» صَحِيحٌ وَتَامٌّ!'), findsOneWidget);
+    expect(find.text('مُعْرَبٌ صَحِيحًا ✓'), findsWidgets);
   });
 }
 

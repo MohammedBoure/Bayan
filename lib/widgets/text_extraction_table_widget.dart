@@ -3,16 +3,31 @@ import 'package:flutter/material.dart';
 import '../nlp/arabic_clitic_stemmer.dart';
 import '../theme/app_theme.dart';
 
+/// Evaluation result for student-constructed Arabic syntactic parsing.
+class _ParsingEvaluationResult {
+  final bool isValid;
+  final String feedback;
+
+  const _ParsingEvaluationResult(this.isValid, this.feedback);
+}
+
 /// Text Extraction & Parsing Table widget
 /// Designed for classroom whiteboard, interactive touchscreens, and Data Show projectors.
 /// Displays an authentic reading story, supports interactive word tapping to discover and extract target words,
 /// and features an interactive table with detailed syntactic and grammatical analysis.
+///
+/// In student-parsing mode:
+/// - Words extracted from the text appear in the table without automatically revealing the parsing answer.
+/// - The student builds the authentic grammatical parsing using a rich palette of building blocks (including distractors).
+/// - Provides intelligent grammatical verification and targeted error feedback.
 class TextExtractionTableWidget extends StatefulWidget {
   final String passage;
   final List<Map<String, String>> tableRows;
   final List<String>? tableHeaders;
   final String? tableTitle;
   final String? passageTitle;
+  final bool? requiresStudentParsing;
+  final List<String>? helperChips;
   final bool areAnswersRevealed;
   final ValueChanged<bool> onValidationChanged;
 
@@ -23,6 +38,8 @@ class TextExtractionTableWidget extends StatefulWidget {
     this.tableHeaders,
     this.tableTitle,
     this.passageTitle,
+    this.requiresStudentParsing,
+    this.helperChips,
     required this.areAnswersRevealed,
     required this.onValidationChanged,
   });
@@ -33,9 +50,51 @@ class TextExtractionTableWidget extends StatefulWidget {
 
 class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   late Set<int> _revealedRowIndices;
+  int? _activeParsingRowIndex;
+  final Map<int, TextEditingController> _controllers = {};
+  final Map<int, bool?> _rowValidationStatus = {};
+  final Map<int, String?> _rowFeedbackMessage = {};
+
   String? _statusMessage;
   bool _statusIsSuccess = true;
   final List<TapGestureRecognizer> _recognizers = [];
+
+  // Default rich syntactic building blocks and distractors for Arabic subject parsing:
+  static const List<String> _defaultSubjectParsingChips = [
+    // أجزاء الإعراب الأصلية
+    'فَاعِلٌ',
+    'مَرْفُوعٌ',
+    'وَعَلَامَةُ رَفْعِهِ',
+    'الضَّمَّةُ الظَّاهِرَةُ',
+    'الضَّمَّةُ الْمُقَدَّرَةُ',
+    'عَلَى آخِرِهِ.',
+    'عَلَى الْيَاءِ مَنَعَ مِنْ ظُهُورِهَا الثِّقَلُ.',
+    // أجزاء ثانوية للتشتيت
+    'مَفْعُولٌ بِهِ',
+    'مَنْصُوبٌ',
+    'مَجْزُومٌ',
+    'وَعَلَامَةُ نَصْبِهِ',
+    'وَعَلَامَةُ جَزْمِهِ',
+    'الْفَتْحَةُ الظَّاهِرَةُ',
+    'الْكَسْرَةُ الظَّاهِرَةُ',
+    'السُّكُونُ',
+    'فِعْلٌ مَاضٍ',
+    'مَبْنِيٌّ عَلَى الْفَتْحِ',
+  ];
+
+  bool get _isStudentParsingMode =>
+      widget.requiresStudentParsing == true ||
+      (widget.requiresStudentParsing == null &&
+          widget.tableHeaders == null &&
+          widget.tableRows.any((r) => r.containsKey('parsing')));
+
+  TextEditingController _getController(int idx) {
+    if (!_controllers.containsKey(idx)) {
+      final ctrl = TextEditingController();
+      _controllers[idx] = ctrl;
+    }
+    return _controllers[idx]!;
+  }
 
   @override
   void initState() {
@@ -49,6 +108,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
       r.dispose();
     }
     _recognizers.clear();
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    _controllers.clear();
     super.dispose();
   }
 
@@ -58,6 +121,15 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
     if (widget.areAnswersRevealed && !oldWidget.areAnswersRevealed) {
       setState(() {
         _revealedRowIndices = Set.from(List.generate(widget.tableRows.length, (i) => i));
+        if (_isStudentParsingMode) {
+          for (int i = 0; i < widget.tableRows.length; i++) {
+            final model = widget.tableRows[i]['parsing'] ?? '';
+            _getController(i).text = model;
+            _rowValidationStatus[i] = true;
+            _rowFeedbackMessage[i] = null;
+          }
+          _activeParsingRowIndex = 0;
+        }
         _statusMessage = 'تَمَّ عَرْضُ جَمِيعِ الإِجَابَاتِ وَحُلُولِ الجَدْوَلِ!';
         _statusIsSuccess = true;
       });
@@ -73,8 +145,23 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   void _resetRevealedRows() {
     if (widget.areAnswersRevealed) {
       _revealedRowIndices = Set.from(List.generate(widget.tableRows.length, (i) => i));
+      if (_isStudentParsingMode) {
+        for (int i = 0; i < widget.tableRows.length; i++) {
+          final model = widget.tableRows[i]['parsing'] ?? '';
+          _getController(i).text = model;
+          _rowValidationStatus[i] = true;
+          _rowFeedbackMessage[i] = null;
+        }
+        _activeParsingRowIndex = 0;
+      }
     } else {
       _revealedRowIndices = {};
+      _activeParsingRowIndex = null;
+      _rowValidationStatus.clear();
+      _rowFeedbackMessage.clear();
+      for (final ctrl in _controllers.values) {
+        ctrl.clear();
+      }
     }
     _checkValidation();
   }
@@ -82,12 +169,25 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   void _toggleRow(int index) {
     setState(() {
       if (_revealedRowIndices.contains(index)) {
-        _revealedRowIndices.remove(index);
+        if (_isStudentParsingMode) {
+          // If already extracted, select it as active parsing target
+          _activeParsingRowIndex = index;
+          final word = widget.tableRows[index]['word'] ?? '';
+          _statusMessage = 'تَمَّ اخْتِيَارُ كَلِمَةِ «$word» لِإِعْرَابِهَا أَدْنَاهُ.';
+          _statusIsSuccess = true;
+        } else {
+          _revealedRowIndices.remove(index);
+        }
       } else {
         _revealedRowIndices.add(index);
         final row = widget.tableRows[index];
         final word = row['word'] ?? row['col1'] ?? '';
-        _statusMessage = 'تَمَّ إِظْهَارُ تَحْلِيلِ: «$word» فِي الجَدْوَلِ!';
+        if (_isStudentParsingMode) {
+          _activeParsingRowIndex = index;
+          _statusMessage = 'تَمَّ اسْتِخْرَاجُ «$word»؛ قُمْ الآنَ بِإِعْرَابِهَا فِي اللَّوْحَةِ أَدْنَاهُ.';
+        } else {
+          _statusMessage = 'تَمَّ إِظْهَارُ تَحْلِيلِ: «$word» فِي الجَدْوَلِ!';
+        }
         _statusIsSuccess = true;
       }
     });
@@ -98,11 +198,28 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
     setState(() {
       if (_revealedRowIndices.length == widget.tableRows.length) {
         _revealedRowIndices.clear();
+        _activeParsingRowIndex = null;
+        _rowValidationStatus.clear();
+        _rowFeedbackMessage.clear();
+        for (final c in _controllers.values) {
+          c.clear();
+        }
         _statusMessage = 'تَمَّ إِخْفَاءُ جَمِيعِ الإِجَابَاتِ.';
         _statusIsSuccess = true;
       } else {
         _revealedRowIndices = Set.from(List.generate(widget.tableRows.length, (i) => i));
-        _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَتَحْلِيلَاتِ الجَدْوَلِ.';
+        if (_isStudentParsingMode) {
+          for (int i = 0; i < widget.tableRows.length; i++) {
+            final model = widget.tableRows[i]['parsing'] ?? '';
+            _getController(i).text = model;
+            _rowValidationStatus[i] = true;
+            _rowFeedbackMessage[i] = null;
+          }
+          _activeParsingRowIndex = 0;
+          _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَإِعْرَابَاتِ الجَدْوَلِ.';
+        } else {
+          _statusMessage = 'تَمَّ إِظْهَارُ جَمِيعِ إِجَابَاتِ وَتَحْلِيلَاتِ الجَدْوَلِ.';
+        }
         _statusIsSuccess = true;
       }
     });
@@ -110,8 +227,21 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   }
 
   void _checkValidation() {
-    final allRevealed = widget.areAnswersRevealed || _revealedRowIndices.length == widget.tableRows.length;
-    widget.onValidationChanged(allRevealed);
+    if (widget.areAnswersRevealed) {
+      widget.onValidationChanged(true);
+      return;
+    }
+
+    if (_isStudentParsingMode) {
+      final allExtracted = _revealedRowIndices.length == widget.tableRows.length;
+      final allParsed = widget.tableRows.asMap().keys.every(
+            (idx) => _rowValidationStatus[idx] == true,
+          );
+      widget.onValidationChanged(allExtracted && allParsed);
+    } else {
+      final allRevealed = _revealedRowIndices.length == widget.tableRows.length;
+      widget.onValidationChanged(allRevealed);
+    }
   }
 
   /// Normalizes Arabic text for matching, removing diacritics and handling proclitics.
@@ -182,10 +312,20 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         final unrevealed = matchingIndices.where((idx) => !_revealedRowIndices.contains(idx)).toList();
         if (unrevealed.isNotEmpty) {
           _revealedRowIndices.addAll(unrevealed);
-          _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord» بِنَجَاحٍ، وَتَمَّ كَشْفُ السَّطْرِ المُنَاسِبِ فِي الجَدْوَلِ!';
+          if (_isStudentParsingMode) {
+            _activeParsingRowIndex = unrevealed.first;
+            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord»؛ قُمْ الآنَ بِإِعْرَابِهِ فِي لَوْحَةِ الإِعْرَابِ أَدْنَاهُ.';
+          } else {
+            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord» بِنَجَاحٍ، وَتَمَّ كَشْفُ السَّطْرِ المُنَاسِبِ فِي الجَدْوَلِ!';
+          }
           _statusIsSuccess = true;
         } else {
-          _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا فِي الجَدْوَلِ.';
+          if (_isStudentParsingMode) {
+            _activeParsingRowIndex = matchingIndices.first;
+            _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ إِعْرَابِهَا أَدْنَاهُ.';
+          } else {
+            _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا فِي الجَدْوَلِ.';
+          }
           _statusIsSuccess = true;
         }
       } else {
@@ -197,10 +337,211 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
     _checkValidation();
   }
 
+  void _insertChip(String chipText) {
+    if (_activeParsingRowIndex == null) return;
+    final ctrl = _getController(_activeParsingRowIndex!);
+    final current = ctrl.text.trim();
+    if (current.isEmpty) {
+      ctrl.text = chipText;
+    } else {
+      if (current.endsWith('.') || current.endsWith('،')) {
+        ctrl.text = '$current $chipText';
+      } else {
+        ctrl.text = '$current $chipText';
+      }
+    }
+    ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+    setState(() {
+      _rowValidationStatus[_activeParsingRowIndex!] = null;
+      _rowFeedbackMessage[_activeParsingRowIndex!] = null;
+    });
+    _checkValidation();
+  }
+
+  void _backspace() {
+    if (_activeParsingRowIndex == null) return;
+    final ctrl = _getController(_activeParsingRowIndex!);
+    if (ctrl.text.isEmpty) return;
+
+    final words = ctrl.text.trim().split(RegExp(r'\s+'));
+    if (words.isNotEmpty) {
+      words.removeLast();
+      ctrl.text = words.join(' ');
+      ctrl.selection = TextSelection.fromPosition(TextPosition(offset: ctrl.text.length));
+      setState(() {
+        _rowValidationStatus[_activeParsingRowIndex!] = null;
+        _rowFeedbackMessage[_activeParsingRowIndex!] = null;
+      });
+      _checkValidation();
+    }
+  }
+
+  void _clearParsing() {
+    if (_activeParsingRowIndex == null) return;
+    final ctrl = _getController(_activeParsingRowIndex!);
+    ctrl.clear();
+    setState(() {
+      _rowValidationStatus[_activeParsingRowIndex!] = null;
+      _rowFeedbackMessage[_activeParsingRowIndex!] = null;
+    });
+    _checkValidation();
+  }
+
+  void _verifyActiveRowParsing() {
+    if (_activeParsingRowIndex == null) return;
+    final idx = _activeParsingRowIndex!;
+    final row = widget.tableRows[idx];
+    final word = row['word'] ?? '';
+    final ctrl = _getController(idx);
+    final input = ctrl.text.trim();
+    final modelParsing = row['parsing'] ?? '';
+
+    final checkResult = _evaluateStudentParsing(input, modelParsing, word);
+    setState(() {
+      _rowValidationStatus[idx] = checkResult.isValid;
+      _rowFeedbackMessage[idx] = checkResult.feedback;
+      if (checkResult.isValid) {
+        _statusMessage = 'أَحْسَنْتَ! إِعْرَابُ «$word» صَحِيحٌ وَتَامٌّ! 🎉';
+        _statusIsSuccess = true;
+        // Auto-advance to the next extracted row that is not yet validated:
+        final nextUnparsed = widget.tableRows.asMap().keys.firstWhere(
+              (i) => _revealedRowIndices.contains(i) && _rowValidationStatus[i] != true,
+              orElse: () => -1,
+            );
+        if (nextUnparsed != -1) {
+          _activeParsingRowIndex = nextUnparsed;
+        }
+      } else {
+        _statusMessage = checkResult.feedback;
+        _statusIsSuccess = false;
+      }
+    });
+
+    _checkValidation();
+  }
+
+  _ParsingEvaluationResult _evaluateStudentParsing(String input, String modelParsing, String word) {
+    if (input.trim().isEmpty) {
+      return const _ParsingEvaluationResult(
+        false,
+        'الرَّجَاءُ كِتَابَةُ الإِعْرَابِ أَوِ انْقُرْ عَلَى الأَلْفَاظِ المُنَاسِبَةِ مِنَ القَائِمَةِ لِتَرْكِيبِهِ.',
+      );
+    }
+
+    final cleanInput = ArabicCliticStemmer.stripDiacritics(input).trim();
+    final normInput = ArabicCliticStemmer.normalize(cleanInput);
+    final cleanModel = ArabicCliticStemmer.stripDiacritics(modelParsing).trim();
+    final normModel = ArabicCliticStemmer.normalize(cleanModel);
+
+    String stripPunct(String s) =>
+        s.replaceAll(RegExp(r'[.,؛،:؟!«»]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    if (stripPunct(normInput) == stripPunct(normModel)) {
+      return const _ParsingEvaluationResult(true, 'أَحْسَنْتَ! إِعْرَابٌ صَحِيحٌ وَتَامٌّ بِنَجَاحٍ! 🎉');
+    }
+
+    // Checking for specific distractor errors:
+    if (normInput.contains('مفعول')) {
+      return _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: الكَلِمَةُ «$word» هِيَ فَاعِلٌ (دَلَّتْ عَلَى مَنْ قَامَ بِالفِعْلِ)، وَلَيْسَتْ مَفْعُولاً بِهِ!',
+      );
+    }
+
+    if (normInput.contains('فعل ماض') || (normInput.contains('فعل') && !normInput.contains('فاعل'))) {
+      return _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: الكَلِمَةُ «$word» اسْمٌ وَقَعَ فَاعِلاً، وَلَيْسَتْ فِعْلاً مَاضِيًا!',
+      );
+    }
+
+    if (normInput.contains('منصوب') || normInput.contains('مجزوم')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: الفَاعِلُ يَكُونُ دَائِمًا «مَرْفُوعًا»، وَلَا يَكُونُ مَنْصُوبًا وَلَا مَجْزُومًا!',
+      );
+    }
+
+    if (normInput.contains('فتحة') ||
+        normInput.contains('كسرة') ||
+        normInput.contains('سكون') ||
+        normInput.contains('نصب') ||
+        normInput.contains('جزم')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: عَلَامَةُ رَفْعِ الفَاعِلِ هِيَ الضَّمَّةُ، وَلَيْسَتِ الفَتْحَةَ أَوِ الكَسْرَةَ أَوِ السُّكُونَ.',
+      );
+    }
+
+    if (normModel.contains('مقدرة') && !normInput.contains('مقدرة')) {
+      return _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: «$word» اسْمٌ مَنْقُوصٌ يَنْتَهِي بِيَاءٍ، فَتَكُونُ الضَّمَّةُ «مُقَدَّرَةً عَلَى اليَاءِ مَنَعَ مِنْ ظُهُورِهَا الثِّقَلُ» وَلَيْسَتْ ظَاهِرَةً!',
+      );
+    }
+
+    if (!normModel.contains('مقدرة') && normInput.contains('مقدرة')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: الضَّمَّةُ هُنَا «ظَاهِرَةٌ عَلَى آخِرِهِ» لأَنَّ آخِرَ الكَلِمَةِ حَرْفٌ صَحِيحٌ تَظْهَرُ عَلَيْهِ الحَرَكَةُ.',
+      );
+    }
+
+    if (!normInput.contains('فاعل')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: يَجِبُ تَحْدِيدُ المَوْقِعِ الإِعْرَابِيِّ لِلْكَلِمَةِ أَنَّهَا (فَاعِلٌ).',
+      );
+    }
+
+    if (!normInput.contains('مرفوع')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: يَجِبُ تَحْدِيدُ الحَالَةِ الإِعْرَابِيَّةِ لِلْفَاعِلِ أَنَّهُ (مَرْفُوعٌ).',
+      );
+    }
+
+    if (!normInput.contains('ضمة')) {
+      return const _ParsingEvaluationResult(
+        false,
+        'تَنْبِيهٌ: يَجِبُ تَحْدِيدُ عَلَامَةِ الرَّفْعِ المُنَاسِبَةِ (الضَّمَّةُ...).',
+      );
+    }
+
+    // Syntactic match:
+    final hasFaiel = normInput.contains('فاعل');
+    final hasMarfoo = normInput.contains('مرفوع');
+    final hasDamma = normInput.contains('ضمة');
+
+    if (hasFaiel && hasMarfoo && hasDamma) {
+      if (normModel.contains('مقدرة')) {
+        if (normInput.contains('مقدرة') &&
+            (normInput.contains('ياء') || normInput.contains('الثقل') || normInput.contains('ثقل'))) {
+          return const _ParsingEvaluationResult(true, 'أَحْسَنْتَ! إِعْرَابٌ صَحِيحٌ وَتَامٌّ بِنَجَاحٍ! 🎉');
+        }
+      } else {
+        return const _ParsingEvaluationResult(true, 'أَحْسَنْتَ! إِعْرَابٌ صَحِيحٌ وَتَامٌّ بِنَجَاحٍ! 🎉');
+      }
+    }
+
+    return const _ParsingEvaluationResult(
+      false,
+      'حَاوِلْ مَرَّةً أُخْرَى! رَتِّبْ أَلْفَاظَ الإِعْرَابِ: (المَوْقِعُ + الحَالَةُ + عَلَامَةُ الرَّفْعِ + مَوْضِعُهَا).',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allRevealed = _revealedRowIndices.length == widget.tableRows.length;
     final hasCustomHeaders = widget.tableHeaders != null && widget.tableHeaders!.isNotEmpty;
+    final allParsedCount = widget.tableRows.asMap().keys.where((i) => _rowValidationStatus[i] == true).length;
+
+    // Ensure active row has a valid target if extracted rows exist
+    if (_isStudentParsingMode && _revealedRowIndices.isNotEmpty) {
+      if (_activeParsingRowIndex == null || !_revealedRowIndices.contains(_activeParsingRowIndex)) {
+        _activeParsingRowIndex = _revealedRowIndices.first;
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -223,7 +564,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header title + counter badge
+              // Header title + counter badges
               Row(
                 children: [
                   Container(
@@ -245,20 +586,43 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: allRevealed ? const Color(0xFF16A34A) : const Color(0xFF0284C7),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'المُسْتَخْرَجُ: ${_revealedRowIndices.length} / ${widget.tableRows.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: allRevealed ? const Color(0xFF16A34A) : const Color(0xFF0284C7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'المُسْتَخْرَجُ: ${_revealedRowIndices.length} / ${widget.tableRows.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (_isStudentParsingMode)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: allParsedCount == widget.tableRows.length
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFD97706),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'المُعْرَبُ: $allParsedCount / ${widget.tableRows.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -392,7 +756,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                               ),
                             ),
                           ),
-                        const SizedBox(width: 44), // Spacing for hide/reveal action
+                        const SizedBox(width: 44),
                       ],
                     ),
                   )
@@ -445,125 +809,647 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                     final parsing = row['parsing'] ?? '';
                     final isRevealed = _revealedRowIndices.contains(idx);
 
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: idx.isEven ? Colors.white : const Color(0xFFF8FAFC),
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade200),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Col 1: Word + Associated Verb
-                          SizedBox(
-                            width: 220,
-                            child: Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDCFCE7),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
-                                  ),
-                                  child: Text(
-                                    word,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF15803D),
-                                    ),
-                                  ),
-                                ),
-                                if (verb.isNotEmpty)
-                                  Text(
-                                    '($verb)',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(width: 14),
-
-                          // Col 2: Detailed Parsing (Tap to reveal or shown)
-                          Expanded(
-                            child: isRevealed
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0FDF4),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFFBBF7D0)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            parsing,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF15803D),
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.visibility_off_rounded, size: 18, color: Colors.grey),
-                                          onPressed: () => _toggleRow(idx),
-                                          tooltip: 'إِخْفَاءٌ',
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : InkWell(
-                                    onTap: () => _toggleRow(idx),
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: const Color(0xFFCBD5E1)),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.visibility_rounded, color: Color(0xFF0284C7), size: 18),
-                                          SizedBox(width: 6),
-                                          Text(
-                                            'عَرْضُ الإِعْرَابِ',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF0284C7),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    );
+                    return _buildSubjectParsingRow(idx, word, verb, parsing, isRevealed);
                   }),
               ],
             ),
           ),
         ),
+
+        // 4. Interactive Student Parsing Builder Panel (In student parsing mode)
+        if (_isStudentParsingMode) ...[
+          const SizedBox(height: 24),
+          _buildStudentParsingBuilder(),
+        ],
       ],
+    );
+  }
+
+  /// Builds row in standard 2-column layout with student-parsing support.
+  Widget _buildSubjectParsingRow(int idx, String word, String verb, String parsing, bool isRevealed) {
+    final isValidated = _rowValidationStatus[idx] == true;
+    final isActive = _activeParsingRowIndex == idx;
+    final studentText = _getController(idx).text;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isActive
+            ? const Color(0xFFEFF6FF)
+            : (idx.isEven ? Colors.white : const Color(0xFFF8FAFC)),
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200),
+          right: isActive ? const BorderSide(color: Color(0xFF0284C7), width: 4) : BorderSide.none,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Col 1: Word + Associated Verb
+          SizedBox(
+            width: 220,
+            child: isRevealed
+                ? Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+                        ),
+                        child: Text(
+                          word,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                      if (verb.isNotEmpty)
+                        Text(
+                          '($verb)',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.help_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Text(
+                              '؟ (فَاعِلُ ${idx + 1})',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+
+          const SizedBox(width: 14),
+
+          // Col 2: Detailed Parsing / Student Parsing Status
+          Expanded(
+            child: isRevealed
+                ? (_isStudentParsingMode
+                    ? _buildStudentParsingCell(idx, word, parsing, isValidated, isActive, studentText)
+                    : _buildDefaultRevealedParsingCell(idx, parsing))
+                : InkWell(
+                    onTap: () => _toggleRow(idx),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.touch_app_rounded, color: Color(0xFF0284C7), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'انْقُرْ عَلَى الفَاعِلِ فِي النَّصِّ لِاسْتِخْرَاجِهِ (أَوْ انْقُرْ هُنَا لِلْكَشْفِ)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0284C7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentParsingCell(
+      int idx, String word, String modelParsing, bool isValidated, bool isActive, String studentText) {
+    if (widget.areAnswersRevealed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFBBF7D0)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                modelParsing,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF15803D),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isValidated) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                studentText.isNotEmpty ? studentText : modelParsing,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF15803D),
+                  height: 1.4,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_note_rounded, size: 20, color: Color(0xFF0284C7)),
+              onPressed: () => setState(() => _activeParsingRowIndex = idx),
+              tooltip: 'تَعْدِيلُ الإِعْرَابِ',
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isActive) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF60A5FA), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.edit_note_rounded, color: Color(0xFF0284C7), size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                studentText.isNotEmpty ? studentText : 'قَيْدُ الإِعْرَابِ فِي اللَّوْحَةِ أَدْنَاهُ ✍️',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: studentText.isNotEmpty ? const Color(0xFF1E3A8A) : const Color(0xFF0284C7),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Extracted but neither active nor validated
+    return InkWell(
+      onTap: () => setState(() => _activeParsingRowIndex = idx),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFFCD34D), width: 1.2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.create_rounded, color: Color(0xFFD97706), size: 18),
+            const SizedBox(width: 8),
+            Text(
+              studentText.isNotEmpty ? '«$studentText» (انْقُرْ لِلْمُتَابَعَةِ)' : 'انْقُرْ هُنَا لِإِعْرَابِ «$word» ✍️',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB45309),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultRevealedParsingCell(int idx, String parsing) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              parsing,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF15803D),
+                height: 1.4,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.visibility_off_rounded, size: 18, color: Colors.grey),
+            onPressed: () => _toggleRow(idx),
+            tooltip: 'إِخْفَاءٌ',
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the dedicated interactive parsing builder with chips & distractors.
+  Widget _buildStudentParsingBuilder() {
+    if (_revealedRowIndices.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF86EFAC), width: 1.8),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.touch_app_rounded, color: Color(0xFF16A34A), size: 28),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Text(
+                'اقْرَأِ النَّصَّ أَعْلَاهُ وَانْقُرْ عَلَى الفَاعِلِ لِاسْتِخْرَاجِهِ، ثُمَّ سَتَفْتَحُ لَكَ لَوْحَةُ بِنَاءِ الإِعْرَابِ هُنَا بِاسْتِعْمَالِ بَنْكِ الأَلْفَاظِ!',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF15803D),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final activeIdx = _activeParsingRowIndex ?? _revealedRowIndices.first;
+    final row = widget.tableRows[activeIdx];
+    final activeWord = row['word'] ?? '';
+    final controller = _getController(activeIdx);
+    final isValidated = _rowValidationStatus[activeIdx] == true;
+    final isErrored = _rowValidationStatus[activeIdx] == false;
+    final feedbackMsg = _rowFeedbackMessage[activeIdx];
+    final chips = widget.helperChips ?? _defaultSubjectParsingChips;
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isValidated
+              ? const Color(0xFF16A34A)
+              : (isErrored ? const Color(0xFFEF4444) : const Color(0xFF0284C7)),
+          width: 2.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Header with active word and extracted word selector tabs
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (isValidated ? const Color(0xFF16A34A) : const Color(0xFF0284C7)).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isValidated ? Icons.check_circle_rounded : Icons.edit_note_rounded,
+                  color: isValidated ? const Color(0xFF16A34A) : const Color(0xFF0284C7),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'لَوْحَةُ بِنَاءِ إِعْرَابِ: «$activeWord»',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                    color: isValidated ? const Color(0xFF15803D) : AppTheme.primaryDark,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isValidated
+                      ? const Color(0xFFDCFCE7)
+                      : (isErrored ? const Color(0xFFFEE2E2) : const Color(0xFFE0F2FE)),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isValidated
+                        ? const Color(0xFF86EFAC)
+                        : (isErrored ? const Color(0xFFFCA5A5) : const Color(0xFFBAE6FD)),
+                  ),
+                ),
+                child: Text(
+                  isValidated
+                      ? 'مُعْرَبٌ صَحِيحًا ✓'
+                      : (isErrored ? 'يَحْتَاجُ تَصْحِيحًا ⚠️' : 'قَيْدُ الإِنْجَازِ ✍️'),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: isValidated
+                        ? const Color(0xFF15803D)
+                        : (isErrored ? const Color(0xFFB91C1C) : const Color(0xFF0369A1)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Extracted Words Switcher Tabs
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: widget.tableRows.asMap().entries.where((e) => _revealedRowIndices.contains(e.key)).map((e) {
+              final idx = e.key;
+              final word = e.value['word'] ?? '';
+              final isCurrent = idx == activeIdx;
+              final isWordValid = _rowValidationStatus[idx] == true;
+
+              return ChoiceChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(word, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                    const SizedBox(width: 4),
+                    Icon(
+                      isWordValid ? Icons.check_circle_rounded : Icons.edit_rounded,
+                      size: 14,
+                      color: isWordValid ? const Color(0xFF16A34A) : Colors.grey,
+                    ),
+                  ],
+                ),
+                selected: isCurrent,
+                selectedColor: const Color(0xFFBAE6FD),
+                backgroundColor: isWordValid ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+                side: BorderSide(
+                  color: isCurrent
+                      ? const Color(0xFF0284C7)
+                      : (isWordValid ? const Color(0xFF86EFAC) : const Color(0xFFCBD5E1)),
+                  width: isCurrent ? 2 : 1,
+                ),
+                onSelected: (_) => setState(() => _activeParsingRowIndex = idx),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Parsing Text Input Display
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isValidated
+                    ? const Color(0xFF86EFAC)
+                    : (isErrored ? const Color(0xFFFCA5A5) : const Color(0xFFCBD5E1)),
+                width: 1.8,
+              ),
+            ),
+            child: TextField(
+              controller: controller,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+                height: 1.6,
+              ),
+              maxLines: 2,
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.all(16),
+                border: InputBorder.none,
+                hintText: 'انْقُرْ عَلَى أَلْفَاظِ الإِعْرَابِ أَدْنَاهُ لِتَرْكِيبِ الإِعْرَابِ التَّامِّ، أَوْ اكْتُبْ مُبَاشَرَةً...',
+                hintStyle: TextStyle(fontSize: 15, color: Color(0xFF94A3B8)),
+              ),
+              onChanged: (_) {
+                setState(() {
+                  _rowValidationStatus[activeIdx] = null;
+                  _rowFeedbackMessage[activeIdx] = null;
+                });
+                _checkValidation();
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 3. Action Toolbar (Verify, Backspace, Clear)
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            alignment: WrapAlignment.start,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _verifyActiveRowParsing,
+                icon: const Icon(Icons.check_circle_rounded, size: 20),
+                label: const Text(
+                  'تَحَقَّقْ مِنَ الإِعْرَابِ',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _backspace,
+                icon: const Icon(Icons.backspace_rounded, size: 18),
+                label: const Text(
+                  'حَذْفُ كَلِمَةٍ',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD97706),
+                  side: const BorderSide(color: Color(0xFFF59E0B), width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _clearParsing,
+                icon: const Icon(Icons.clear_all_rounded, size: 18),
+                label: const Text(
+                  'مَسْحُ الكُلِّ',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFDC2626),
+                  side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+
+          // 4. Targeted Row Feedback Alert (if checked)
+          if (feedbackMsg != null) ...[
+            const SizedBox(height: 14),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isValidated ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isValidated ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isValidated ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+                    color: isValidated ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      feedbackMsg,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isValidated ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 18),
+
+          // 5. Grammatical Parts & Distractors Palette
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.category_rounded, size: 20, color: Color(0xFF0369A1)),
+                    SizedBox(width: 8),
+                    Text(
+                      'قَائِمَةُ أَلْفَاظِ وَأَجْزَاءِ الإِعْرَابِ (اخْتَرِ الأَجْزَاءَ المُنَاسِبَةَ لِإِكْمَالِ الإِعْرَابِ):',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF0369A1),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: chips.map((chip) {
+                    return ActionChip(
+                      label: Text(
+                        chip,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      backgroundColor: Colors.white,
+                      elevation: 1,
+                      shadowColor: Colors.black.withValues(alpha: 0.1),
+                      side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      onPressed: () => _insertChip(chip),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -590,7 +1476,6 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (isRevealed) ...[
-            // Column 1: Target word badge in green
             Expanded(
               flex: 2,
               child: Wrap(
@@ -617,8 +1502,6 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
               ),
             ),
             const SizedBox(width: 8),
-
-            // Remaining columns: Grammatical values
             for (int i = 1; i < cellValues.length; i++) ...[
               Expanded(
                 flex: headers.length > 3 ? 2 : 3,
@@ -648,7 +1531,6 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
               tooltip: 'إِخْفَاءٌ',
             ),
           ] else ...[
-            // Unrevealed Row Placeholder (Interactive Slot)
             Expanded(
               flex: 2,
               child: Container(
