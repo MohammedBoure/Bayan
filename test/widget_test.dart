@@ -19,6 +19,7 @@ import 'package:nahw_app/theme/app_theme.dart';
 import 'package:nahw_app/widgets/activation_dialog.dart';
 import 'package:nahw_app/widgets/audio_player_widget.dart';
 import 'package:nahw_app/widgets/celebration_dialog.dart';
+import 'package:nahw_app/widgets/image_matching_widget.dart';
 import 'package:nahw_app/widgets/multi_sentence_fill_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1929,10 +1930,10 @@ void main() {
     expect(find.text('شرب'), findsWidgets);
     expect(find.text('نام'), findsWidgets);
     expect(find.text('ركض'), findsWidgets);
-    expect(find.text('طفل يأكل'), findsWidgets);
-    expect(find.text('طفل يشرب'), findsWidgets);
-    expect(find.text('طفل نائم'), findsWidgets);
-    expect(find.text('طفل يركض'), findsWidgets);
+    expect(find.text('طفل يأكل'), findsNothing);
+    expect(find.text('طفل يشرب'), findsNothing);
+    expect(find.text('طفل نائم'), findsNothing);
+    expect(find.text('طفل يركض'), findsNothing);
 
     final act5 = l1.activities[4];
     expect(act5.imagePaths, isNotNull);
@@ -2985,6 +2986,66 @@ void main() {
     expect(find.descendant(of: bannerFinderG5, matching: find.text('نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ')), findsOneWidget);
     final titleWidgetG5 = tester.widget<Text>(find.descendant(of: bannerFinderG5, matching: find.text('نَوَاصِبُ الْفِعْلِ الْمُضَارِعِ')));
     expect(titleWidgetG5.style?.fontWeight, equals(FontWeight.w900));
+  });
+
+  testWidgets('Grade 3 Lesson 1 Activity 5 renders image matching without textual descriptions', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    final grade3 = repo.getGradeById('grade3')!;
+    final lesson1 = grade3.lessons.firstWhere((l) => l.id == 'g3_l1');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: lesson1.activities,
+            lessonTitle: lesson1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Navigate to Activity 5 (النشاط الخامس)
+    await tester.tap(find.text('5'));
+    await tester.pumpAndSettle();
+
+    // Verify activity title
+    expect(find.textContaining('النشاط الخامس: صل الفعل بالصورة المناسبة'), findsWidgets);
+
+    // Verify verbs are rendered
+    expect(find.text('أكل'), findsOneWidget);
+    expect(find.text('شرب'), findsOneWidget);
+    expect(find.text('نام'), findsOneWidget);
+    expect(find.text('ركض'), findsOneWidget);
+
+    // Verify NO textual descriptions of images exist anywhere on screen
+    expect(find.text('طفل يأكل'), findsNothing);
+    expect(find.text('طفل يشرب'), findsNothing);
+    expect(find.text('طفل نائم'), findsNothing);
+    expect(find.text('طفل يركض'), findsNothing);
+
+    // Verify 4 activity images are rendered within ImageMatchingWidget
+    expect(find.descendant(of: find.byType(ImageMatchingWidget), matching: find.byType(Image)), findsNWidgets(4));
+
+    // Tap on verb "أكل" to select it
+    await tester.tap(find.text('أكل'));
+    await tester.pumpAndSettle();
+
+    // Tap on the first activity image card
+    await tester.tap(find.descendant(of: find.byType(ImageMatchingWidget), matching: find.byType(Image)).first);
+    await tester.pumpAndSettle();
+
+    // Verify linking confirmation does NOT show the image description
+    expect(find.textContaining('طفل'), findsNothing);
+    expect(find.text('تَمَّ الرَّبْطُ بِالصُّورَةِ'), findsOneWidget);
   });
 }
 

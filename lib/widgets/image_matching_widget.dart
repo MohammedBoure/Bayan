@@ -172,7 +172,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
   }
 
   /// Displays high-definition enlarged image dialog for classroom presentation
-  void _showEnlargedImage(BuildContext context, String title, String? imageAsset) {
+  void _showEnlargedImage(BuildContext context, String? imageAsset) {
     if (imageAsset == null) return;
     showDialog(
       context: context,
@@ -198,10 +198,10 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                     child: const Icon(Icons.zoom_in_rounded, color: AppTheme.accentOrange, size: 26),
                   ),
                   const SizedBox(width: 14),
-                  Expanded(
+                  const Expanded(
                     child: Text(
-                      'مُعَايَنَةٌ بَصَرِيَّةٌ مُكَبَّرَةٌ: $title',
-                      style: const TextStyle(
+                      'مُعَايَنَةٌ بَصَرِيَّةٌ مُكَبَّرَةٌ لِلصُّورَةِ',
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.textDark,
@@ -529,7 +529,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                     ),
                     if (matchedDesc != null)
                       Text(
-                        'مَرْبُوطٌ مَعَ: $matchedDesc',
+                        'تَمَّ الرَّبْطُ بِالصُّورَةِ',
                         style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -659,7 +659,7 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                         child: Tooltip(
                           message: 'تَكْبِيرُ الصُّورَةِ مِلْءَ الشَّاشَةِ',
                           child: InkWell(
-                            onTap: () => _showEnlargedImage(context, desc, imageAsset),
+                            onTap: () => _showEnlargedImage(context, imageAsset),
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -726,44 +726,35 @@ class _ImageMatchingWidgetState extends State<ImageMatchingWidget> {
                 ),
                 const SizedBox(height: 12),
 
-                // 2. Action Description Label & Connection Indicator
+                // 2. Connection Indicator & Action Button (بدون أي وصف للصورة ليستنتج الطفل المعنى بمفرده)
                 Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            desc,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          if (isAssigned)
-                            Text(
-                              'مَرْبُوطٌ بِالفِعْلِ: «$assignedVerb»',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
+                      child: isAssigned
+                          ? Row(
+                              children: [
+                                Icon(Icons.check_circle_rounded, color: color, size: 20),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'مَرْبُوطٌ بِالفِعْلِ: «$assignedVerb»',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: color,
+                                  ),
+                                ),
+                              ],
                             )
-                          else
-                            Text(
+                          : Text(
                               _selectedVerb != null
                                   ? 'انْقُرْ هُنَا لِرَبْطِ «$_selectedVerb»'
-                                  : 'انْقُرْ لِتَحْدِيدِ الرَّبْطِ',
+                                  : 'انْقُرْ عَلَى الصُّورَةِ لِلرَّبْطِ',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade500,
+                                color: _selectedVerb != null ? AppTheme.accentOrange : Colors.grey.shade600,
                               ),
                             ),
-                        ],
-                      ),
                     ),
                     const SizedBox(width: 8),
 
