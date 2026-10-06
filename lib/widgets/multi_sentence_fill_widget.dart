@@ -268,10 +268,10 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
           final expectedWord = widget.solutions[sentence];
           final isCorrect = placedWord == expectedWord;
 
-          // Split sentence by blank markers: 2 or more underscores or dots
+          // Split sentence by blank markers: 2 or more underscores, 2 or more dots, or ellipsis
           // e.g. "يَحْرِصُ التِّلْمِيذُ _____ يُحَافِظَ..." -> ["يَحْرِصُ التِّلْمِيذُ", "يُحَافِظَ..."]
-          // e.g. "_____ أُهْمِلَ وَاجِبَاتِي..." -> ["", "أُهْمِلَ وَاجِبَاتِي..."]
-          final splitParts = sentence.split(RegExp(r'[_]{2,}|[\.]{3,}'));
+          // e.g. "أَمْسِ ..... سَامِي..." -> ["أَمْسِ", "سَامِي..."]
+          final splitParts = sentence.split(RegExp(r'[_]{2,}|[\.]{2,}|\u2026'));
           final prefixText = splitParts.isNotEmpty ? splitParts[0].trim() : '';
           final suffixText = splitParts.length > 1 ? splitParts.sublist(1).join(' ').trim() : '';
 
@@ -519,7 +519,10 @@ class _MultiSentenceFillWidgetState extends State<MultiSentenceFillWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              placedWord ?? (_selectedWord != null ? 'ضَعْ «$_selectedWord»' : '______'),
+              placedWord ??
+                  (_selectedWord != null
+                      ? 'ضَعْ «$_selectedWord»'
+                      : (sentence.contains('..') || sentence.contains('…') ? '.....' : '______')),
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,

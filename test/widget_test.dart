@@ -3479,6 +3479,67 @@ void main() {
     expect(find.text('يَنْجَحَ'), findsWidgets);
     expect(find.byType(TextFormField), findsWidgets);
   });
+
+  testWidgets('Grade 3 Comprehensive Evaluation Activity 3 renders dots for empty verb slot and no bracketed suggestions', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final grade3 = CurriculumRepository.instance.getGradeById('grade3')!;
+    final act3 = grade3.comprehensiveActivities[2];
+
+    expect(act3.type, equals(ActivityType.multiSentenceFill));
+    expect(act3.sentenceItems, isNotNull);
+    for (final s in act3.sentenceItems!) {
+      expect(s.contains('['), isFalse, reason: 'Sentence should not have bracketed suggestions: $s');
+      expect(s.contains('.....'), isTrue, reason: 'Sentence should have dots for the blank slot: $s');
+    }
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act3],
+            lessonTitle: 'التقويم الشامل',
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify activity title and prompt
+    expect(find.text('النشاط الثالث: أَكْمِلْ بِالفِعْلِ المُنَاسِبِ'), findsWidgets);
+    expect(find.text('ضَعِ الفِعْلَ المُنَاسِبَ فِي الفَرَاغِ:'), findsOneWidget);
+
+    // Verify no bracketed suggestion text exists on screen
+    expect(find.textContaining('[كَتَبَ]'), findsNothing);
+    expect(find.textContaining('[يَقْرَأُ]'), findsNothing);
+
+    // Verify dots are shown in the target blank slot
+    expect(find.text('.....'), findsWidgets);
+
+    // Verify available word chips exist
+    expect(find.text('كَتَبَ'), findsWidgets);
+    expect(find.text('يَقْرَأُ'), findsWidgets);
+    expect(find.text('اِفْتَحْ'), findsWidgets);
+    expect(find.text('شَرِبَ'), findsWidgets);
+    expect(find.text('تَذْهَبُ'), findsWidgets);
+    expect(find.text('اُكْتُبْ'), findsWidgets);
+
+    // Tap first sentence word chip 'كَتَبَ' to place it in the first sentence
+    await tester.tap(find.byKey(const Key('sentence_0_word_كَتَبَ')));
+    await tester.pumpAndSettle();
+
+    // Verify first blank now contains 'كَتَبَ'
+    expect(find.text('كَتَبَ'), findsWidgets);
+  });
 }
 
 
