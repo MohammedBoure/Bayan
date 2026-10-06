@@ -135,10 +135,15 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
     if (normMod.contains('تعليل') && (normIn.contains('تعليل') || normIn == 'لام' || normIn == 'ل')) {
       return true;
     }
-    if (normMod.contains('ناهية') && (normIn.contains('ناهية') || normIn == 'لا')) {
+    if ((normMod.contains('ناهية') || normMod == 'لا') && (normIn.contains('ناهية') || normIn.contains('لا'))) {
       return true;
     }
-    if (normMod.contains('نافية') && (normIn.contains('نافية') || normIn == 'لم' || normIn == 'لن')) {
+    if ((normMod == 'لم' || normMod.contains('لم') || normMod.contains('نافية')) &&
+        (normIn.contains('لم') || normIn.contains('نافية') || normIn == 'لن')) {
+      return true;
+    }
+    if ((normMod.contains('أمر') || normMod.contains('امر')) &&
+        (normIn.contains('أمر') || normIn.contains('امر') || normIn.contains('لام'))) {
       return true;
     }
 
@@ -520,7 +525,12 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           final sentenceText = row['col1'] ?? cleanWord;
           if (_isStudentTableInputMode) {
             _activeParsingRowIndex = firstUnrev;
-            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ الجُمْلَةَ الفِعْلِيَّةَ: «$sentenceText»؛ اكْتُبِ الآنَ عَنَاصِرَهَا (الفِعْلَ، الفَاعِلَ، المَفْعُولَ بِهِ) فِي الجَدْوَلِ!';
+            final remainingCols = widget.tableHeaders != null && widget.tableHeaders!.length > 1
+                ? widget.tableHeaders!.skip(1).join('، ')
+                : '';
+            _statusMessage = remainingCols.isNotEmpty
+                ? 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$sentenceText»؛ اكْتُبِ الآنَ فِي الجَدْوَلِ: ($remainingCols)!'
+                : 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$sentenceText»؛ اكْتُبِ الآنَ عَنَاصِرَهُ فِي الجَدْوَلِ!';
           } else if (_isStudentParsingMode) {
             _activeParsingRowIndex = firstUnrev;
             _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord»؛ قُمْ الآنَ بِإِعْرَابِهِ فِي لَوْحَةِ الإِعْرَابِ أَدْنَاهُ.';
@@ -534,7 +544,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           final sentenceText = row['col1'] ?? cleanWord;
           if (_isStudentTableInputMode) {
             _activeParsingRowIndex = firstIdx;
-            _statusMessage = 'هَذِهِ الجُمْلَةُ («$sentenceText») مُسْتَخْرَجَةٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ كِتَابَةِ عَنَاصِرِهَا فِي الجَدْوَلِ.';
+            _statusMessage = 'هَذَا العُنْصُرُ («$sentenceText») مُسْتَخْرَجٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ كِتَابَةِ بَقِيَّةِ الخَانَاتِ فِي الجَدْوَلِ.';
           } else if (_isStudentParsingMode) {
             _activeParsingRowIndex = firstIdx;
             _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ إِعْرَابِهَا أَدْنَاهُ.';
@@ -544,7 +554,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           _statusIsSuccess = true;
         }
       } else {
-        _statusMessage = 'كَلِمَةُ «$cleanWord» لَيْسَتْ ضِمْنَ الجُمَلِ الفِعْلِيَّةِ المَطْلُوبِ اسْتِخْرَاجُهَا. حَاوِلْ مَرَّةً أُخْرَى!';
+        _statusMessage = 'كَلِمَةُ «$cleanWord» لَيْسَتْ ضِمْنَ العَنَاصِرِ المَطْلُوبِ اسْتِخْرَاجُهَا. حَاوِلْ مَرَّةً أُخْرَى!';
         _statusIsSuccess = false;
       }
     });

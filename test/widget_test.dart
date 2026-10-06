@@ -3886,6 +3886,77 @@ void main() {
     expect(foundRedOkhidhat, isTrue, reason: 'Past passive verb (أخذت) must be highlighted in red');
     expect(foundRedDuriba, isTrue, reason: 'Past passive verb (ضرب) must be highlighted in red');
   });
+
+  testWidgets('Grade 5 Lesson 2 Activity 4 (جوازم المضارع) student table input mode test', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final grade5 = repo.getGradeById('grade5')!;
+    final l2 = grade5.lessons.firstWhere((l) => l.id == 'g5_l2');
+    final a4 = l2.activities.firstWhere((a) => a.id == 'g5_l2_a4');
+
+    expect(a4.requiresStudentInput, isTrue);
+    expect(a4.helperChips, isNotNull);
+    expect(a4.helperChips!, contains('لَا النَّاهِيَةُ'));
+    expect(a4.helperChips!, contains('السُّكُونُ الظَّاهِرُ'));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [a4],
+            lessonTitle: l2.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify activity title
+    expect(find.textContaining('النشاط الرابع: أَسْتَخْرِجُ وَأُحَلِّلُ مِنَ النَّصِّ'), findsWidgets);
+    // Verify table headers
+    expect(find.text('الفِعْلُ المُضَارِعُ المَجْزُومُ'), findsOneWidget);
+    expect(find.text('أَدَاةُ الجَزْمِ'), findsOneWidget);
+    expect(find.text('عَلَامَةُ الجَزْمِ'), findsOneWidget);
+
+    // Verify helper chips panel is rendered
+    expect(find.textContaining('لَوْحَةُ الكَلِمَاتِ وَالعَلَامَاتِ المُسَاعِدَةِ'), findsOneWidget);
+    expect(find.text('لَا النَّاهِيَةُ'), findsWidgets);
+
+    // Click on element 1 row placeholder to reveal it
+    final revealBtn = find.text('؟ (عُنْصُرُ 1)');
+    expect(revealBtn, findsOneWidget);
+    await tester.ensureVisible(revealBtn);
+    await tester.tap(revealBtn);
+    await tester.pumpAndSettle();
+
+    // Verify row 0 is extracted (displays 'تُهْمِلُوا') and has editable text fields
+    expect(find.text('تُهْمِلُوا'), findsOneWidget);
+    final textFields = find.byType(TextFormField);
+    expect(textFields, findsWidgets);
+
+    // Tap on the first enabled input field (column 2: tool)
+    await tester.tap(textFields.first);
+    await tester.pumpAndSettle();
+
+    // Tap the helper chip 'لَا النَّاهِيَةُ'
+    final chipLa = find.widgetWithText(ActionChip, 'لَا النَّاهِيَةُ').first;
+    await tester.ensureVisible(chipLa);
+    await tester.tap(chipLa);
+    await tester.pumpAndSettle();
+
+    // Now verify the text is entered
+    expect(find.text('لَا النَّاهِيَةُ'), findsWidgets);
+  });
 }
 
 
