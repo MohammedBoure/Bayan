@@ -4058,8 +4058,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     return false;
   }
 
-  /// Attempts to decompose a compound token containing a subjunctive particle (لام التعليل)
-  /// and a target verb, e.g. وَلِأُوَاصِلَ -> [وَ] + [لِ] (green) + [أُوَاصِلَ] (red).
+  /// Attempts to decompose a compound token containing a governing particle or prefix, e.g.:
+  /// - Particle with proclitic prefix: أَلَمْ -> [أَ] (normal) + [لَمْ] (green)
+  ///                                   فَلَمْ -> [فَ] (normal) + [لَمْ] (green)
+  ///                                   وَلَمْ -> [وَ] (normal) + [لَمْ] (green)
+  ///                                   وَلَا  -> [وَ] (normal) + [لَا]  (green)
+  /// - Attached subjunctive particle + verb: وَلِأُوَاصِلَ -> [وَ] (normal) + [لِ] (green) + [أُوَاصِلَ] (red)
+  ///                                         لِأُوَاصِلَ  -> [لِ] (green) + [أُوَاصِلَ] (red)
   bool _tryDecomposeDiscoveryToken(
     String token,
     List<String> targetWords,
@@ -4067,12 +4072,65 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     double scale,
     List<InlineSpan> spans,
   ) {
-    if (greenTargetWords.isEmpty || targetWords.isEmpty) return false;
+    if (greenTargetWords.isEmpty && targetWords.isEmpty) return false;
 
     final cleanToken = ArabicCliticStemmer.stripDiacritics(token).trim();
     final diacritics = RegExp(r'[\u064B-\u0652\u0670\u0640]');
 
-    // Case 1: 'و' + 'ل' + verb (e.g. وَلِأُوَاصِلَ)
+    // Case 1: Particle with proclitic prefix (e.g. أَلَمْ, فَلَمْ, وَلَمْ, وَلَا, فَلَا)
+    if (greenTargetWords.isNotEmpty && cleanToken.length > 2) {
+      for (final prefixChar in ['أ', 'إ', 'ا', 'ف', 'و']) {
+        if (cleanToken.startsWith(prefixChar)) {
+          final remainderClean = cleanToken.substring(1);
+          final hasMatchingParticle = greenTargetWords.any((target) {
+            final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+            final normTarget = ArabicCliticStemmer.normalize(target);
+            return remainderClean == cleanTarget || ArabicCliticStemmer.normalize(remainderClean) == normTarget;
+          });
+
+          if (hasMatchingParticle) {
+            int prefixEnd = 1;
+            while (prefixEnd < token.length && diacritics.hasMatch(token[prefixEnd])) {
+              prefixEnd++;
+            }
+
+            final prefixPart = token.substring(0, prefixEnd);
+            final particlePart = token.substring(prefixEnd);
+
+            // Proclitic prefix in normal style
+            spans.add(
+              TextSpan(
+                text: prefixPart,
+                style: TextStyle(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                  height: 1.9,
+                ),
+              ),
+            );
+
+            // Particle in bold green style
+            spans.add(
+              TextSpan(
+                text: particlePart,
+                style: TextStyle(
+                  fontSize: 25 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF16A34A),
+                  backgroundColor: const Color(0xFFDCFCE7),
+                  height: 1.9,
+                ),
+              ),
+            );
+
+            return true;
+          }
+        }
+      }
+    }
+
+    // Case 2: 'و' + 'ل' + verb (e.g. وَلِأُوَاصِلَ)
     if (cleanToken.startsWith('ول') && cleanToken.length > 2) {
       final remainderClean = cleanToken.substring(2);
       final hasMatchingVerb = targetWords.any((target) {

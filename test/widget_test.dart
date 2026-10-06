@@ -3745,6 +3745,79 @@ void main() {
     expect(foundRedVerb, isTrue, reason: 'Subjunctive verbs must be highlighted in red');
     expect(foundDecomposedGreenLam, isTrue, reason: 'Lam al-taaleel in ولأواصل must be decomposed and highlighted in green');
   });
+
+  testWidgets('Grade 5 Lesson 2 discovery stage renders jussive particles in green and verbs in red', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    final g5l2 = repo.getGradeById('grade5')!.lessons.firstWhere((l) => l.id == 'g5_l2');
+
+    expect(g5l2.discovery, isNotNull);
+    expect(g5l2.discovery!.greenTargetWords, contains('لَمْ'));
+    expect(g5l2.discovery!.greenTargetWords, contains('لَا'));
+    expect(g5l2.discovery!.targetWords, containsAll(['تَجْلِسْ', 'تَفْهَمُوا', 'يُرِدْ', 'أَدْرِ']));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g5l2,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاَحِظُ وَأَكْتَشِفُ")
+    await tester.tap(find.text('4. أُلاَحِظُ وَأَكْتَشِفُ'));
+    await tester.pumpAndSettle();
+
+    // Inspect RichText widgets in discovery stage
+    final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+    bool foundGreenLa = false;
+    bool foundGreenLam = false;
+    bool foundRedVerb = false;
+    bool foundNormalPrefixHamza = false;
+    bool foundNormalPrefixFaa = false;
+
+    for (final richText in richTexts) {
+      richText.text.visitChildren((span) {
+        if (span is TextSpan) {
+          final text = span.text;
+          final color = span.style?.color;
+          if (text == 'لَا' && color == const Color(0xFF16A34A)) {
+            foundGreenLa = true;
+          }
+          if (text == 'لَمْ' && color == const Color(0xFF16A34A)) {
+            foundGreenLam = true;
+          }
+          if ((text == 'تَجْلِسْ' || text == 'تَفْهَمُوا' || text == 'يُرِدْ' || text == 'أَدْرِ') &&
+              color == const Color(0xFFDC2626)) {
+            foundRedVerb = true;
+          }
+          if (text == 'أَ' && color == AppTheme.textDark) {
+            foundNormalPrefixHamza = true;
+          }
+          if (text == 'فَ' && color == AppTheme.textDark) {
+            foundNormalPrefixFaa = true;
+          }
+        }
+        return true;
+      });
+    }
+
+    expect(foundGreenLa, isTrue, reason: 'Jussive particle (لا الناهية) must be highlighted in green');
+    expect(foundGreenLam, isTrue, reason: 'Jussive particle (لم النافية) must be highlighted in green');
+    expect(foundRedVerb, isTrue, reason: 'Jussive verbs (تجلس، تفهموا، يرد، أدر) must be highlighted in red');
+    expect(foundNormalPrefixHamza, isTrue, reason: 'Interrogative hamza in ألم must be decomposed and rendered in standard text color');
+    expect(foundNormalPrefixFaa, isTrue, reason: 'Conjunction faa in فلم must be decomposed and rendered in standard text color');
+  });
 }
 
 
