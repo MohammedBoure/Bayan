@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-class _ParagraphSentenceSegment {
-  final String text;
-  final int sentenceIndex;
 
-  const _ParagraphSentenceSegment(this.text, this.sentenceIndex);
-}
 
 /// Interactive sentence multi-selection widget for classroom whiteboards and Data Show.
 /// Supports paragraph context display with direct sentence tapping, vibrant emerald green
@@ -38,20 +33,7 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
   String? _statusMessage;
   bool _statusIsSuccess = true;
 
-  // Pre-configured sentence segments for Samir's reading paragraph in Grade 4 Lesson 1
-  static const List<_ParagraphSentenceSegment> _samirParagraphSegments = [
-    _ParagraphSentenceSegment('استيقظَ سامرُ باكرًا،', 0),
-    _ParagraphSentenceSegment('ورتّبَ سريرَه،', 1),
-    _ParagraphSentenceSegment('ثم غسلَ وجهَه وتناولَ فطورَه،', 2),
-    _ParagraphSentenceSegment('كانتِ السماءُ صافيةً،', 3),
-    _ParagraphSentenceSegment('والهواءُ منعشًا،', 4),
-    _ParagraphSentenceSegment('خرجَ سامرُ إلى الحديقة،', 5),
-    _ParagraphSentenceSegment('فـسقى الأزهارَ', 6),
-    _ParagraphSentenceSegment('وجمعَ الأوراقَ المتساقطةَ،', 7),
-    _ParagraphSentenceSegment('بعد ذلك، جلسَ تحتَ شجرةٍ', 8),
-    _ParagraphSentenceSegment('وقرأَ قصةً قصيرةً،', 9),
-    _ParagraphSentenceSegment('ثمّ عادَ سامرُ إلى البيتِ وهو يشعرُ بالسعادةِ.', 12),
-  ];
+
 
   @override
   void initState() {
@@ -168,7 +150,7 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        'نَصُّ الفِقْرَةِ المَقْرُوءَةِ (انْقُرْ عَلَى الجُمَلِ لِتَحْدِيدِهَا بِالأَخْضَرِ):',
+                        'نَصُّ الفِقْرَةِ المَقْرُوءَةِ:',
                         style: TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w900,
@@ -529,64 +511,28 @@ class _MultiSelectSentencesWidgetState extends State<MultiSelectSentencesWidget>
     );
   }
 
-  /// Builds interactive reading paragraph where tapping sentences highlights them in green.
+  /// Builds continuous reading paragraph as one unified flowing narrative text (نص واحد غير مقسم).
   Widget _buildInteractiveParagraph() {
     final paragraph = widget.contextParagraph!;
-    final isSamirParagraph = paragraph.contains('سامر') || paragraph.contains('سريرَه');
 
-    if (isSamirParagraph) {
-      return Wrap(
-        spacing: 6,
-        runSpacing: 8,
-        children: _samirParagraphSegments.map((segment) {
-          final isSelected = _selectedIndices.contains(segment.sentenceIndex);
-
-          return InkWell(
-            onTap: () => _toggleIndex(segment.sentenceIndex),
-            borderRadius: BorderRadius.circular(10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isSelected) ...[
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    segment.text,
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
-                      color: isSelected ? const Color(0xFF15803D) : AppTheme.textDark,
-                      height: 1.7,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    }
-
-    // Default narrative text rendering for any other paragraphs
-    return Text(
-      paragraph,
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: AppTheme.textDark,
-        height: 1.85,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+      ),
+      child: Text(
+        paragraph,
+        textAlign: TextAlign.justify,
+        style: const TextStyle(
+          fontSize: 23,
+          fontWeight: FontWeight.bold,
+          color: AppTheme.textDark,
+          height: 1.95,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

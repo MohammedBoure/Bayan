@@ -3177,6 +3177,10 @@ void main() {
   });
 
   testWidgets('Grade 4 Lesson 1 Activity 5 interactive verbal sentences green selection and delayed solution reveal', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
     final grade4 = Grade4CurriculumPack.buildGrade();
     final lesson1 = grade4.lessons.firstWhere((l) => l.id == 'g4_l1');
     final act5 = lesson1.activities.firstWhere((a) => a.id == 'g4_l1_act5');
@@ -3217,8 +3221,8 @@ void main() {
     // 2. Verify solution card "الجمل الفعلية الموجودة في الفقرة" is initially HIDDEN
     expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsNothing);
 
-    // 3. Tap on sentence in paragraph: "استيقظَ سامرُ باكرًا،"
-    await tester.tap(find.textContaining('استيقظَ سامرُ باكرًا،'));
+    // 3. Tap on sentence card: "استيقظَ سامرُ باكرًا."
+    await tester.tap(find.text('استيقظَ سامرُ باكرًا.'));
     await tester.pumpAndSettle();
 
     // Verify it is highlighted and counter reflects selection
@@ -3240,6 +3244,7 @@ void main() {
     expect(find.textContaining('الجُمَلُ الفِعْلِيَّةُ المَوْجُودَةُ فِي الفِقْرَةِ'), findsNothing);
 
     // 5. Unselect the incorrect sentence
+    await tester.ensureVisible(find.text('الهواءُ منعشٌ.'));
     await tester.tap(find.text('الهواءُ منعشٌ.'));
     await tester.pumpAndSettle();
 
@@ -3255,6 +3260,7 @@ void main() {
       'عادَ سامرُ إلى البيتِ وهو يشعرُ بالسعادةِ.',
     ];
     for (final s in verbalSentencesToSelect) {
+      await tester.ensureVisible(find.text(s));
       await tester.tap(find.text(s));
       await tester.pumpAndSettle();
     }
@@ -3263,6 +3269,7 @@ void main() {
     expect(find.text('المُحَدَّدُ: 9 / 9'), findsOneWidget);
 
     // Click verify
+    await tester.ensureVisible(find.text('تَحَقَّقْ مِنَ الإِجَابَةِ'));
     await tester.tap(find.text('تَحَقَّقْ مِنَ الإِجَابَةِ'));
     await tester.pumpAndSettle();
 
