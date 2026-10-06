@@ -3818,6 +3818,74 @@ void main() {
     expect(foundNormalPrefixHamza, isTrue, reason: 'Interrogative hamza in ألم must be decomposed and rendered in standard text color');
     expect(foundNormalPrefixFaa, isTrue, reason: 'Conjunction faa in فلم must be decomposed and rendered in standard text color');
   });
+
+  testWidgets('Grade 5 Lesson 3 discovery stage renders present passive verbs in green and past passive verbs in red', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    final g5l3 = repo.getGradeById('grade5')!.lessons.firstWhere((l) => l.id == 'g5_l3');
+
+    expect(g5l3.discovery, isNotNull);
+    expect(g5l3.discovery!.greenTargetWords, contains('يُحْكَى'));
+    expect(g5l3.discovery!.greenTargetWords, contains('يُسْمَعُ'));
+    expect(g5l3.discovery!.targetWords, contains('أُخِذَتْ'));
+    expect(g5l3.discovery!.targetWords, contains('ضُرِبَ'));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g5l3,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاَحِظُ وَأَكْتَشِفُ")
+    await tester.tap(find.text('4. أُلاَحِظُ وَأَكْتَشِفُ'));
+    await tester.pumpAndSettle();
+
+    // Inspect RichText widgets in discovery stage
+    final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+    bool foundGreenYuhka = false;
+    bool foundGreenYusmaa = false;
+    bool foundRedOkhidhat = false;
+    bool foundRedDuriba = false;
+
+    for (final richText in richTexts) {
+      richText.text.visitChildren((span) {
+        if (span is TextSpan) {
+          final text = span.text;
+          final color = span.style?.color;
+          if (text == 'يُحْكَى' && color == const Color(0xFF16A34A)) {
+            foundGreenYuhka = true;
+          }
+          if (text == 'يُسْمَعُ' && color == const Color(0xFF16A34A)) {
+            foundGreenYusmaa = true;
+          }
+          if (text == 'أُخِذَتْ' && color == const Color(0xFFDC2626)) {
+            foundRedOkhidhat = true;
+          }
+          if (text == 'ضُرِبَ' && color == const Color(0xFFDC2626)) {
+            foundRedDuriba = true;
+          }
+        }
+        return true;
+      });
+    }
+
+    expect(foundGreenYuhka, isTrue, reason: 'Present passive verb (يحكى) must be highlighted in green');
+    expect(foundGreenYusmaa, isTrue, reason: 'Present passive verb (يسمع) must be highlighted in green');
+    expect(foundRedOkhidhat, isTrue, reason: 'Past passive verb (أخذت) must be highlighted in red');
+    expect(foundRedDuriba, isTrue, reason: 'Past passive verb (ضرب) must be highlighted in red');
+  });
 }
 
 

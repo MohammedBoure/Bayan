@@ -22,5 +22,6 @@ This directory contains automated unit and widget test suites for the Arabic Gra
   16. Grade 3 Lesson 1 Activity 5 visual image matching (`ImageMatchingWidget`), confirming the complete absence of textual descriptions on cards, verb slots, and zoom dialogs so children deduce verb actions independently.
   17. Grade 5 Lesson 1 observation stage («ألاحظ وأكتشف») rendering subjunctive particles (`لَنْ`, `أَنْ`, `كَيْ`, `لِـ`) in emerald green and subjunctive/comparison verbs in crimson red with automatic clitic decomposition.
   18. Grade 5 Lesson 2 observation stage («ألاحظ وأكتشف») rendering jussive particles (`لَمْ`, `لَا`) in emerald green and jussive verbs (`تَجْلِسْ`, `تَفْهَمُوا`, `يُرِدْ`, `أَدْرِ`) in crimson red with proclitic prefix decomposition for (`أَلَمْ`, `فَلَمْ`).
+  19. Grade 5 Lesson 3 observation stage («ألاحظ وأكتشف») rendering present passive verbs (`يُحْكَى`, `يُسْمَعُ`) in emerald green and past passive verbs (`أُخِذَتْ`, `ضُرِبَ`) in crimson red with conjunction prefix decomposition.
 
 

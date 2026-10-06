@@ -4130,6 +4130,59 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       }
     }
 
+    // Case 1b: Word with proclitic conjunction prefix matching targetWords (e.g. وَضُرِبَ, فَأُخِذَتْ)
+    if (targetWords.isNotEmpty && cleanToken.length > 2) {
+      for (final prefixChar in ['ف', 'و']) {
+        if (cleanToken.startsWith(prefixChar)) {
+          final remainderClean = cleanToken.substring(1);
+          final hasMatchingTarget = targetWords.any((target) {
+            final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+            final normTarget = ArabicCliticStemmer.normalize(target);
+            return remainderClean == cleanTarget || ArabicCliticStemmer.normalize(remainderClean) == normTarget;
+          });
+
+          if (hasMatchingTarget) {
+            int prefixEnd = 1;
+            while (prefixEnd < token.length && diacritics.hasMatch(token[prefixEnd])) {
+              prefixEnd++;
+            }
+
+            final prefixPart = token.substring(0, prefixEnd);
+            final verbPart = token.substring(prefixEnd);
+
+            // Conjunction prefix in normal style
+            spans.add(
+              TextSpan(
+                text: prefixPart,
+                style: TextStyle(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                  height: 1.9,
+                ),
+              ),
+            );
+
+            // Target verb in bold red style
+            spans.add(
+              TextSpan(
+                text: verbPart,
+                style: TextStyle(
+                  fontSize: 25 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFDC2626),
+                  backgroundColor: const Color(0xFFFFECEC),
+                  height: 1.9,
+                ),
+              ),
+            );
+
+            return true;
+          }
+        }
+      }
+    }
+
     // Case 2: 'و' + 'ل' + verb (e.g. وَلِأُوَاصِلَ)
     if (cleanToken.startsWith('ول') && cleanToken.length > 2) {
       final remainderClean = cleanToken.substring(2);
