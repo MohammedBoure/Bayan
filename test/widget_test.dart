@@ -1187,6 +1187,18 @@ void main() {
     await tester.enterText(textFields.at(4), 'الأم');
     await tester.enterText(textFields.at(5), 'العامل');
     await tester.pumpAndSettle();
+
+    // Verify per-sentence verify button and model answer reveal button exist
+    expect(find.byKey(const Key('verify_sentence_0')), findsOneWidget);
+    expect(find.byKey(const Key('reveal_sentence_0')), findsOneWidget);
+
+    // Tap per-sentence verify button for sentence 0
+    await tester.ensureVisible(find.byKey(const Key('verify_sentence_0')));
+    await tester.tap(find.byKey(const Key('verify_sentence_0')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('إِجَابَةٌ صَحِيحَةٌ'), findsWidgets);
+
+    await tester.ensureVisible(checkBtn);
     await tester.tap(checkBtn);
     await tester.pumpAndSettle();
 
