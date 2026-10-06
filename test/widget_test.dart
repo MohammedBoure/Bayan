@@ -3577,7 +3577,66 @@ void main() {
     // Verify first blank now contains 'كَتَبَ'
     expect(find.text('كَتَبَ'), findsWidgets);
   });
+
+  testWidgets('Grade 4 Comprehensive Activity 6 extracts verbal sentences and student writes subject/object in table', (WidgetTester tester) async {
+    final grade4 = CurriculumRepository.instance.getGradeById('grade4')!;
+    final act6 = grade4.comprehensiveActivities[5];
+    expect(act6.type, equals(ActivityType.textExtractionTable));
+    expect(act6.requiresStudentInput, isTrue);
+
+    final ps = ProgressService();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act6],
+            lessonTitle: 'التقويم الشامل',
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify activity header and table structure
+    expect(find.text('النشاط السادس: اسْتِخْرَاجٌ وَتَصْنِيفٌ مِنَ النَّصِّ'), findsWidgets);
+    expect(find.text('الجُمْلَةُ الفِعْلِيَّةُ'), findsWidgets);
+    expect(find.text('الفِعْلُ'), findsWidgets);
+    expect(find.text('الفَاعِلُ'), findsWidgets);
+    expect(find.text('المَفْعُولُ بِهِ'), findsWidgets);
+
+    // Initial state: verbal sentences are not yet extracted
+    final sentencePlaceholder = find.text('؟ (جُمْلَةُ 1)');
+    expect(sentencePlaceholder, findsOneWidget);
+
+    // Ensure visible and tap first sentence placeholder in table to extract the sentence
+    await tester.ensureVisible(sentencePlaceholder);
+    await tester.pumpAndSettle();
+    await tester.tap(sentencePlaceholder);
+    await tester.pumpAndSettle();
+
+    // Verbal sentence is extracted and displayed in column 1
+    expect(find.text('خَرَجَ سُكَّانُ الحَيِّ إِلَى السَّاحَةِ'), findsWidgets);
+
+    // The other elements (فعل، فاعل، مفعول به) remain empty for the student to write
+    final textFields = find.byType(TextFormField);
+    expect(textFields, findsWidgets);
+
+    // Enter student inputs for row 0: الفعل, الفاعل, المفعول به
+    await tester.enterText(textFields.at(0), 'خَرَجَ');
+    await tester.enterText(textFields.at(1), 'سُكَّانُ الحَيِّ');
+    await tester.enterText(textFields.at(2), 'لا يُوجَدُ');
+    await tester.pumpAndSettle();
+
+    // Check helper chips are available
+    expect(find.text('سُكَّانُ الحَيِّ'), findsWidgets);
+    expect(find.text('الشَّبَابُ'), findsWidgets);
+    expect(find.text('الأَدَوَاتِ'), findsWidgets);
+  });
 }
+
 
 
 

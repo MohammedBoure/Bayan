@@ -182,6 +182,43 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
       if (normMod.contains('واو') && normIn.contains('واو')) return true;
     }
 
+    // عناصر الجملة الفعلية (الفعل، الفاعل، المفعول به):
+    // 1. انعدام المفعول به (لا يوجد / غير موجود / جار ومجرور)
+    if (normMod.contains('لا يوجد') || normMod.contains('غير موجود') || normMod.contains('لايوجد')) {
+      if (normIn == 'لا' ||
+          normIn == 'لا يوجد' ||
+          normIn == 'لايوجد' ||
+          normIn == 'غير موجود' ||
+          normIn.contains('لا يوجد') ||
+          normIn.contains('لايوجد') ||
+          normIn.contains('جار ومجرور') ||
+          normIn == '-' ||
+          normIn == '—' ||
+          normIn == 'معدوم') {
+        return true;
+      }
+    }
+
+    // 2. الفاعل: ضمير مستتر
+    if (normMod.contains('مستتر') || normMod.contains('هو')) {
+      if (normIn.contains('مستتر') || normIn == 'هو' || normIn.contains('ضمير')) {
+        return true;
+      }
+    }
+
+    // 3. الفاعل أو المفعول به المركب أو المضاف (مثل: سكان الحي / سكان، رئيس الحي / رئيس)
+    if (normMod.startsWith('سكان') && normIn.startsWith('سكان')) return true;
+    if (normMod.startsWith('رئيس') && normIn.startsWith('رئيس')) return true;
+
+    // 4. مطابقة الاسم مع أو بدون أداة التعريف (ال)
+    final sIn = normIn.startsWith('ال') ? normIn.substring(2) : normIn;
+    final sMod = normMod.startsWith('ال') ? normMod.substring(2) : normMod;
+    if (sIn.isNotEmpty && sMod.isNotEmpty && sIn == sMod) return true;
+    if (sIn.isNotEmpty && sMod.isNotEmpty && sMod.split(' ').first == sIn.split(' ').first) return true;
+
+    // 5. مطابقة التضمين (مثل: شتلات / شتلات صغيرة، النفايات / النفايات المتناثرة)
+    if (normMod.contains(normIn) || normIn.contains(normMod)) return true;
+
     return false;
   }
 
@@ -286,25 +323,33 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
 
   void _toggleRow(int index) {
     setState(() {
+      final row = widget.tableRows[index];
+      final itemText = row['col1'] ?? (row['word'] ?? '');
       if (_revealedRowIndices.contains(index)) {
         if (_isStudentParsingMode) {
           // If already extracted, select it as active parsing target
           _activeParsingRowIndex = index;
-          final word = widget.tableRows[index]['word'] ?? '';
-          _statusMessage = 'تَمَّ اخْتِيَارُ كَلِمَةِ «$word» لِإِعْرَابِهَا أَدْنَاهُ.';
+          _statusMessage = 'تَمَّ اخْتِيَارُ «$itemText» لِإِعْرَابِهَا أَدْنَاهُ.';
+          _statusIsSuccess = true;
+        } else if (_isStudentTableInputMode) {
+          _activeParsingRowIndex = index;
+          _focusedCellKey = '${index}_1';
+          _statusMessage = 'تَمَّ اخْتِيَارُ «$itemText»؛ اكْتُبْ عَنَاصِرَهَا فِي الجَدْوَلِ أَدْنَاهُ.';
           _statusIsSuccess = true;
         } else {
           _revealedRowIndices.remove(index);
         }
       } else {
         _revealedRowIndices.add(index);
-        final row = widget.tableRows[index];
-        final word = row['word'] ?? row['col1'] ?? '';
         if (_isStudentParsingMode) {
           _activeParsingRowIndex = index;
-          _statusMessage = 'تَمَّ اسْتِخْرَاجُ «$word»؛ قُمْ الآنَ بِإِعْرَابِهَا فِي اللَّوْحَةِ أَدْنَاهُ.';
+          _statusMessage = 'تَمَّ اسْتِخْرَاجُ «$itemText»؛ قُمْ الآنَ بِإِعْرَابِهَا فِي اللَّوْحَةِ أَدْنَاهُ.';
+        } else if (_isStudentTableInputMode) {
+          _activeParsingRowIndex = index;
+          _focusedCellKey = '${index}_1';
+          _statusMessage = 'تَمَّ اسْتِخْرَاجُ «$itemText»؛ اكْتُبْ الآنَ عَنَاصِرَهَا فِي الجَدْوَلِ.';
         } else {
-          _statusMessage = 'تَمَّ إِظْهَارُ تَحْلِيلِ: «$word» فِي الجَدْوَلِ!';
+          _statusMessage = 'تَمَّ إِظْهَارُ تَحْلِيلِ: «$itemText» فِي الجَدْوَلِ!';
         }
         _statusIsSuccess = true;
       }
@@ -434,8 +479,14 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
     }
 
     final col1 = row['col1'];
-    if (col1 != null && col1.isNotEmpty && _isWordMatch(word, col1)) {
-      return true;
+    if (col1 != null && col1.isNotEmpty) {
+      if (_isWordMatch(word, col1)) return true;
+      final tokens = col1.split(RegExp(r'\s+'));
+      for (final tok in tokens) {
+        if (_isWordMatch(word, tok)) {
+          return true;
+        }
+      }
     }
 
     final col3 = row['col3'];
@@ -464,24 +515,36 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         final unrevealed = matchingIndices.where((idx) => !_revealedRowIndices.contains(idx)).toList();
         if (unrevealed.isNotEmpty) {
           _revealedRowIndices.addAll(unrevealed);
-          if (_isStudentParsingMode) {
-            _activeParsingRowIndex = unrevealed.first;
+          final firstUnrev = unrevealed.first;
+          final row = widget.tableRows[firstUnrev];
+          final sentenceText = row['col1'] ?? cleanWord;
+          if (_isStudentTableInputMode) {
+            _activeParsingRowIndex = firstUnrev;
+            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ الجُمْلَةَ الفِعْلِيَّةَ: «$sentenceText»؛ اكْتُبِ الآنَ عَنَاصِرَهَا (الفِعْلَ، الفَاعِلَ، المَفْعُولَ بِهِ) فِي الجَدْوَلِ!';
+          } else if (_isStudentParsingMode) {
+            _activeParsingRowIndex = firstUnrev;
             _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord»؛ قُمْ الآنَ بِإِعْرَابِهِ فِي لَوْحَةِ الإِعْرَابِ أَدْنَاهُ.';
           } else {
-            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$cleanWord» بِنَجَاحٍ، وَتَمَّ كَشْفُ السَّطْرِ المُنَاسِبِ فِي الجَدْوَلِ!';
+            _statusMessage = 'أَحْسَنْتَ! اسْتَخْرَجْتَ: «$sentenceText» بِنَجَاحٍ، وَتَمَّ كَشْفُ السَّطْرِ المُنَاسِبِ فِي الجَدْوَلِ!';
           }
           _statusIsSuccess = true;
         } else {
-          if (_isStudentParsingMode) {
-            _activeParsingRowIndex = matchingIndices.first;
+          final firstIdx = matchingIndices.first;
+          final row = widget.tableRows[firstIdx];
+          final sentenceText = row['col1'] ?? cleanWord;
+          if (_isStudentTableInputMode) {
+            _activeParsingRowIndex = firstIdx;
+            _statusMessage = 'هَذِهِ الجُمْلَةُ («$sentenceText») مُسْتَخْرَجَةٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ كِتَابَةِ عَنَاصِرِهَا فِي الجَدْوَلِ.';
+          } else if (_isStudentParsingMode) {
+            _activeParsingRowIndex = firstIdx;
             _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا. يُمْكِنُكَ إِكْمَالُ إِعْرَابِهَا أَدْنَاهُ.';
           } else {
-            _statusMessage = 'هَذِهِ الكَلِمَةُ («$cleanWord») مُسْتَخْرَجَةٌ سَابِقًا فِي الجَدْوَلِ.';
+            _statusMessage = 'هَذِهِ الجُمْلَةُ («$sentenceText») مُسْتَخْرَجَةٌ سَابِقًا فِي الجَدْوَلِ.';
           }
           _statusIsSuccess = true;
         }
       } else {
-        _statusMessage = 'كَلِمَةُ «$cleanWord» لَيْسَتْ مِنَ الكَلِمَاتِ المَطْلُوبِ اسْتِخْرَاجُهَا. حَاوِلْ مَرَّةً أُخْرَى!';
+        _statusMessage = 'كَلِمَةُ «$cleanWord» لَيْسَتْ ضِمْنَ الجُمَلِ الفِعْلِيَّةِ المَطْلُوبِ اسْتِخْرَاجُهَا. حَاوِلْ مَرَّةً أُخْرَى!';
         _statusIsSuccess = false;
       }
     });
@@ -832,17 +895,17 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
           spacing: 12,
           runSpacing: 8,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
               children: [
-                const Icon(Icons.table_chart_rounded, color: Color(0xFF0284C7), size: 26),
-                const SizedBox(width: 8),
+                const Icon(Icons.table_chart_rounded, color: Color(0xFF0284C7), size: 24),
                 Text(
                   widget.tableTitle != null
                       ? '${widget.tableTitle!} (${_revealedRowIndices.length}/${widget.tableRows.length}):'
                       : 'جَدْوَلُ الفَاعِلِ وَإِعْرَابِهِ (${_revealedRowIndices.length}/${widget.tableRows.length}):',
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
                     color: AppTheme.textDark,
                   ),
@@ -897,7 +960,9 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                       children: [
                         for (int i = 0; i < widget.tableHeaders!.length; i++)
                           Expanded(
-                            flex: i == 0 ? 2 : (widget.tableHeaders!.length > 3 ? 2 : 3),
+                            flex: i == 0
+                                ? (widget.tableHeaders!.first.contains('جُمْلَة') ? 4 : 2)
+                                : (widget.tableHeaders!.length > 3 ? 2 : 3),
                             child: Text(
                               widget.tableHeaders![i],
                               textAlign: TextAlign.center,
@@ -1612,11 +1677,14 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
   Widget _buildCustomMultiColRow(int idx, Map<String, String> row, bool isRevealed) {
     final headers = widget.tableHeaders!;
     final word = row['word'] ?? row['col1'] ?? (row.values.isNotEmpty ? row.values.first : '');
+    final col1Text = row['col1'] ?? word;
+    final isSentenceHeader = headers.isNotEmpty && headers.first.contains('جُمْلَة');
+    final firstColFlex = isSentenceHeader ? 4 : 2;
 
     final List<String> cellValues = [];
     for (int i = 0; i < headers.length; i++) {
       final key = 'col${i + 1}';
-      final val = row[key] ?? (i == 0 ? word : (row[headers[i]] ?? (row['parsing'] ?? '')));
+      final val = row[key] ?? (i == 0 ? col1Text : (row[headers[i]] ?? (row['parsing'] ?? '')));
       cellValues.add(val);
     }
 
@@ -1631,9 +1699,9 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Column 1: The extracted word / target
+            // Column 1: The extracted word / sentence target
             Expanded(
-              flex: 2,
+              flex: firstColFlex,
               child: isExtracted
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1643,10 +1711,10 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                         border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
                       ),
                       child: Text(
-                        word,
+                        col1Text,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF15803D),
                         ),
@@ -1668,7 +1736,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                             const Icon(Icons.touch_app_rounded, size: 14, color: Color(0xFF64748B)),
                             const SizedBox(width: 4),
                             Text(
-                              '؟ (عُنْصُرُ ${idx + 1})',
+                              isSentenceHeader ? '؟ (جُمْلَةُ ${idx + 1})' : '؟ (عُنْصُرُ ${idx + 1})',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -1799,7 +1867,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
         children: [
           if (isRevealed) ...[
             Expanded(
-              flex: 2,
+              flex: firstColFlex,
               child: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 spacing: 8,
@@ -1812,9 +1880,9 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                       border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
                     ),
                     child: Text(
-                      cellValues.isNotEmpty ? cellValues[0] : word,
+                      col1Text,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF15803D),
                       ),
@@ -1854,7 +1922,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
             ),
           ] else ...[
             Expanded(
-              flex: 2,
+              flex: firstColFlex,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
@@ -1869,7 +1937,7 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                     const Icon(Icons.help_outline_rounded, size: 16, color: Color(0xFF64748B)),
                     const SizedBox(width: 6),
                     Text(
-                      '؟ (عُنْصُرُ ${idx + 1})',
+                      isSentenceHeader ? '؟ (جُمْلَةُ ${idx + 1})' : '؟ (عُنْصُرُ ${idx + 1})',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1954,6 +2022,69 @@ class _TextExtractionTableWidgetState extends State<TextExtractionTableWidget> {
                   ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // شريط حركات التشكيل السريع
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF0369A1)),
+                  SizedBox(width: 4),
+                  Text(
+                    'حَرَكَاتُ التَّشْكِيلِ:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0369A1),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 4),
+              for (final diacritic in ['َ', 'ُ', 'ِ', 'ْ', 'ّ', 'ً', 'ٌ', 'ٍ'])
+                InkWell(
+                  onTap: () {
+                    if (_focusedCellKey != null) {
+                      final ctrl = _cellControllers[_focusedCellKey!];
+                      if (ctrl != null) {
+                        final text = ctrl.text;
+                        final sel = ctrl.selection;
+                        if (sel.isValid && sel.start >= 0) {
+                          final newText = text.replaceRange(sel.start, sel.end, diacritic);
+                          ctrl.value = TextEditingValue(
+                            text: newText,
+                            selection: TextSelection.collapsed(offset: sel.start + diacritic.length),
+                          );
+                        } else {
+                          ctrl.text = '$text$diacritic';
+                        }
+                        setState(() {});
+                        _checkValidation();
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFBAE6FD)),
+                    ),
+                    child: Text(
+                      'ـ$diacritic',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
