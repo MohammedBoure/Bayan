@@ -3677,6 +3677,74 @@ void main() {
     expect(find.text('مَبْنِيٌّ لِلْمَعْلُومِ'), findsWidgets);
     expect(find.text('مَبْنِيٌّ لِلْمَجْهُولِ'), findsWidgets);
   });
+
+  testWidgets('Grade 5 Lesson 1 discovery stage renders subjunctive particles in green and verbs in red', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final repo = CurriculumRepository.instance;
+    final ps = ProgressService();
+    final g5l1 = repo.getGradeById('grade5')!.lessons.firstWhere((l) => l.id == 'g5_l1');
+
+    expect(g5l1.discovery, isNotNull);
+    expect(g5l1.discovery!.greenTargetWords, contains('لَنْ'));
+    expect(g5l1.discovery!.greenTargetWords, contains('أَنْ'));
+    expect(g5l1.discovery!.greenTargetWords, contains('كَيْ'));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: LessonDetailScreen(
+            lesson: g5l1,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap stage 4 ("4. أُلاَحِظُ وَأَكْتَشِفُ")
+    await tester.tap(find.text('4. أُلاَحِظُ وَأَكْتَشِفُ'));
+    await tester.pumpAndSettle();
+
+    // Inspect RichText widgets in discovery stage
+    final richTexts = tester.widgetList<RichText>(find.byType(RichText));
+    bool foundGreenParticle = false;
+    bool foundRedVerb = false;
+    bool foundDecomposedGreenLam = false;
+
+    for (final richText in richTexts) {
+      richText.text.visitChildren((span) {
+        if (span is TextSpan) {
+          final text = span.text;
+          final color = span.style?.color;
+          if (text == 'لَنْ' || text == 'أَنْ' || text == 'كَيْ') {
+            if (color == const Color(0xFF16A34A)) {
+              foundGreenParticle = true;
+            }
+          }
+          if (text == 'يَقْبَلَ' || text == 'يَعِيشُوا' || text == 'أَرْفَعَ' || text == 'أُوَاصِلَ') {
+            if (color == const Color(0xFFDC2626)) {
+              foundRedVerb = true;
+            }
+          }
+          if (text == 'لِـ' || text == 'لِ') {
+            if (color == const Color(0xFF16A34A)) {
+              foundDecomposedGreenLam = true;
+            }
+          }
+        }
+        return true;
+      });
+    }
+
+    expect(foundGreenParticle, isTrue, reason: 'Subjunctive particles (لن، أن، كي) must be highlighted in green');
+    expect(foundRedVerb, isTrue, reason: 'Subjunctive verbs must be highlighted in red');
+    expect(foundDecomposedGreenLam, isTrue, reason: 'Lam al-taaleel in ولأواصل must be decomposed and highlighted in green');
+  });
 }
 
 

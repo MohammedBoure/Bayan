@@ -3619,7 +3619,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
               ),
-              child: _buildDiscoveryTriggerSentence(sentence, discovery.allTargetWords, scale),
+              child: _buildDiscoveryTriggerSentence(
+                sentence,
+                discovery.allTargetWords,
+                scale,
+                greenTargetWords: discovery.greenTargetWords,
+              ),
             );
           }),
 
@@ -4035,14 +4040,176 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           return true;
         }
       }
+      // Handle future particle 'س' and 'وس' (e.g. وَسَيَقُومُ / سَيَقُومُ vs يَقُومُ)
+      if (cleanToken.startsWith('وس') && cleanToken.length > 3) {
+        final subClean = cleanToken.substring(2);
+        if (subClean == cleanTarget || ArabicCliticStemmer.normalize(subClean) == normTarget) {
+          return true;
+        }
+      }
+      if (cleanToken.startsWith('س') && cleanToken.length > 2) {
+        final subClean = cleanToken.substring(1);
+        if (subClean == cleanTarget || ArabicCliticStemmer.normalize(subClean) == normTarget) {
+          return true;
+        }
+      }
     }
 
     return false;
   }
 
-  /// Renders a discovery trigger sentence highlighting target grammatical verbs/words in bold red.
+  /// Attempts to decompose a compound token containing a subjunctive particle (لام التعليل)
+  /// and a target verb, e.g. وَلِأُوَاصِلَ -> [وَ] + [لِ] (green) + [أُوَاصِلَ] (red).
+  bool _tryDecomposeDiscoveryToken(
+    String token,
+    List<String> targetWords,
+    List<String> greenTargetWords,
+    double scale,
+    List<InlineSpan> spans,
+  ) {
+    if (greenTargetWords.isEmpty || targetWords.isEmpty) return false;
+
+    final cleanToken = ArabicCliticStemmer.stripDiacritics(token).trim();
+    final diacritics = RegExp(r'[\u064B-\u0652\u0670\u0640]');
+
+    // Case 1: 'و' + 'ل' + verb (e.g. وَلِأُوَاصِلَ)
+    if (cleanToken.startsWith('ول') && cleanToken.length > 2) {
+      final remainderClean = cleanToken.substring(2);
+      final hasMatchingVerb = targetWords.any((target) {
+        final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+        final normTarget = ArabicCliticStemmer.normalize(target);
+        return remainderClean == cleanTarget || ArabicCliticStemmer.normalize(remainderClean) == normTarget;
+      });
+      final hasMatchingParticle = greenTargetWords.any((target) {
+        final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+        return cleanTarget == 'ل';
+      });
+
+      if (hasMatchingVerb && hasMatchingParticle) {
+        int wawEnd = 1;
+        while (wawEnd < token.length && diacritics.hasMatch(token[wawEnd])) {
+          wawEnd++;
+        }
+        int lamEnd = wawEnd + 1;
+        while (lamEnd < token.length && diacritics.hasMatch(token[lamEnd])) {
+          lamEnd++;
+        }
+
+        final wawPart = token.substring(0, wawEnd);
+        final lamPart = token.substring(wawEnd, lamEnd);
+        final verbPart = token.substring(lamEnd);
+
+        // Conjunction 'و' in normal style
+        spans.add(
+          TextSpan(
+            text: wawPart,
+            style: TextStyle(
+              fontSize: 24 * scale,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDark,
+              height: 1.9,
+            ),
+          ),
+        );
+
+        // Subjunctive particle 'لِـ' in green
+        spans.add(
+          TextSpan(
+            text: lamPart,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF16A34A),
+              backgroundColor: const Color(0xFFDCFCE7),
+              height: 1.9,
+            ),
+          ),
+        );
+
+        // Verb in red
+        spans.add(
+          TextSpan(
+            text: verbPart,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFDC2626),
+              backgroundColor: const Color(0xFFFFECEC),
+              height: 1.9,
+            ),
+          ),
+        );
+
+        return true;
+      }
+    }
+
+    // Case 2: 'ل' + verb (e.g. لِأُوَاصِلَ or لِيَنْجَحَ)
+    if (cleanToken.startsWith('ل') && cleanToken.length > 2) {
+      final remainderClean = cleanToken.substring(1);
+      final hasMatchingVerb = targetWords.any((target) {
+        final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+        final normTarget = ArabicCliticStemmer.normalize(target);
+        return remainderClean == cleanTarget || ArabicCliticStemmer.normalize(remainderClean) == normTarget;
+      });
+      final hasMatchingParticle = greenTargetWords.any((target) {
+        final cleanTarget = ArabicCliticStemmer.stripDiacritics(target).trim();
+        return cleanTarget == 'ل';
+      });
+
+      if (hasMatchingVerb && hasMatchingParticle) {
+        int lamEnd = 1;
+        while (lamEnd < token.length && diacritics.hasMatch(token[lamEnd])) {
+          lamEnd++;
+        }
+
+        final lamPart = token.substring(0, lamEnd);
+        final verbPart = token.substring(lamEnd);
+
+        // Subjunctive particle in green
+        spans.add(
+          TextSpan(
+            text: lamPart,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF16A34A),
+              backgroundColor: const Color(0xFFDCFCE7),
+              height: 1.9,
+            ),
+          ),
+        );
+
+        // Verb in red
+        spans.add(
+          TextSpan(
+            text: verbPart,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFDC2626),
+              backgroundColor: const Color(0xFFFFECEC),
+              height: 1.9,
+            ),
+          ),
+        );
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Renders a discovery trigger sentence highlighting target grammatical verbs/words in bold red,
+  /// and target particles (e.g. subjunctive particles in Grade 5) in bold green.
   /// Handles paired sentences separated by ' / ' with a dedicated RTL separator badge.
-  Widget _buildDiscoveryTriggerSentence(String sentence, List<String> targetWords, double scale) {
+  Widget _buildDiscoveryTriggerSentence(
+    String sentence,
+    List<String> targetWords,
+    double scale, {
+    List<String> greenTargetWords = const [],
+  }) {
     if (sentence.contains(' / ')) {
       final parts = sentence.split(' / ');
       return Wrap(
@@ -4050,7 +4217,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         spacing: 14,
         runSpacing: 10,
         children: [
-          _buildDiscoveryRichText(parts[0].trim(), targetWords, scale),
+          _buildDiscoveryRichText(parts[0].trim(), targetWords, scale, greenTargetWords: greenTargetWords),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
@@ -4067,14 +4234,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               ),
             ),
           ),
-          _buildDiscoveryRichText(parts[1].trim(), targetWords, scale),
+          _buildDiscoveryRichText(parts[1].trim(), targetWords, scale, greenTargetWords: greenTargetWords),
         ],
       );
     }
-    return _buildDiscoveryRichText(sentence, targetWords, scale);
+    return _buildDiscoveryRichText(sentence, targetWords, scale, greenTargetWords: greenTargetWords);
   }
 
-  Widget _buildDiscoveryRichText(String text, List<String> targetWords, double scale) {
+  Widget _buildDiscoveryRichText(
+    String text,
+    List<String> targetWords,
+    double scale, {
+    List<String> greenTargetWords = const [],
+  }) {
     final spans = <InlineSpan>[];
 
     // When the trigger sentence contains explicit quotation marks "", highlight content inside quotes directly in red
@@ -4113,9 +4285,29 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       if (token.isEmpty) continue;
 
       final isWord = RegExp(r'^[\u0600-\u06FF]+$').hasMatch(token);
-      final isTarget = isWord && _isDiscoveryTargetWord(token, targetWords);
 
-      if (isTarget) {
+      // Check compound token (e.g. وَلِأُوَاصِلَ -> وَ + لِـ [green] + أُوَاصِلَ [red])
+      if (isWord && _tryDecomposeDiscoveryToken(token, targetWords, greenTargetWords, scale, spans)) {
+        continue;
+      }
+
+      final isGreenTarget = isWord && _isDiscoveryTargetWord(token, greenTargetWords);
+      final isRedTarget = isWord && _isDiscoveryTargetWord(token, targetWords);
+
+      if (isGreenTarget) {
+        spans.add(
+          TextSpan(
+            text: token,
+            style: TextStyle(
+              fontSize: 25 * scale,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF16A34A), // Bold emerald green for subjunctive particles
+              backgroundColor: const Color(0xFFDCFCE7), // Soft pastel green highlight
+              height: 1.9,
+            ),
+          ),
+        );
+      } else if (isRedTarget) {
         spans.add(
           TextSpan(
             text: token,

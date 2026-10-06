@@ -39,6 +39,7 @@ class GrammarDiscoveryModel {
   final List<String> observations;
   final String targetedPattern;
   final List<String> targetWords;
+  final List<String> greenTargetWords;
   final List<String> choices;
   final int? correctChoiceIndex;
   final String ruleExample;
@@ -51,6 +52,7 @@ class GrammarDiscoveryModel {
     required this.observations,
     this.targetedPattern = '',
     this.targetWords = const [],
+    this.greenTargetWords = const [],
     this.choices = const [],
     this.correctChoiceIndex,
     this.ruleExample = '',
