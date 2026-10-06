@@ -2663,6 +2663,10 @@ void main() {
   });
 
   testWidgets('Grade 3 Comprehensive Evaluation contains 6 authentic activities from docx', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
     final grade3 = CurriculumRepository.instance.getGradeById('grade3')!;
     expect(grade3.comprehensiveActivities.length, equals(6));
 
@@ -2693,7 +2697,7 @@ void main() {
     expect(act6.tableHeaders?.length, equals(3));
     expect(act6.tableExampleRow, equals(['ذَهَبَ', 'يَذْهَبُ', 'اِذْهَبْ']));
     expect(act6.incompleteTableRows?.length, equals(5));
-    expect(act6.availableWords?.length, equals(10));
+    expect(act6.availableWords, isNull);
 
     // Test rendering InteractiveActivityScreen with Grade 3 comprehensive activities
     final ps = ProgressService();
@@ -2728,6 +2732,20 @@ void main() {
     expect(find.text('ذَهَبَ'), findsWidgets);
     expect(find.text('يَذْهَبُ'), findsWidgets);
     expect(find.text('اِذْهَبْ'), findsWidgets);
+
+    // Verify word bank of suggested verbs is removed
+    expect(find.textContaining('بَنْكُ الأَفْعَالِ'), findsNothing);
+
+    // Verify editable input fields exist for student direct typing
+    expect(find.byType(TextFormField), findsWidgets);
+    expect(find.byKey(const Key('cell_input_r1_c1')), findsOneWidget);
+
+    // Test typing a verb directly in cell r1_c1
+    await tester.enterText(find.byKey(const Key('cell_input_r1_c1')), 'كتب');
+    await tester.pumpAndSettle();
+
+    // Verify success checkmark is shown in cell r1_c1
+    expect(find.descendant(of: find.byKey(const Key('cell_input_r1_c1')), matching: find.byIcon(Icons.check_circle_rounded)), findsOneWidget);
   });
 
   testWidgets('Grade 4 Comprehensive Evaluation contains 6 authentic activities from docx', (tester) async {
