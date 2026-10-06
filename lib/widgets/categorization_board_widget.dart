@@ -121,11 +121,13 @@ class _CategorizationBoardWidgetState extends State<CategorizationBoardWidget> {
                 children: [
                   const Icon(Icons.touch_app_rounded, color: AppTheme.primaryTeal, size: 28),
                   const SizedBox(width: 8),
-                  Text(
-                    _remainingPool.isEmpty
-                        ? 'تَمَّ تَصْنِيفُ كُلِّ الكَلِمَاتِ؛ تَأَكَّدْ مِنْ صِحَّتِهَا أَدْنَاهُ:'
-                        : 'انْقُرْ أَوْ اسْحَبِ الكَلِمَةَ إِلَى خَانَتِهَا المُنَاسِبَةِ:',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                  Expanded(
+                    child: Text(
+                      _remainingPool.isEmpty
+                          ? 'تَمَّ تَصْنِيفُ كُلِّ الكَلِمَاتِ؛ تَأَكَّدْ مِنْ صِحَّتِهَا أَدْنَاهُ:'
+                          : 'انْقُرْ أَوْ اسْحَبِ الكَلِمَةَ إِلَى خَانَتِهَا المُنَاسِبَةِ:',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                    ),
                   ),
                 ],
               ),

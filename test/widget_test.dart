@@ -3635,7 +3635,50 @@ void main() {
     expect(find.text('الشَّبَابُ'), findsWidgets);
     expect(find.text('الأَدَوَاتِ'), findsWidgets);
   });
+
+  testWidgets('Grade 5 Comprehensive Activity 5 contains updated active and passive sentences', (WidgetTester tester) async {
+    final grade5 = CurriculumRepository.instance.getGradeById('grade5')!;
+    final act5 = grade5.comprehensiveActivities[4];
+    expect(act5.type, equals(ActivityType.categorizationTwoCols));
+    expect(act5.availableWords, equals([
+      'كَتَبَ التِّلْمِيذُ الدَّرْسَ.',
+      'تُزْرَعُ الأَشْجَارُ.',
+      'فُتِحَ البَابُ.',
+      'جَاءَ المُعَلِّمُ.',
+      'يَرْسُمُ الفَنَّانُ لَوْحَةً.',
+      'قُطِفَتِ الأَزْهَارُ.',
+    ]));
+
+    final ps = ProgressService();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act5],
+            lessonTitle: 'التقويم الشامل',
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify all 6 sentences are displayed
+    expect(find.text('كَتَبَ التِّلْمِيذُ الدَّرْسَ.'), findsWidgets);
+    expect(find.text('تُزْرَعُ الأَشْجَارُ.'), findsWidgets);
+    expect(find.text('فُتِحَ البَابُ.'), findsWidgets);
+    expect(find.text('جَاءَ المُعَلِّمُ.'), findsWidgets);
+    expect(find.text('يَرْسُمُ الفَنَّانُ لَوْحَةً.'), findsWidgets);
+    expect(find.text('قُطِفَتِ الأَزْهَارُ.'), findsWidgets);
+
+    // Verify categories
+    expect(find.text('مَبْنِيٌّ لِلْمَعْلُومِ'), findsWidgets);
+    expect(find.text('مَبْنِيٌّ لِلْمَجْهُولِ'), findsWidgets);
+  });
 }
+
 
 
 
