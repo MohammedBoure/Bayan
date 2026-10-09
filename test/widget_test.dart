@@ -3957,6 +3957,74 @@ void main() {
     // Now verify the text is entered
     expect(find.text('لَا النَّاهِيَةُ'), findsWidgets);
   });
+
+  testWidgets('Grade 4 Lesson 1 Activity 6 (أعيد بناء الجملة الفعلية) hides full sentences and provides suggestions', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    final grade4 = Grade4CurriculumPack.buildGrade();
+    final lesson1 = grade4.lessons.firstWhere((l) => l.id == 'g4_l1');
+    final act6 = lesson1.activities.firstWhere((a) => a.id == 'g4_l1_act6');
+
+    expect(act6.type, ActivityType.multiSentenceOrder);
+    expect(act6.sentenceItems, contains('الجُمْلَةُ الأُولَى'));
+    expect(act6.sentenceWordsMap!['الجُمْلَةُ الأُولَى'], contains('ذَهَبَ'));
+
+    final ps = ProgressService();
+    await ps.init();
+    await ps.setRevealAnswersDirectly(false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.buildTheme(),
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: InteractiveActivityScreen(
+            activities: [act6],
+            lessonTitle: lesson1.title,
+            progressService: ps,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify activity title & prompt
+    expect(find.textContaining('النشاط السادس: أُعيد بناء الجملة الفعلية'), findsWidgets);
+    expect(find.textContaining('اقرأ الكلمات الآتية، ثم رتّبها لتكوّن جملة فعلية مفيدة:'), findsWidgets);
+
+    // Verify full solved sentences are NOT shown in the card headers
+    expect(find.textContaining('ذهبَ الطفلُ إلى الحديقةِ.'), findsNothing);
+    expect(find.textContaining('قرأتْ مريمُ القصةَ.'), findsNothing);
+    expect(find.textContaining('يسقي الفلاحُ الأشجارَ.'), findsNothing);
+    expect(find.textContaining('اكتبْ الدرسَ يا سامي.'), findsNothing);
+
+    // Verify items display their labels
+    expect(find.text('الجُمْلَةُ الأُولَى'), findsOneWidget);
+    expect(find.text('الجُمْلَةُ الثَّانِيَةُ'), findsOneWidget);
+    expect(find.text('الجُمْلَةُ الثَّالِثَةُ'), findsOneWidget);
+    expect(find.text('الجُمْلَةُ الرَّابِعَةُ'), findsOneWidget);
+
+    // Verify suggestions (chips) are present
+    expect(find.text('ذَهَبَ'), findsOneWidget);
+    expect(find.text('الطفلُ'), findsOneWidget);
+    expect(find.text('إلى'), findsOneWidget);
+    expect(find.text('الحديقةِ'), findsOneWidget);
+
+    // Tap words for sentence 1 to assemble it: ذَهَبَ -> الطفلُ -> إلى -> الحديقةِ
+    await tester.tap(find.text('ذَهَبَ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('الطفلُ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('إلى'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('الحديقةِ'));
+    await tester.pumpAndSettle();
+
+    // Verify they are assembled into the first drop zone
+    expect(find.text('إِعَادَةُ التَّرْتِيبِ'), findsWidgets);
+  });
 }
 
 

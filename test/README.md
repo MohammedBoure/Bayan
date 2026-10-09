@@ -24,5 +24,6 @@ This directory contains automated unit and widget test suites for the Arabic Gra
   18. Grade 5 Lesson 2 observation stage («ألاحظ وأكتشف») rendering jussive particles (`لَمْ`, `لَا`) in emerald green and jussive verbs (`تَجْلِسْ`, `تَفْهَمُوا`, `يُرِدْ`, `أَدْرِ`) in crimson red with proclitic prefix decomposition for (`أَلَمْ`, `فَلَمْ`).
   19. Grade 5 Lesson 3 observation stage («ألاحظ وأكتشف») rendering present passive verbs (`يُحْكَى`, `يُسْمَعُ`) in emerald green and past passive verbs (`أُخِذَتْ`, `ضُرِبَ`) in crimson red with conjunction prefix decomposition.
   20. Grade 5 Lesson 2 Activity 4 («أستخرج وأحلل من النص») student table input mode, verifying `requiresStudentInput: true`, on-screen editable cells for jussive tools and case marks, and helper chips integration.
+  21. Grade 4 Lesson 1 Activity 6 («أُعيد بناء الجملة الفعلية») pure scrambled word ordering, verifying that full solution sentences are hidden from the card headers, and only suggested word chips and item labels are provided for assembly.
 
 
