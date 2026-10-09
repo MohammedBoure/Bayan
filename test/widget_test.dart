@@ -717,7 +717,7 @@ void main() {
     expect(find.text('اخْتِيَارُ السَّنَةِ الدِّرَاسِيَّةِ'), findsOneWidget);
   });
 
-  test('LicenseService manages 7-day trial, unique device code, and HMAC-SHA256 activation', () async {
+  test('LicenseService manages 100-day trial, unique device code, and HMAC-SHA256 activation', () async {
     SharedPreferences.setMockInitialValues({});
     final license = LicenseService();
     await license.init();
@@ -726,11 +726,11 @@ void main() {
     expect(license.deviceCode, startsWith('BYN-'));
     expect(RegExp(r'^BYN-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$').hasMatch(license.deviceCode), isTrue);
 
-    // 2. Initial state: Trial active for 7 days
+    // 2. Initial state: Trial active for 100 days
     expect(license.isTrialActive, isTrue);
     expect(license.isActivated, isFalse);
     expect(license.canAccessCurriculum, isTrue);
-    expect(license.daysRemaining, inInclusiveRange(1, 7));
+    expect(license.daysRemaining, inInclusiveRange(1, 100));
 
     // 3. Reject invalid keys
     final failResult = await license.activateSoftware('ACT-DEAD-BEEF-0000');
@@ -755,7 +755,7 @@ void main() {
     final license = LicenseService();
     await license.init();
 
-    // Simulate 7-day trial expiration
+    // Simulate 100-day trial expiration
     await license.expireTrialForTesting();
     expect(license.isTrialActive, isFalse);
     expect(license.isActivated, isFalse);

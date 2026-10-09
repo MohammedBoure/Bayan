@@ -8,13 +8,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum LicenseStatus {
   /// Permanent Lifetime License active
   activated,
-  /// 7-day trial currently active
+  /// 100-day trial currently active
   trialActive,
-  /// 7-day trial period expired - access locked
+  /// 100-day trial period expired - access locked
   trialExpired,
 }
 
-/// Service managing device hardware identification, 7-day trial period,
+/// Service managing device hardware identification, 100-day trial period,
 /// tamper-resistant trial timestamps, and cryptographic HMAC-SHA256 license activation.
 class LicenseService extends ChangeNotifier {
   static const String _keyDeviceSeed = 'license_device_seed';
@@ -26,8 +26,8 @@ class LicenseService extends ChangeNotifier {
   /// Master cryptographic secret salt for the Bayan Educational Platform
   static const String masterSecret = 'BAYAN_PRIMARY_ARABIC_2026_MASTER_SECRET_KEY';
 
-  /// Trial duration: 7 days
-  static const Duration trialDuration = Duration(days: 7);
+  /// Trial duration: 100 days
+  static const Duration trialDuration = Duration(days: 100);
 
   SharedPreferences? _prefs;
 
@@ -45,7 +45,7 @@ class LicenseService extends ChangeNotifier {
   /// Date when the application was first launched on this device
   DateTime get firstRunDate => _firstRunDate;
 
-  /// Expiration date of the 7-day trial period
+  /// Expiration date of the 100-day trial period
   DateTime get trialExpiryDate => _firstRunDate.add(trialDuration);
 
   /// Time remaining in the trial period
@@ -56,7 +56,7 @@ class LicenseService extends ChangeNotifier {
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
-  /// Remaining whole days in trial (0 to 7)
+  /// Remaining whole days in trial (0 to 100)
   int get daysRemaining {
     if (_isActivated) return 0;
     final rem = timeRemaining;
@@ -65,7 +65,7 @@ class LicenseService extends ChangeNotifier {
     return rem.inDays + (rem.inHours % 24 > 0 ? 1 : 0);
   }
 
-  /// Whether the 7-day trial period is currently active and unexpired
+  /// Whether the 100-day trial period is currently active and unexpired
   bool get isTrialActive {
     if (_isActivated) return false;
     if (_isClockTampered) return false;
@@ -86,7 +86,7 @@ class LicenseService extends ChangeNotifier {
   }
 
   /// Gatekeeper permission: allows access to lessons and interactive exercises
-  /// only when permanently activated OR within the 7-day trial period.
+  /// only when permanently activated OR within the 100-day trial period.
   bool get canAccessCurriculum => _isActivated || isTrialActive;
 
   /// Initializes hardware ID, checks trial status, and verifies existing license.
@@ -149,7 +149,7 @@ class LicenseService extends ChangeNotifier {
     _deviceCode = 'BYN-$block1-$block2-$block3';
   }
 
-  /// Initializes and verifies the 7-day trial period timestamps with anti-tamper signature.
+  /// Initializes and verifies the 100-day trial period timestamps with anti-tamper signature.
   Future<void> _checkTrialState() async {
     final now = DateTime.now();
     final savedEpoch = _prefs?.getInt(_keyFirstRunEpoch);
@@ -237,7 +237,7 @@ class LicenseService extends ChangeNotifier {
   /// Forces trial to expired state (used in testing).
   Future<void> expireTrialForTesting() async {
     _isActivated = false;
-    _firstRunDate = DateTime.now().subtract(const Duration(days: 8));
+    _firstRunDate = DateTime.now().subtract(trialDuration + const Duration(days: 1));
     if (_prefs != null) {
       final epoch = _firstRunDate.millisecondsSinceEpoch;
       final sig = _computeHmac('$epoch|$_deviceCode|FIRST_RUN');

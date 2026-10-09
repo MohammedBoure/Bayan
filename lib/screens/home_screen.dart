@@ -433,7 +433,7 @@ class HomeScreen extends StatelessWidget {
               const Icon(Icons.access_time_rounded, color: AppTheme.accentOrange, size: 20),
               const SizedBox(width: 6),
               Text(
-                'فترة تجريبية: متبقي ${license.daysRemaining} أيام ⏳',
+                'فترة تجريبية: متبقي ${license.daysRemaining} ${license.daysRemaining > 10 ? 'يومًا' : 'أيام'} ⏳',
                 style: const TextStyle(
                   color: AppTheme.accentOrange,
                   fontWeight: FontWeight.bold,

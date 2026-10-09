@@ -839,7 +839,7 @@ class SettingsScreen extends StatelessWidget {
         final titleText = isActivated
             ? 'البَرْنَامِجُ مُفَعَّلٌ بِنَجَاحٍ (نُسْخَةٌ كَامِلَةٌ دَائِمَةٌ)'
             : (isTrial
-                ? 'فَتْرَةٌ تَجْرِيبِيَّةٌ نَشِطَةٌ (مُتَبَقٍّ ${license.daysRemaining} أَيَّام)'
+                ? 'فَتْرَةٌ تَجْرِيبِيَّةٌ نَشِطَةٌ (مُتَبَقٍّ ${license.daysRemaining} ${license.daysRemaining > 10 ? 'يَوْمًا' : 'أَيَّام'})'
                 : 'انْتَهَتِ الفَتْرَةُ التَّجْرِيبِيَّةُ (مَطْلُوبُ التَّفْعِيلِ)');
 
         final descText = isActivated
